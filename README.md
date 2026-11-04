@@ -26,7 +26,11 @@ Open `sim/index.html` directly in a browser. No build step. Scene state loads fr
 
 ## Deployment (GitHub Pages)
 
-Sim is served from the `/sim` folder of this repo's `main` branch. To enable Pages on a fresh clone: Settings → Pages → Source: `main` branch, `/sim` folder. Live URL in ~1 minute at `https://<username>.github.io/bspk-studio/sim/`.
+The sim deploys via `.github/workflows/deploy-sim.yml`, which uploads the `/sim` folder as the Pages artifact on every push to `main`. (GitHub's "Deploy from a branch" source only offers `/ (root)` or `/docs`, so a workflow is how we keep `/sim` as the sim's semantic home.)
+
+One-time repo setup: Settings → Pages → **Source: GitHub Actions**. After the next push to `main`, the sim is live at `https://<username>.github.io/bspk-studio/`.
+
+**Note:** GitHub Pages on a private repo requires GitHub Pro/Team/Enterprise. If the repo is public, Pages works on any plan.
 
 ## Conventions
 
