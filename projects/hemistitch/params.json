@@ -1,0 +1,23 @@
+{
+  "version": "0.1",
+  "project": "hemistitch",
+  "parts": [
+    {
+      "id": "case_middle",
+      "type": "cushion_case",
+      "visible": true,
+      "params": {
+        "width": 200,
+        "height": 200,
+        "depth": 65,
+        "corner_radius": 50,
+        "sagitta_horizontal": 2,
+        "sagitta_vertical": 2
+      }
+    }
+  ],
+  "view": {
+    "camera_position": [0, 0, 380],
+    "camera_target": [0, 0, 0]
+  }
+}

@@ -1,0 +1,1055 @@
+<title>BSPK Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: full-viewport Three.js canvas with floating toolbar and right-side part/parameter panel; stacks on narrow screens. */
+  :root {
+    --bg: #ece8dd;
+    --surface: #f8f4ea;
+    --surface-raised: #ffffff;
+    --surface-inset: #e3ddcd;
+    --fg: #1a1814;
+    --fg-muted: #6c6454;
+    --fg-dim: #998f78;
+    --line: rgba(26, 24, 20, 0.14);
+    --line-strong: rgba(26, 24, 20, 0.28);
+    --accent: #9e7532;
+    --accent-weak: #d9b878;
+    --cool: #4c6a7e;
+    --warn: #b8661d;
+    --ok: #4a7a4a;
+    --scene-bg: #d8d0bd;
+    --part-case: #c48434;
+    --part-movement: #6a8aa0;
+    --part-drive: #8a8778;
+    --highlight: #ff9a3c;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141210;
+      --surface: #1c1915;
+      --surface-raised: #26221c;
+      --surface-inset: #0e0c0a;
+      --fg: #ece6d4;
+      --fg-muted: #8e8778;
+      --fg-dim: #5e5848;
+      --line: rgba(236, 230, 212, 0.12);
+      --line-strong: rgba(236, 230, 212, 0.26);
+      --accent: #d4a85a;
+      --accent-weak: #8f703a;
+      --cool: #7f9bb0;
+      --warn: #e0a04d;
+      --ok: #7fb57f;
+      --scene-bg: #0d0b09;
+      --part-case: #d9a254;
+      --part-movement: #7b9bb3;
+      --part-drive: #a89f88;
+      --highlight: #ffb55c;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141210;
+    --surface: #1c1915;
+    --surface-raised: #26221c;
+    --surface-inset: #0e0c0a;
+    --fg: #ece6d4;
+    --fg-muted: #8e8778;
+    --fg-dim: #5e5848;
+    --line: rgba(236, 230, 212, 0.12);
+    --line-strong: rgba(236, 230, 212, 0.26);
+    --accent: #d4a85a;
+    --accent-weak: #8f703a;
+    --cool: #7f9bb0;
+    --warn: #e0a04d;
+    --ok: #7fb57f;
+    --scene-bg: #0d0b09;
+    --part-case: #d9a254;
+    --part-movement: #7b9bb3;
+    --part-drive: #a89f88;
+    --highlight: #ffb55c;
+    color-scheme: dark;
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    overflow: hidden;
+    font-size: 13px;
+  }
+
+  #app {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  #viewport {
+    flex: 1 1 auto;
+    min-width: 0;
+    position: relative;
+    background: var(--scene-bg);
+  }
+  #viewport canvas { display: block; }
+
+  #brand {
+    position: absolute;
+    top: 14px;
+    left: max(18px, env(safe-area-inset-left, 0px));
+    z-index: 2;
+    pointer-events: none;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  #brand strong {
+    display: block;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: var(--fg);
+    margin-bottom: 1px;
+  }
+
+  #toolbar {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    gap: 2px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  #toolbar button {
+    all: unset;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: background 100ms, color 100ms;
+  }
+  #toolbar button:hover { background: var(--surface-inset); color: var(--fg); }
+  #toolbar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  #toolbar button.active { background: var(--accent); color: var(--surface); }
+  #toolbar .sep { width: 1px; background: var(--line); margin: 2px 4px; }
+
+  .theme-toggle {
+    position: absolute;
+    top: 14px;
+    right: max(14px, env(safe-area-inset-right, 0px));
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--fg-muted);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .theme-toggle:hover { color: var(--fg); border-color: var(--accent); }
+
+  #status {
+    position: absolute;
+    bottom: 12px;
+    left: max(18px, env(safe-area-inset-left, 0px));
+    z-index: 2;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--fg-dim);
+    pointer-events: none;
+    letter-spacing: 0.04em;
+  }
+  #status .val { color: var(--fg-muted); }
+
+  #panel {
+    width: 320px;
+    flex: 0 0 320px;
+    background: var(--surface);
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    padding-block: 20px;
+    padding-left: 20px;
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .section { display: flex; flex-direction: column; gap: 8px; }
+  .section-title {
+    margin: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .section-title .count {
+    font-size: 9.5px;
+    color: var(--fg-dim);
+  }
+
+  .parts-list { display: flex; flex-direction: column; gap: 2px; }
+  .part-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 100ms;
+    border: 1px solid transparent;
+  }
+  .part-row:hover { background: var(--surface-inset); }
+  .part-row.selected {
+    background: var(--surface-inset);
+    border-color: var(--accent);
+  }
+  .part-row.hidden .part-name { opacity: 0.4; text-decoration: line-through; }
+  .part-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    border: 1px solid var(--line-strong);
+    flex-shrink: 0;
+  }
+  .part-name {
+    font-size: 12.5px;
+    color: var(--fg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .part-type {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    margin-left: 4px;
+  }
+  .part-eye {
+    all: unset;
+    cursor: pointer;
+    font-size: 13px;
+    width: 20px;
+    text-align: center;
+    color: var(--fg-muted);
+    transition: color 100ms;
+  }
+  .part-eye:hover { color: var(--fg); }
+  .part-row.hidden .part-eye { color: var(--fg-dim); }
+
+  .empty-note {
+    font-size: 11.5px;
+    color: var(--fg-dim);
+    font-style: italic;
+    padding: 4px 8px;
+  }
+
+  .params-list { display: flex; flex-direction: column; gap: 12px; }
+  .param-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 4px 10px;
+  }
+  .param-row label {
+    font-size: 11.5px;
+    color: var(--fg-muted);
+    letter-spacing: 0.02em;
+  }
+  .param-row .unit {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    margin-left: 4px;
+  }
+  .param-row .val {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+  .param-row input[type=range] {
+    grid-column: 1 / -1;
+    width: 100%;
+    accent-color: var(--accent);
+    margin: 0;
+  }
+
+  .session-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .session-grid button {
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 8px 10px;
+    background: var(--surface-raised);
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  .session-grid button:hover { border-color: var(--accent); }
+  .session-grid button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .session-grid button.primary {
+    background: var(--accent);
+    color: var(--surface);
+    border-color: var(--accent);
+  }
+  .session-grid button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .scene-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+  .scene-name-row .project {
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .scene-name-row .dirty {
+    color: var(--warn);
+  }
+
+  #file-input { display: none; }
+
+  @media (max-width: 760px) {
+    body { overflow: auto; }
+    #app { flex-direction: column; height: auto; min-height: 100%; }
+    #viewport { height: 58vh; min-height: 320px; flex: 0 0 auto; }
+    #panel {
+      width: 100%;
+      flex: 0 0 auto;
+      border-left: none;
+      border-top: 1px solid var(--line);
+      padding-left: max(20px, env(safe-area-inset-left, 0px));
+    }
+    #toolbar {
+      font-size: 9px;
+      flex-wrap: wrap;
+      max-width: calc(100vw - 100px);
+    }
+  }
+</style>
+
+<div id="app">
+  <div id="viewport">
+    <div id="brand"><strong>BSPK Studio</strong>v0.1 · hemistitch</div>
+    <div id="toolbar" role="toolbar" aria-label="View and session controls">
+      <button data-view="iso" title="Isometric view">ISO</button>
+      <button data-view="top" title="Top view">TOP</button>
+      <button data-view="side" title="Side view">SIDE</button>
+      <button data-view="front" title="Front view">FRONT</button>
+      <span class="sep"></span>
+      <button id="btn-undo" title="Undo (⌘Z)" disabled>UNDO</button>
+      <button id="btn-redo" title="Redo (⇧⌘Z)" disabled>REDO</button>
+      <span class="sep"></span>
+      <button id="btn-grid" class="active" title="Toggle grid">GRID</button>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">◐</button>
+    <div id="status"><span class="val" id="dims">—</span></div>
+  </div>
+
+  <aside id="panel" aria-label="Design controls">
+    <div class="section">
+      <h2 class="section-title">Scene<span class="count" id="part-count">1 part</span></h2>
+      <div class="scene-name-row">
+        <span class="project" id="project-name">hemistitch</span>
+        <span id="dirty-flag"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Parts</h2>
+      <div class="parts-list" id="parts-list" role="list"></div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Parameters<span class="count" id="selected-name"></span></h2>
+      <div class="params-list" id="params-list">
+        <p class="empty-note">Select a part to edit its parameters.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Session</h2>
+      <div class="session-grid">
+        <button id="btn-save" class="primary">Save JSON</button>
+        <button id="btn-load">Load JSON</button>
+      </div>
+      <input type="file" id="file-input" accept=".json,application/json">
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  // =========================================================================
+  // PART TYPE REGISTRY — v0.1 ships with one type: cushion_case.
+  // Future part types (bezel, caseback, lug, gear, disc...) register here.
+  // =========================================================================
+  const PART_TYPES = {
+    cushion_case: {
+      label: 'Cushion case',
+      group: 'case',
+      color: '--part-case',
+      schema: [
+        { name: 'width',              label: 'Width',              unit: 'mm', type: 'range', min: 60, max: 300, step: 1,   default: 200 },
+        { name: 'height',             label: 'Height',             unit: 'mm', type: 'range', min: 60, max: 300, step: 1,   default: 200 },
+        { name: 'depth',              label: 'Depth',              unit: 'mm', type: 'range', min: 10, max: 120, step: 1,   default: 65  },
+        { name: 'corner_radius',      label: 'Corner radius',      unit: 'mm', type: 'range', min: 1,  max: 100, step: 0.5, default: 50  },
+        { name: 'sagitta_horizontal', label: 'Sagitta top/bottom', unit: 'mm', type: 'range', min: 0,  max: 15,  step: 0.1, default: 2   },
+        { name: 'sagitta_vertical',   label: 'Sagitta left/right', unit: 'mm', type: 'range', min: 0,  max: 15,  step: 0.1, default: 2   },
+      ],
+      build: buildCushionCaseMesh,
+    },
+  };
+
+  // =========================================================================
+  // GEOMETRY — cushion case generator
+  // =========================================================================
+  function cushionProfile(W, H, r, sagH, sagV) {
+    // Rounded-square outline traversed counter-clockwise, with optional
+    // outward-bulging arcs on each of the four straight edges.
+    //   sagH: bulge magnitude on top and bottom edges (both get it)
+    //   sagV: bulge magnitude on left and right edges (both get it)
+    r = Math.max(0.5, Math.min(r, Math.min(W, H) / 2 - 0.5));
+    const pts = [];
+    const cornerSegs = 14;
+    const edgeSegs = 16;
+
+    // TR corner: 0 → π/2, from (W/2, H/2-r) to (W/2-r, H/2)
+    const cTR = [W/2 - r, H/2 - r];
+    for (let i = 0; i <= cornerSegs; i++) {
+      const a = (i / cornerSegs) * (Math.PI / 2);
+      pts.push([cTR[0] + r * Math.cos(a), cTR[1] + r * Math.sin(a)]);
+    }
+
+    // TOP edge: (W/2-r, H/2) → (-W/2+r, H/2), bulges upward by sagH.
+    // If sagH is zero the shape's implicit lineTo closes the edge flat.
+    if (sagH > 0.01) {
+      const chord = W - 2 * r;
+      const arcR = (chord * chord + 4 * sagH * sagH) / (8 * sagH);
+      const cy = H/2 + sagH - arcR;
+      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
+      for (let i = 1; i < edgeSegs; i++) {
+        const t = i / edgeSegs;
+        const theta = halfA - t * (2 * halfA);
+        pts.push([arcR * Math.sin(theta), cy + arcR * Math.cos(theta)]);
+      }
+    }
+
+    // TL corner: π/2 → π, from (-W/2+r, H/2) to (-W/2, H/2-r)
+    const cTL = [-W/2 + r, H/2 - r];
+    for (let i = 0; i <= cornerSegs; i++) {
+      const a = Math.PI / 2 + (i / cornerSegs) * (Math.PI / 2);
+      pts.push([cTL[0] + r * Math.cos(a), cTL[1] + r * Math.sin(a)]);
+    }
+
+    // LEFT edge: (-W/2, H/2-r) → (-W/2, -H/2+r), bulges leftward by sagV.
+    if (sagV > 0.01) {
+      const chord = H - 2 * r;
+      const arcR = (chord * chord + 4 * sagV * sagV) / (8 * sagV);
+      const cx = -W/2 - sagV + arcR;
+      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
+      for (let i = 1; i < edgeSegs; i++) {
+        const t = i / edgeSegs;
+        const theta = halfA - t * (2 * halfA);
+        pts.push([cx - arcR * Math.cos(theta), arcR * Math.sin(theta)]);
+      }
+    }
+
+    // BL corner: π → 3π/2, from (-W/2, -H/2+r) to (-W/2+r, -H/2)
+    const cBL = [-W/2 + r, -H/2 + r];
+    for (let i = 0; i <= cornerSegs; i++) {
+      const a = Math.PI + (i / cornerSegs) * (Math.PI / 2);
+      pts.push([cBL[0] + r * Math.cos(a), cBL[1] + r * Math.sin(a)]);
+    }
+
+    // BOTTOM edge: (-W/2+r, -H/2) → (W/2-r, -H/2), bulges downward by sagH.
+    if (sagH > 0.01) {
+      const chord = W - 2 * r;
+      const arcR = (chord * chord + 4 * sagH * sagH) / (8 * sagH);
+      const cy = -H/2 - sagH + arcR;
+      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
+      for (let i = 1; i < edgeSegs; i++) {
+        const t = i / edgeSegs;
+        const theta = halfA - t * (2 * halfA);
+        pts.push([-arcR * Math.sin(theta), cy - arcR * Math.cos(theta)]);
+      }
+    }
+
+    // BR corner: 3π/2 → 2π, from (W/2-r, -H/2) to (W/2, -H/2+r)
+    const cBR = [W/2 - r, -H/2 + r];
+    for (let i = 0; i <= cornerSegs; i++) {
+      const a = (3 * Math.PI) / 2 + (i / cornerSegs) * (Math.PI / 2);
+      pts.push([cBR[0] + r * Math.cos(a), cBR[1] + r * Math.sin(a)]);
+    }
+
+    // RIGHT edge: (W/2, -H/2+r) → (W/2, H/2-r), bulges rightward by sagV.
+    if (sagV > 0.01) {
+      const chord = H - 2 * r;
+      const arcR = (chord * chord + 4 * sagV * sagV) / (8 * sagV);
+      const cx = W/2 + sagV - arcR;
+      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
+      for (let i = 1; i < edgeSegs; i++) {
+        const t = i / edgeSegs;
+        const theta = halfA - t * (2 * halfA);
+        pts.push([cx + arcR * Math.cos(theta), -arcR * Math.sin(theta)]);
+      }
+    }
+
+    return pts;
+  }
+
+  function buildCushionCaseMesh(params, color) {
+    const { width, height, depth, corner_radius, sagitta_horizontal, sagitta_vertical } = params;
+    const pts = cushionProfile(width, height, corner_radius, sagitta_horizontal, sagitta_vertical);
+    const shape = new THREE.Shape();
+    shape.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], pts[i][1]);
+    shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, {
+      depth: depth,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      bevelSize: 0.6,
+      bevelThickness: 0.6,
+      curveSegments: 20,
+    });
+    geo.translate(0, 0, -depth / 2);
+    // Rotate so cushion plane is XY and depth extrudes along Z (Z up)
+    // ExtrudeGeometry already extrudes along +Z, and our profile is in XY, so no rotation needed.
+    const mat = new THREE.MeshStandardMaterial({
+      color: color,
+      metalness: 0.4,
+      roughness: 0.55,
+    });
+    return new THREE.Mesh(geo, mat);
+  }
+
+  // =========================================================================
+  // SCENE
+  // =========================================================================
+  const viewport = $('viewport');
+  const scene = new THREE.Scene();
+  const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const colorFromCss = (name) => new THREE.Color(cssVar(name));
+
+  function updateSceneBg() { scene.background = colorFromCss('--scene-bg'); }
+  updateSceneBg();
+
+  const camera = new THREE.PerspectiveCamera(42, 1, 1, 10000);
+  camera.up.set(0, 0, 1);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  viewport.appendChild(renderer.domElement);
+
+  function resize() {
+    const w = viewport.clientWidth, h = viewport.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  new ResizeObserver(resize).observe(viewport);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9);
+  key.position.set(60, -40, 100);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+  fill.position.set(-80, 60, 40);
+  scene.add(fill);
+
+  const grid = new THREE.GridHelper(400, 40, 0x666666, 0x444444);
+  grid.rotation.x = Math.PI / 2;
+  scene.add(grid);
+
+  // Highlight outline ring — a torus that draws around a selected part's AABB
+  const highlightGroup = new THREE.Group();
+  scene.add(highlightGroup);
+
+  // =========================================================================
+  // STATE
+  // =========================================================================
+  const DEFAULT_SCENE = {
+    version: '0.1',
+    project: 'hemistitch',
+    parts: [
+      {
+        id: 'case_middle',
+        type: 'cushion_case',
+        visible: true,
+        params: Object.fromEntries(PART_TYPES.cushion_case.schema.map(p => [p.name, p.default])),
+      },
+    ],
+    view: {
+      camera_position: [120, -240, 180],
+      camera_target: [0, 0, 0],
+    },
+  };
+
+  let state = structuredClone(DEFAULT_SCENE);
+  let selectedPartId = state.parts[0]?.id ?? null;
+  const partMeshes = new Map();   // partId -> THREE.Mesh
+  let dirty = false;
+
+  // Undo / redo
+  const history = { stack: [structuredClone(state)], ptr: 0, max: 100 };
+  function pushHistory() {
+    history.stack.length = history.ptr + 1;
+    history.stack.push(structuredClone(state));
+    if (history.stack.length > history.max) history.stack.shift();
+    history.ptr = history.stack.length - 1;
+    updateUndoButtons();
+    markDirty(true);
+  }
+  function undo() {
+    if (history.ptr === 0) return;
+    history.ptr--;
+    state = structuredClone(history.stack[history.ptr]);
+    syncFromState();
+    updateUndoButtons();
+    markDirty(true);
+  }
+  function redo() {
+    if (history.ptr >= history.stack.length - 1) return;
+    history.ptr++;
+    state = structuredClone(history.stack[history.ptr]);
+    syncFromState();
+    updateUndoButtons();
+    markDirty(true);
+  }
+  function updateUndoButtons() {
+    $('btn-undo').disabled = history.ptr === 0;
+    $('btn-redo').disabled = history.ptr >= history.stack.length - 1;
+  }
+
+  function markDirty(d) {
+    dirty = d;
+    $('dirty-flag').textContent = d ? '· modified' : '';
+    $('dirty-flag').className = d ? 'dirty' : '';
+  }
+
+  // =========================================================================
+  // RENDER / REBUILD
+  // =========================================================================
+  function disposeMesh(mesh) {
+    if (mesh.geometry) mesh.geometry.dispose();
+    if (mesh.material) mesh.material.dispose();
+    if (mesh.parent) mesh.parent.remove(mesh);
+  }
+
+  function rebuildPart(part) {
+    const prev = partMeshes.get(part.id);
+    if (prev) disposeMesh(prev);
+    const typeDef = PART_TYPES[part.type];
+    if (!typeDef) return;
+    const color = colorFromCss(typeDef.color).getHex();
+    const mesh = typeDef.build(part.params, color);
+    mesh.visible = part.visible !== false;
+    mesh.userData.partId = part.id;
+    scene.add(mesh);
+    partMeshes.set(part.id, mesh);
+  }
+
+  function rebuildAll() {
+    for (const mesh of partMeshes.values()) disposeMesh(mesh);
+    partMeshes.clear();
+    for (const part of state.parts) rebuildPart(part);
+    updateHighlight();
+    updateStatus();
+  }
+
+  function updateHighlight() {
+    while (highlightGroup.children.length) {
+      const c = highlightGroup.children[0];
+      highlightGroup.remove(c);
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) c.material.dispose();
+    }
+    if (!selectedPartId) return;
+    const mesh = partMeshes.get(selectedPartId);
+    if (!mesh || !mesh.visible) return;
+    const box = new THREE.Box3().setFromObject(mesh);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const geo = new THREE.BoxGeometry(size.x + 2, size.y + 2, size.z + 2);
+    const edges = new THREE.EdgesGeometry(geo);
+    const mat = new THREE.LineBasicMaterial({ color: colorFromCss('--highlight').getHex() });
+    const lines = new THREE.LineSegments(edges, mat);
+    lines.position.copy(center);
+    highlightGroup.add(lines);
+    geo.dispose();
+  }
+
+  function updateStatus() {
+    const part = state.parts.find(p => p.id === selectedPartId);
+    if (!part) { $('dims').textContent = `${state.parts.length} part${state.parts.length === 1 ? '' : 's'}`; return; }
+    const p = part.params;
+    if (part.type === 'cushion_case') {
+      $('dims').textContent = `${part.id}  ${p.width}×${p.height}×${p.depth} mm`;
+    } else {
+      $('dims').textContent = part.id;
+    }
+  }
+
+  // =========================================================================
+  // PARTS PANEL
+  // =========================================================================
+  function renderPartsList() {
+    const list = $('parts-list');
+    list.innerHTML = '';
+    if (!state.parts.length) {
+      const empty = document.createElement('p');
+      empty.className = 'empty-note';
+      empty.textContent = 'No parts in scene.';
+      list.appendChild(empty);
+      return;
+    }
+    for (const part of state.parts) {
+      const typeDef = PART_TYPES[part.type];
+      const row = document.createElement('div');
+      row.className = 'part-row';
+      row.setAttribute('role', 'listitem');
+      if (part.id === selectedPartId) row.classList.add('selected');
+      if (part.visible === false) row.classList.add('hidden');
+
+      const sw = document.createElement('span');
+      sw.className = 'part-swatch';
+      sw.style.background = cssVar(typeDef.color);
+
+      const name = document.createElement('span');
+      name.className = 'part-name';
+      name.innerHTML = `${part.id}<span class="part-type">${typeDef.label}</span>`;
+
+      const eye = document.createElement('button');
+      eye.className = 'part-eye';
+      eye.textContent = part.visible === false ? '○' : '●';
+      eye.title = part.visible === false ? 'Show' : 'Hide';
+      eye.setAttribute('aria-label', part.visible === false ? 'Show part' : 'Hide part');
+      eye.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePartVisibility(part.id);
+      });
+
+      row.addEventListener('click', () => selectPart(part.id));
+      row.appendChild(sw);
+      row.appendChild(name);
+      row.appendChild(eye);
+      list.appendChild(row);
+    }
+    $('part-count').textContent = `${state.parts.length} part${state.parts.length === 1 ? '' : 's'}`;
+  }
+
+  function selectPart(id) {
+    selectedPartId = id;
+    renderPartsList();
+    renderParamsPanel();
+    updateHighlight();
+    updateStatus();
+  }
+
+  function togglePartVisibility(id) {
+    const part = state.parts.find(p => p.id === id);
+    if (!part) return;
+    part.visible = !part.visible;
+    const mesh = partMeshes.get(id);
+    if (mesh) mesh.visible = part.visible;
+    renderPartsList();
+    updateHighlight();
+    pushHistory();
+  }
+
+  // =========================================================================
+  // PARAMETERS PANEL
+  // =========================================================================
+  function renderParamsPanel() {
+    const panel = $('params-list');
+    panel.innerHTML = '';
+    const part = state.parts.find(p => p.id === selectedPartId);
+    if (!part) {
+      $('selected-name').textContent = '';
+      const empty = document.createElement('p');
+      empty.className = 'empty-note';
+      empty.textContent = 'Select a part to edit its parameters.';
+      panel.appendChild(empty);
+      return;
+    }
+    $('selected-name').textContent = part.id;
+    const typeDef = PART_TYPES[part.type];
+    let paramDebounce = null;
+    for (const def of typeDef.schema) {
+      const row = document.createElement('div');
+      row.className = 'param-row';
+
+      const label = document.createElement('label');
+      label.setAttribute('for', `p_${def.name}`);
+      label.innerHTML = `${def.label}<span class="unit">${def.unit || ''}</span>`;
+
+      const val = document.createElement('span');
+      val.className = 'val';
+      val.textContent = formatValue(part.params[def.name], def);
+
+      const input = document.createElement('input');
+      input.type = def.type;
+      input.id = `p_${def.name}`;
+      input.min = def.min;
+      input.max = def.max;
+      input.step = def.step;
+      input.value = part.params[def.name];
+      input.addEventListener('input', () => {
+        const v = parseFloat(input.value);
+        part.params[def.name] = v;
+        val.textContent = formatValue(v, def);
+        rebuildPart(part);
+        updateHighlight();
+        updateStatus();
+        markDirty(true);
+        if (paramDebounce) clearTimeout(paramDebounce);
+        paramDebounce = setTimeout(() => pushHistory(), 400);
+      });
+
+      row.appendChild(label);
+      row.appendChild(val);
+      row.appendChild(input);
+      panel.appendChild(row);
+    }
+  }
+
+  function formatValue(v, def) {
+    const step = def.step || 1;
+    const decimals = step >= 1 ? 0 : (step >= 0.1 ? 1 : 2);
+    return Number(v).toFixed(decimals);
+  }
+
+  // =========================================================================
+  // VIEWS
+  // =========================================================================
+  function frameAll() {
+    const box = new THREE.Box3();
+    for (const mesh of partMeshes.values()) box.expandByObject(mesh);
+    if (box.isEmpty()) return { center: new THREE.Vector3(), radius: 100 };
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const radius = Math.max(size.x, size.y, size.z) * 0.9;
+    return { center, radius };
+  }
+  function setView(preset) {
+    const { center, radius } = frameAll();
+    const d = radius * 2.8;
+    if (preset === 'iso')   camera.position.set(center.x + d * 0.6, center.y - d * 0.9, center.z + d * 0.7);
+    if (preset === 'top')   camera.position.set(center.x, center.y, center.z + d);
+    if (preset === 'side')  camera.position.set(center.x + d, center.y, center.z);
+    if (preset === 'front') camera.position.set(center.x, center.y - d, center.z);
+    controls.target.copy(center);
+    controls.update();
+  }
+
+  // =========================================================================
+  // SAVE / LOAD
+  // =========================================================================
+  function serializeState() {
+    const camPos = camera.position.toArray();
+    const camTarget = controls.target.toArray();
+    const snap = structuredClone(state);
+    snap.view = { camera_position: camPos, camera_target: camTarget };
+    return JSON.stringify(sortKeys(snap), null, 2) + '\n';
+  }
+
+  function sortKeys(obj) {
+    if (Array.isArray(obj)) return obj.map(sortKeys);
+    if (obj && typeof obj === 'object') {
+      const out = {};
+      for (const k of Object.keys(obj).sort()) out[k] = sortKeys(obj[k]);
+      return out;
+    }
+    return obj;
+  }
+
+  async function saveJson() {
+    const json = serializeState();
+    try {
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${state.project || 'scene'}.params.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {}
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(json);
+        const btn = document.getElementById('btn-save');
+        const orig = btn.textContent;
+        btn.textContent = 'JSON copied';
+        setTimeout(() => { btn.textContent = orig; }, 1800);
+      } catch (e) {}
+    }
+    markDirty(false);
+  }
+
+  function loadJsonFromFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const loaded = JSON.parse(e.target.result);
+        if (!loaded.parts || !Array.isArray(loaded.parts)) throw new Error('Invalid: missing parts array');
+        state = loaded;
+        selectedPartId = state.parts[0]?.id ?? null;
+        history.stack.length = 0;
+        history.stack.push(structuredClone(state));
+        history.ptr = 0;
+        updateUndoButtons();
+        syncFromState();
+        if (state.view?.camera_position) camera.position.fromArray(state.view.camera_position);
+        if (state.view?.camera_target) controls.target.fromArray(state.view.camera_target);
+        controls.update();
+        markDirty(false);
+      } catch (err) {
+        alert(`Could not load JSON: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // =========================================================================
+  // STATE SYNC
+  // =========================================================================
+  function syncFromState() {
+    $('project-name').textContent = state.project || '(untitled)';
+    rebuildAll();
+    renderPartsList();
+    renderParamsPanel();
+  }
+
+  // =========================================================================
+  // THEME
+  // =========================================================================
+  function applyTheme(mode) {
+    const root = document.documentElement;
+    if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode);
+    else root.removeAttribute('data-theme');
+    try { localStorage.setItem('bspk.theme', mode || 'auto'); } catch (e) {}
+    updateSceneBg();
+    rebuildAll();
+  }
+  try {
+    const stored = localStorage.getItem('bspk.theme');
+    if (stored === 'light' || stored === 'dark') applyTheme(stored);
+  } catch (e) {}
+  $('themeToggle').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : (cur === 'light' ? null : 'dark');
+    applyTheme(next);
+  });
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (!document.documentElement.getAttribute('data-theme')) { updateSceneBg(); rebuildAll(); }
+    });
+  }
+
+  // =========================================================================
+  // WIRE UP
+  // =========================================================================
+  document.querySelectorAll('#toolbar [data-view]').forEach(btn => {
+    btn.addEventListener('click', () => setView(btn.dataset.view));
+  });
+  $('btn-undo').addEventListener('click', undo);
+  $('btn-redo').addEventListener('click', redo);
+  $('btn-grid').addEventListener('click', (e) => {
+    grid.visible = !grid.visible;
+    e.currentTarget.classList.toggle('active', grid.visible);
+  });
+  $('btn-save').addEventListener('click', saveJson);
+  $('btn-load').addEventListener('click', () => $('file-input').click());
+  $('file-input').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (f) loadJsonFromFile(f);
+    e.target.value = '';
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if (mod && (e.key === 'Z' || (e.key === 'z' && e.shiftKey)) || (mod && e.key === 'y')) { e.preventDefault(); redo(); }
+    else if (mod && e.key === 's') { e.preventDefault(); saveJson(); }
+  });
+
+  // =========================================================================
+  // RENDER LOOP
+  // =========================================================================
+  function loop() {
+    requestAnimationFrame(loop);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  // =========================================================================
+  // BOOT
+  // =========================================================================
+  resize();
+  syncFromState();
+  camera.position.fromArray(state.view.camera_position);
+  controls.target.fromArray(state.view.camera_target);
+  controls.update();
+  loop();
+})();
+</script>
