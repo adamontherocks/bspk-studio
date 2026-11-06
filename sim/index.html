@@ -1,1055 +1,1810 @@
-<title>BSPK Studio</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BSPK Studio · Watch train</title>
 <style>
-  /* Layout: full-viewport Three.js canvas with floating toolbar and right-side part/parameter panel; stacks on narrow screens. */
-  :root {
-    --bg: #ece8dd;
-    --surface: #f8f4ea;
-    --surface-raised: #ffffff;
-    --surface-inset: #e3ddcd;
-    --fg: #1a1814;
-    --fg-muted: #6c6454;
-    --fg-dim: #998f78;
-    --line: rgba(26, 24, 20, 0.14);
-    --line-strong: rgba(26, 24, 20, 0.28);
-    --accent: #9e7532;
-    --accent-weak: #d9b878;
-    --cool: #4c6a7e;
-    --warn: #b8661d;
-    --ok: #4a7a4a;
-    --scene-bg: #d8d0bd;
-    --part-case: #c48434;
-    --part-movement: #6a8aa0;
-    --part-drive: #8a8778;
-    --highlight: #ff9a3c;
-    --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
-    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #141210;
-      --surface: #1c1915;
-      --surface-raised: #26221c;
-      --surface-inset: #0e0c0a;
-      --fg: #ece6d4;
-      --fg-muted: #8e8778;
-      --fg-dim: #5e5848;
-      --line: rgba(236, 230, 212, 0.12);
-      --line-strong: rgba(236, 230, 212, 0.26);
-      --accent: #d4a85a;
-      --accent-weak: #8f703a;
-      --cool: #7f9bb0;
-      --warn: #e0a04d;
-      --ok: #7fb57f;
-      --scene-bg: #0d0b09;
-      --part-case: #d9a254;
-      --part-movement: #7b9bb3;
-      --part-drive: #a89f88;
-      --highlight: #ffb55c;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #141210;
-    --surface: #1c1915;
-    --surface-raised: #26221c;
-    --surface-inset: #0e0c0a;
-    --fg: #ece6d4;
-    --fg-muted: #8e8778;
-    --fg-dim: #5e5848;
-    --line: rgba(236, 230, 212, 0.12);
-    --line-strong: rgba(236, 230, 212, 0.26);
-    --accent: #d4a85a;
-    --accent-weak: #8f703a;
-    --cool: #7f9bb0;
-    --warn: #e0a04d;
-    --ok: #7fb57f;
-    --scene-bg: #0d0b09;
-    --part-case: #d9a254;
-    --part-movement: #7b9bb3;
-    --part-drive: #a89f88;
-    --highlight: #ffb55c;
-    color-scheme: dark;
-  }
-
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: var(--font-sans);
-    overflow: hidden;
-    font-size: 13px;
-  }
-
-  #app {
-    position: relative;
-    display: flex;
-    width: 100%;
-    height: 100%;
-  }
-
-  #viewport {
-    flex: 1 1 auto;
-    min-width: 0;
-    position: relative;
-    background: var(--scene-bg);
-  }
-  #viewport canvas { display: block; }
-
-  #brand {
-    position: absolute;
-    top: 14px;
-    left: max(18px, env(safe-area-inset-left, 0px));
-    z-index: 2;
-    pointer-events: none;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
-  }
-  #brand strong {
-    display: block;
-    font-family: var(--font-sans);
-    font-weight: 600;
-    font-size: 15px;
-    letter-spacing: 0.01em;
-    text-transform: none;
-    color: var(--fg);
-    margin-bottom: 1px;
-  }
-
-  #toolbar {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-    display: flex;
-    gap: 2px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 4px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-  }
-  #toolbar button {
-    all: unset;
-    cursor: pointer;
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
-    padding: 5px 10px;
-    border-radius: 3px;
-    transition: background 100ms, color 100ms;
-  }
-  #toolbar button:hover { background: var(--surface-inset); color: var(--fg); }
-  #toolbar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  #toolbar button.active { background: var(--accent); color: var(--surface); }
-  #toolbar .sep { width: 1px; background: var(--line); margin: 2px 4px; }
-
-  .theme-toggle {
-    position: absolute;
-    top: 14px;
-    right: max(14px, env(safe-area-inset-right, 0px));
-    z-index: 3;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    color: var(--fg-muted);
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .theme-toggle:hover { color: var(--fg); border-color: var(--accent); }
-
-  #status {
-    position: absolute;
-    bottom: 12px;
-    left: max(18px, env(safe-area-inset-left, 0px));
-    z-index: 2;
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    color: var(--fg-dim);
-    pointer-events: none;
-    letter-spacing: 0.04em;
-  }
-  #status .val { color: var(--fg-muted); }
-
-  #panel {
-    width: 320px;
-    flex: 0 0 320px;
-    background: var(--surface);
-    border-left: 1px solid var(--line);
-    overflow-y: auto;
-    padding-block: 20px;
-    padding-left: 20px;
-    padding-right: max(20px, env(safe-area-inset-right, 0px));
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-  }
-
-  .section { display: flex; flex-direction: column; gap: 8px; }
-  .section-title {
-    margin: 0;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--line);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-  .section-title .count {
-    font-size: 9.5px;
-    color: var(--fg-dim);
-  }
-
-  .parts-list { display: flex; flex-direction: column; gap: 2px; }
-  .part-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 8px;
-    align-items: center;
-    padding: 6px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: background 100ms;
-    border: 1px solid transparent;
-  }
-  .part-row:hover { background: var(--surface-inset); }
-  .part-row.selected {
-    background: var(--surface-inset);
-    border-color: var(--accent);
-  }
-  .part-row.hidden .part-name { opacity: 0.4; text-decoration: line-through; }
-  .part-swatch {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    border: 1px solid var(--line-strong);
-    flex-shrink: 0;
-  }
-  .part-name {
-    font-size: 12.5px;
-    color: var(--fg);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .part-type {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--fg-dim);
-    margin-left: 4px;
-  }
-  .part-eye {
-    all: unset;
-    cursor: pointer;
-    font-size: 13px;
-    width: 20px;
-    text-align: center;
-    color: var(--fg-muted);
-    transition: color 100ms;
-  }
-  .part-eye:hover { color: var(--fg); }
-  .part-row.hidden .part-eye { color: var(--fg-dim); }
-
-  .empty-note {
-    font-size: 11.5px;
-    color: var(--fg-dim);
-    font-style: italic;
-    padding: 4px 8px;
-  }
-
-  .params-list { display: flex; flex-direction: column; gap: 12px; }
-  .param-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: baseline;
-    gap: 4px 10px;
-  }
-  .param-row label {
-    font-size: 11.5px;
-    color: var(--fg-muted);
-    letter-spacing: 0.02em;
-  }
-  .param-row .unit {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--fg-dim);
-    margin-left: 4px;
-  }
-  .param-row .val {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--fg);
-    font-variant-numeric: tabular-nums;
-  }
-  .param-row input[type=range] {
-    grid-column: 1 / -1;
-    width: 100%;
-    accent-color: var(--accent);
-    margin: 0;
-  }
-
-  .session-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-  .session-grid button {
-    font-family: var(--font-sans);
-    font-size: 11.5px;
-    font-weight: 500;
-    padding: 8px 10px;
-    background: var(--surface-raised);
-    color: var(--fg);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-  }
-  .session-grid button:hover { border-color: var(--accent); }
-  .session-grid button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .session-grid button.primary {
-    background: var(--accent);
-    color: var(--surface);
-    border-color: var(--accent);
-  }
-  .session-grid button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .scene-name-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--fg-muted);
-  }
-  .scene-name-row .project {
-    color: var(--fg);
-    font-weight: 500;
-  }
-  .scene-name-row .dirty {
-    color: var(--warn);
-  }
-
-  #file-input { display: none; }
-
-  @media (max-width: 760px) {
-    body { overflow: auto; }
-    #app { flex-direction: column; height: auto; min-height: 100%; }
-    #viewport { height: 58vh; min-height: 320px; flex: 0 0 auto; }
-    #panel {
-      width: 100%;
-      flex: 0 0 auto;
-      border-left: none;
-      border-top: 1px solid var(--line);
-      padding-left: max(20px, env(safe-area-inset-left, 0px));
-    }
-    #toolbar {
-      font-size: 9px;
-      flex-wrap: wrap;
-      max-width: calc(100vw - 100px);
-    }
-  }
+:root{
+  --bg:#0d1319; --stage-top:#18222d; --panel:#121a22; --line:#243140; --line-2:#2f3e4f;
+  --fg:#dce5ed; --muted:#8798aa; --dim:#5f7183; --accent:#86bddb; --accent-ink:#0d1319;
+  --warn:#e3a95c; --err:#e67b6b; --ok:#7fc29b;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 var(--ui)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:100vh}
+.stage{position:relative;min-width:0;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,var(--stage-top),var(--bg) 75%)}
+#view{display:block;width:100%;height:100%;touch-action:none}
+.overlay{position:absolute;left:14px;font:11px/1.4 var(--mono);color:var(--muted);background:rgba(13,19,25,.72);border:1px solid var(--line);border-radius:6px;padding:6px 9px;pointer-events:none}
+.overlay.top{top:14px}.overlay.bottom{bottom:14px;right:14px}
+.clock{position:absolute;top:12px;right:14px;text-align:right;pointer-events:none}
+.clock .t{font:600 22px/1 var(--mono);letter-spacing:.02em}
+.clock .s{margin-top:6px;font:11px var(--mono);color:var(--muted);display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.beat{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+.beat.on{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;font:11px/1 var(--ui);color:var(--fg);background:rgba(13,19,25,.82);border:1px solid var(--line-2);border-radius:999px;padding:4px 9px 4px 6px;white-space:nowrap;pointer-events:auto;cursor:pointer;will-change:transform}
+.lbl i{width:8px;height:8px;border-radius:50%;flex:none}
+.lbl svg{width:9px;height:9px;color:var(--warn)}
+.lbl.dim{opacity:.2}
+.lbl.hot{border-color:var(--accent);color:#fff}
+.lbl.bad{border-color:var(--err);color:#fff}
+.tip{position:absolute;left:0;top:0;pointer-events:none;background:rgba(9,14,19,.95);border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;font-size:12px;max-width:290px;z-index:3}
+.tip b{display:block;font-weight:600;margin-bottom:3px}
+.tip span{display:block;color:var(--muted);font:11px/1.45 var(--mono)}
+.tip .bad{color:var(--err)}
+.tip .warn{color:var(--warn)}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:18px 18px 28px;display:flex;flex-direction:column;gap:22px}
+.eyebrow{font:600 10.5px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+h1{margin:6px 0 2px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:4px;margin-top:10px}
+.tabs a{font-size:12px;color:var(--muted);text-decoration:none;padding:5px 9px;border:1px solid var(--line-2);border-radius:6px}
+.tabs a:hover{border-color:var(--accent)}
+.tabs a.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+section{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button{background:#1d2935;color:var(--fg);border:1px solid var(--line-2);border-radius:6px;padding:7px 11px;font:12px var(--ui);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.lockbtn{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 7px;font-size:11px;border-radius:999px;color:var(--muted);white-space:nowrap;flex:none}
+.lockbtn svg{width:11px;height:11px}
+.lockbtn.on{color:var(--warn);border-color:rgba(227,169,92,.6);background:rgba(227,169,92,.08)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field .head{display:flex;justify-content:space-between;gap:8px}
+.field b{font:12px var(--mono);color:var(--muted);font-weight:400}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+select{background:var(--bg);color:var(--fg);border:1px solid var(--line-2);border-radius:5px;padding:5px 6px;font:12px var(--ui)}
+.toggle{display:flex;align-items:flex-start;gap:6px;color:var(--muted);font-size:12px}
+.toggle input{accent-color:var(--accent);margin-top:2px}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;row-gap:5px;column-gap:12px;font:12px var(--mono)}
+dt{color:var(--muted);font-family:var(--ui)}
+dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.parts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.parts li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer}
+.parts li:hover,.parts li.hot{background:rgba(255,255,255,.045)}
+.parts li.on{background:rgba(134,189,219,.13);box-shadow:inset 0 0 0 1px rgba(134,189,219,.35)}
+.parts li.off .nm{opacity:.45}
+.parts li.bad .sw{box-shadow:0 0 0 2px var(--err)}
+.sw{width:10px;height:10px;border-radius:3px;flex:none}
+.parts .nm{display:flex;flex-direction:column;min-width:0}
+.parts .nm span{display:flex;align-items:center;gap:5px}
+.parts .nm svg{width:10px;height:10px;color:var(--warn)}
+.parts .nm small{color:var(--muted);font:11px var(--mono)}
+.parts input{accent-color:var(--accent)}
+#selected{display:flex;flex-direction:column;gap:10px}
+.sel-empty{color:var(--muted);font-size:12px}
+.sel-head{display:flex;align-items:center;gap:8px;font-size:14px}
+.chip{font:10.5px var(--ui);color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:2px 8px;margin-left:auto;white-space:nowrap}
+.role{margin:0;color:var(--muted);font-size:12px}
+.sub-h{color:var(--dim);font:600 10px var(--ui);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.pin{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
+.pin b{color:var(--fg);font-weight:600}
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.ctl-val{display:flex;align-items:center;gap:4px}
+.ctl-val input{width:76px;background:var(--bg);color:var(--fg);border:1px solid var(--line-2);border-radius:5px;padding:3px 6px;font:12px var(--mono);text-align:right}
+.ctl-val input:focus{outline:none;border-color:var(--accent)}
+.ctl-val em{font:11px var(--mono);color:var(--dim);font-style:normal;width:22px}
+.gear-card{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.015);cursor:pointer}
+.gear-card.active{border-color:rgba(134,189,219,.6);background:rgba(134,189,219,.05)}
+.gear-card .gh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.gear-card .gh div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.gear-card .gh small{color:var(--muted);font:11px var(--mono)}
+.gear-card .gl{font-size:11.5px;color:var(--muted)}
+.lockrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mesh-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:12px}
+.link{all:unset;cursor:pointer;color:var(--accent)}
+.link:hover{text-decoration:underline}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.checks li{border-left:3px solid var(--line-2);padding:6px 9px;background:rgba(255,255,255,.02);border-radius:0 5px 5px 0;font-size:12px}
+.checks li b{font-weight:600}
+.checks li.ok{border-color:var(--ok)}
+.checks li.info{border-color:var(--accent)}
+.checks li.warn{border-color:var(--warn)}
+.checks li.err{border-color:var(--err)}
+.checks .mono{font:11px/1.6 var(--mono);color:var(--muted)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;max-height:300px;overflow:auto}
+.log li{font-size:12px;padding:6px 8px;border-radius:5px;background:rgba(255,255,255,.025)}
+.log li b{font:600 10px var(--ui);letter-spacing:.08em;text-transform:uppercase;margin-right:6px}
+.log li.you b{color:var(--accent)}
+.log li.auto b{color:var(--warn)}
+.log li.stuck{box-shadow:inset 3px 0 0 var(--err)}
+.log .empty{color:var(--muted);background:none;padding:0}
+.note{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.note a{color:var(--accent)}
+@media (max-width:800px){
+  main{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
+  aside{border-left:0;border-top:1px solid var(--line)}
+}
 </style>
-
-<div id="app">
-  <div id="viewport">
-    <div id="brand"><strong>BSPK Studio</strong>v0.1 · hemistitch</div>
-    <div id="toolbar" role="toolbar" aria-label="View and session controls">
-      <button data-view="iso" title="Isometric view">ISO</button>
-      <button data-view="top" title="Top view">TOP</button>
-      <button data-view="side" title="Side view">SIDE</button>
-      <button data-view="front" title="Front view">FRONT</button>
-      <span class="sep"></span>
-      <button id="btn-undo" title="Undo (⌘Z)" disabled>UNDO</button>
-      <button id="btn-redo" title="Redo (⇧⌘Z)" disabled>REDO</button>
-      <span class="sep"></span>
-      <button id="btn-grid" class="active" title="Toggle grid">GRID</button>
-    </div>
-    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">◐</button>
-    <div id="status"><span class="val" id="dims">—</span></div>
+</head>
+<body>
+<main>
+  <div class="stage" id="stage">
+    <canvas id="view"></canvas>
+    <div class="labels" id="labels"></div>
+    <div class="tip" id="tip" hidden></div>
+    <div class="overlay top">mm · Z up, dial side on top · <span id="gridLabel"></span></div>
+    <div class="clock"><div class="t" id="dial">12:00:00</div><div class="s"><span class="beat" id="beat"></span><span id="beatTxt"></span></div></div>
+    <div class="overlay bottom">hover to identify · click to select · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom</div>
   </div>
+  <aside>
+    <header>
+      <div class="eyebrow">BSPK Studio</div>
+      <h1>Watch train · regulator layout</h1>
+      <div class="sub">Barrel-driven going train. Minutes, seconds and hours each turn their own wheel on their own arbor; no cannon pinion. A faux escape wheel stands in for the escapement. Lock the parts you place. Unlocked parts move, resize and re-height so the train keeps meshing.</div>
+      <nav class="tabs"><a class="on" href="index.html">Watch train</a><a href="gear.html">Single gear</a></nav>
+    </header>
 
-  <aside id="panel" aria-label="Design controls">
-    <div class="section">
-      <h2 class="section-title">Scene<span class="count" id="part-count">1 part</span></h2>
-      <div class="scene-name-row">
-        <span class="project" id="project-name">hemistitch</span>
-        <span id="dirty-flag"></span>
-      </div>
-    </div>
+    <section>
+      <div class="eyebrow">Motion</div>
+      <div class="row"><button class="primary" id="play">Pause</button><button id="resetTime">Reset to 12:00</button></div>
+      <div class="field"><div class="head"><span>Speed</span><b id="speedTxt"></b></div><input type="range" id="speed" min="0" max="10" step="1" value="0" aria-label="Simulation speed"></div>
+      <label class="toggle"><input type="checkbox" id="stepped" checked> Step on each beat, like an escapement releases the train</label>
+      <dl id="motionStats"></dl>
+    </section>
 
-    <div class="section">
-      <h2 class="section-title">Parts</h2>
-      <div class="parts-list" id="parts-list" role="list"></div>
-    </div>
+    <section>
+      <div class="eyebrow">Selected</div>
+      <div id="selected"></div>
+    </section>
 
-    <div class="section">
-      <h2 class="section-title">Parameters<span class="count" id="selected-name"></span></h2>
-      <div class="params-list" id="params-list">
-        <p class="empty-note">Select a part to edit its parameters.</p>
-      </div>
-    </div>
+    <section>
+      <div class="eyebrow">Changes</div>
+      <div class="row"><button id="undo">Undo</button><button id="redo">Redo</button><button id="resetTrain">Reset train</button></div>
+      <label class="toggle"><input type="checkbox" id="autoAvoid" checked> Auto-adjust: when a change makes parts clash, move, swing, raise or lower unlocked parts to clear it. Locked parts are never touched, and the part you just changed stays where you put it.</label>
+      <div class="ctl"><div class="ctl-head"><span>Minimum gap between parts (sideways and vertical)</span><span class="ctl-val"><input type="number" id="minGap" min="0" step="0.01" aria-label="Minimum gap between parts"><em>mm</em></span></div></div>
+      <ul class="log" id="log"></ul>
+    </section>
 
-    <div class="section">
-      <h2 class="section-title">Session</h2>
-      <div class="session-grid">
-        <button id="btn-save" class="primary">Save JSON</button>
-        <button id="btn-load">Load JSON</button>
-      </div>
-      <input type="file" id="file-input" accept=".json,application/json">
-    </div>
+    <section>
+      <div class="eyebrow">Checks</div>
+      <ul class="checks" id="checks"></ul>
+    </section>
+
+    <section>
+      <div class="eyebrow">Parts</div>
+      <ul class="parts" id="parts"></ul>
+    </section>
+
+    <section>
+      <div class="eyebrow">View</div>
+      <div class="row"><button data-view="iso">Iso</button><button data-view="top">Dial side</button><button data-view="back">Back</button><button data-view="side">Side</button><button id="fit">Fit</button></div>
+      <div class="field"><div class="head"><span>Explode</span><b id="explodeTxt">0%</b></div><input type="range" id="explode" min="0" max="100" step="1" value="0" aria-label="Explode"></div>
+      <div class="field"><div class="head"><span>Focus</span></div>
+        <select id="focus" aria-label="Focus on a transmission">
+          <option value="all">All parts</option>
+          <option value="power">Power: barrel → center pinion</option>
+          <option value="minutes">Minutes: center → minute intermediate → minute wheel</option>
+          <option value="seconds">Seconds: center → third → fourth → escape</option>
+          <option value="hours">Hours: center → intermediate → hour wheel</option>
+        </select></div>
+      <div class="field"><div class="head"><span>Print scale</span><b id="scaleTxt"></b></div><input type="range" id="scale" min="1" max="6" step="0.5" value="1" aria-label="Print scale"></div>
+      <label class="toggle"><input type="checkbox" id="labelsToggle" checked> Labels</label>
+      <label class="toggle"><input type="checkbox" id="edges" checked> Edge lines</label>
+    </section>
+
+    <section>
+      <div class="eyebrow">Source</div>
+      <p class="note">Default going-train tooth counts are the 43&nbsp;mm (19‴) example in <a href="https://abbeyclock.com/gbk/gbk6.html" target="_blank" rel="noopener">Chapter VI: The Train</a>: barrel 90 / center pinion 12, 80/10, 75/10, 75/8, escape wheel 16, giving 18,000 vph. The hour train (12/48 then 14/42), the minute drive (40/20 then 40/80 through a minute intermediate, 1:1), the layout and all sizes are designed here. Teeth are drawn involute; that text calls for epicyclic (cycloidal) teeth in watch trains.</p>
+    </section>
   </aside>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+<script src="involute.js"></script>
 <script>
-(function () {
-  'use strict';
-  const $ = (id) => document.getElementById(id);
+'use strict';
+const { computeGear, outline } = Involute;
+const PA_DEG = 20, PA = PA_DEG * Math.PI / 180;
+const ARBOR_R = 0.2, BARREL_ARBOR_R = 0.7;
+const M_MIN = 0.03, M_MAX = 3;
+const EXPLODE_STEP = 5;
+const SPEEDS = [1, 2, 5, 10, 30, 60, 300, 600, 1800, 3600, 7200];
+const RATE_ROOT = 'center';  // its speed is the given: once an hour, clockwise
+const LOCK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.3" width="8" height="5.7" rx="1.2" fill="currentColor"/><path d="M3.9 5.3V3.9a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
+const UNLOCK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.6" y="5.9" width="7" height="5" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 5.9V3.9a2.1 2.1 0 0 1 4.1-.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
 
-  // =========================================================================
-  // PART TYPE REGISTRY — v0.1 ships with one type: cushion_case.
-  // Future part types (bezel, caseback, lug, gear, disc...) register here.
-  // =========================================================================
-  const PART_TYPES = {
-    cushion_case: {
-      label: 'Cushion case',
-      group: 'case',
-      color: '--part-case',
-      schema: [
-        { name: 'width',              label: 'Width',              unit: 'mm', type: 'range', min: 60, max: 300, step: 1,   default: 200 },
-        { name: 'height',             label: 'Height',             unit: 'mm', type: 'range', min: 60, max: 300, step: 1,   default: 200 },
-        { name: 'depth',              label: 'Depth',              unit: 'mm', type: 'range', min: 10, max: 120, step: 1,   default: 65  },
-        { name: 'corner_radius',      label: 'Corner radius',      unit: 'mm', type: 'range', min: 1,  max: 100, step: 0.5, default: 50  },
-        { name: 'sagitta_horizontal', label: 'Sagitta top/bottom', unit: 'mm', type: 'range', min: 0,  max: 15,  step: 0.1, default: 2   },
-        { name: 'sagitta_vertical',   label: 'Sagitta left/right', unit: 'mm', type: 'range', min: 0,  max: 15,  step: 0.1, default: 2   },
-      ],
-      build: buildCushionCaseMesh,
-    },
+const GROUPS = {
+  power:   { label: 'Power',           color: 0xc9a46a },
+  minutes: { label: 'Minutes',         color: 0x4fcdbf },
+  going:   { label: 'Going train',     color: 0x8fa6bd },
+  seconds: { label: 'Seconds',         color: 0xb29cf2 },
+  escape:  { label: 'Faux escapement', color: 0x7fb0e0 },
+  hours:   { label: 'Hours',           color: 0xee8f9b },
+  plate:   { label: 'Plate',           color: 0x3a4757 },
+};
+const FOCUS = {
+  all: null,
+  power: ['barrel', 'center'],
+  minutes: ['center', 'minter', 'minute', 'minute_hand'],
+  seconds: ['center', 'third', 'fourth', 'escape', 'seconds_hand'],
+  hours: ['center', 'inter', 'hour', 'hour_hand'],
+};
+
+// What each part is. Tooth counts are fixed for now, so every speed stays locked.
+const ARBOR_DEFS = [
+  { id: 'barrel', name: 'Barrel', group: 'power', level: 0, staticArbor: true, drumH: 2.4,
+    role: 'The motor. The mainspring inside the drum drives the whole train. The arbor holds still while the drum turns. Lid left off so the spring shows.',
+    gears: [{ id: 'barrel_teeth', label: 'Barrel teeth', z: 90, t: 0.4 }] },
+  { id: 'center', name: 'Center wheel', group: 'going', level: 1,
+    role: 'Turns once an hour, driven by the barrel. Drives the third wheel, the minute wheel (through the minute intermediate) and the hour train. It no longer carries the minute hand.',
+    gears: [
+      { id: 'center_pinion', label: 'Center pinion', z: 12, t: 0.7 },
+      { id: 'center_wheel', label: 'Center wheel', z: 80, t: 0.3 },
+      { id: 'minute_drive', label: 'Minute-drive wheel', z: 40, t: 0.3 },
+      { id: 'hour_drive', label: 'Hour-drive pinion', z: 12, t: 0.6 }] },
+  { id: 'third', name: 'Third wheel', group: 'going', level: 2,
+    role: 'Speeds the train up 8× from the center wheel and passes it on to the fourth wheel.',
+    gears: [
+      { id: 'third_pinion', label: 'Third pinion', z: 10, t: 0.6 },
+      { id: 'third_wheel', label: 'Third wheel', z: 75, t: 0.3 }] },
+  { id: 'fourth', name: 'Fourth wheel', group: 'seconds', level: 3,
+    role: 'Turns once a minute. Its arbor carries the seconds hand.',
+    gears: [
+      { id: 'fourth_pinion', label: 'Fourth pinion', z: 10, t: 0.6 },
+      { id: 'fourth_wheel', label: 'Fourth wheel', z: 75, t: 0.3 }] },
+  { id: 'escape', name: 'Faux escape wheel', group: 'escape', level: 4,
+    role: 'Stands in for the escapement and balance. It sits where the escape wheel goes and turns at escape-wheel speed. With beat stepping on, it advances half a tooth per beat, which is how a real escapement releases the train.',
+    gears: [
+      { id: 'escape_pinion', label: 'Escape pinion', z: 8, t: 0.6 },
+      { id: 'escape_wheel', label: 'Escape wheel (faux)', z: 16, t: 0.3 }] },
+  { id: 'minter', name: 'Minute intermediate', group: 'minutes', level: 5,
+    role: 'Carries the drive from the center arbor out to the minute wheel: 40 into 20, then 40 into 80, so 1:1 overall. Two meshes keep the minute wheel turning the same way as the center wheel.',
+    gears: [
+      { id: 'minter_pinion', label: 'Minute intermediate pinion', z: 20, t: 0.6 },
+      { id: 'minter_wheel', label: 'Minute intermediate wheel', z: 40, t: 0.3 }] },
+  { id: 'minute', name: 'Minute wheel', group: 'minutes', level: 6,
+    role: 'Its own wheel on its own arbor, carrying the minute hand. Driven from the center arbor through the minute intermediate, so it turns clockwise once an hour.',
+    gears: [{ id: 'minute_wheel', label: 'Minute wheel', z: 80, t: 0.3 }] },
+  { id: 'inter', name: 'Hour intermediate', group: 'hours', level: 7,
+    role: 'First hour reduction (4:1), driven by the hour-drive pinion on the center arbor.',
+    gears: [
+      { id: 'inter_wheel', label: 'Intermediate wheel', z: 48, t: 0.3 },
+      { id: 'inter_pinion', label: 'Intermediate pinion', z: 14, t: 0.6 }] },
+  { id: 'hour', name: 'Hour wheel', group: 'hours', level: 8,
+    role: 'Second hour reduction (3:1). Turns once in 12 hours on its own arbor and carries the hour hand.',
+    gears: [{ id: 'hour_wheel', label: 'Hour wheel', z: 42, t: 0.3 }] },
+];
+const HAND_DEFS = [
+  { id: 'hour_hand', name: 'Hour hand', arbor: 'hour', group: 'hours', level: 9, w0: 0.95, w1: 0.45,
+    role: 'On the hour wheel arbor. One turn in 12 hours.' },
+  { id: 'seconds_hand', name: 'Seconds hand', arbor: 'fourth', group: 'seconds', level: 9, w0: 0.3, w1: 0.14, tail: 1.3,
+    role: 'On the fourth wheel arbor. One turn a minute.' },
+  { id: 'minute_hand', name: 'Minute hand', arbor: 'minute', group: 'minutes', level: 10, w0: 0.75, w1: 0.3,
+    role: 'On the minute wheel arbor. One turn an hour.' },
+];
+
+const clone = o => JSON.parse(JSON.stringify(o));
+const hex = c => '#' + c.toString(16).padStart(6, '0');
+const f1 = v => (+v).toFixed(1), f2 = v => (+v).toFixed(2), f3 = v => (+v).toFixed(3);
+const clampM = m => Math.min(M_MAX, Math.max(M_MIN, m));
+const normDeg = d => ((((d + 180) % 360) + 360) % 360) - 180;
+const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+const clonePos = p => Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v.slice()]));
+const listText = (xs, word = 'and') => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ${word} ${xs[xs.length - 1]}`);
+
+const GEAR_DEFS = {};
+for (const a of ARBOR_DEFS) for (const g of a.gears) GEAR_DEFS[g.id] = { ...g, arbor: a.id };
+const ARBOR = Object.fromEntries(ARBOR_DEFS.map(a => [a.id, a]));
+const HAND = Object.fromEntries(HAND_DEFS.map(h => [h.id, h]));
+const ARBOR_IDS = ARBOR_DEFS.map(a => a.id);
+const arborOf = id => (HAND[id] ? HAND[id].arbor : id);
+const mainGear = a => ARBOR[a].gears.reduce((p, q) => (q.z > p.z ? q : p)).id;
+const LMAX = Math.max(...ARBOR_DEFS.map(a => a.level), ...HAND_DEFS.map(h => h.level));
+
+// A stage is one mesh: both gears share its module (tooth size) and its height.
+const DEFAULT_STAGES = {
+  s_barrel: { gears: ['barrel_teeth', 'center_pinion'], m: 0.2, z: 0.3 },
+  s_center: { gears: ['center_wheel', 'third_pinion'], m: 0.15, z: 3.0 },
+  s_third:  { gears: ['third_wheel', 'fourth_pinion'], m: 0.15, z: 3.7 },
+  s_fourth: { gears: ['fourth_wheel', 'escape_pinion'], m: 0.15, z: 4.4 },
+  s_mdrive: { gears: ['minute_drive', 'minter_pinion'], m: 0.22, z: 4.85 },
+  s_minute: { gears: ['minter_wheel', 'minute_wheel'], m: 0.15, z: 5.35 },
+  s_hour1:  { gears: ['hour_drive', 'inter_wheel'], m: 0.25, z: 5.9 },
+  s_hour2:  { gears: ['inter_pinion', 'hour_wheel'], m: 0.25, z: 6.6 },
+};
+const STAGE_IDS = Object.keys(DEFAULT_STAGES);
+const gearStage = {};
+for (const sid of STAGE_IDS) for (const g of DEFAULT_STAGES[sid].gears) gearStage[g] = sid;
+
+// Starting layout, laid out by direction from a neighbour; stored as absolute X/Y.
+function polarLayout(stages, spec) {
+  const pos = { center: [0, 0] };
+  for (const [child, parent, deg] of spec) {
+    const sid = Object.keys(stages).find(k => { const ar = stages[k].gears.map(g => GEAR_DEFS[g].arbor); return ar.includes(child) && ar.includes(parent); });
+    const s = stages[sid], d = s.m * s.gears.reduce((n, g) => n + GEAR_DEFS[g].z, 0) / 2, a = deg * Math.PI / 180;
+    pos[child] = [pos[parent][0] + d * Math.cos(a), pos[parent][1] + d * Math.sin(a)];
+  }
+  return pos;
+}
+
+// Everything you can change. Locked parts are never changed by auto-adjust.
+const DEFAULT_STATE = {
+  movementD: 43,
+  minGap: 0.05,  // real mm between non-meshing parts, sideways and vertically; set it for the print or cut process
+  stages: DEFAULT_STAGES,
+  solo: { escape_wheel: { m: 0.35, z: 5.1 } },
+  pos: polarLayout(DEFAULT_STAGES, [['barrel', 'center', 180], ['third', 'center', -50], ['fourth', 'third', -132.9],
+    ['escape', 'fourth', -30], ['minter', 'center', 30], ['minute', 'minter', -50], ['inter', 'center', 90], ['hour', 'inter', 90]]),
+  thick: Object.fromEntries(Object.entries(GEAR_DEFS).map(([id, g]) => [id, g.t])),
+  hands: { hour_hand: { length: 5, z: 7.6, t: 0.15 }, seconds_hand: { length: 4.5, z: 7.6, t: 0.12 }, minute_hand: { length: 9, z: 8.0, t: 0.15 } },
+  locks: { barrel_teeth: true, minute_wheel: true, fourth_wheel: true, escape_wheel: true, hour_wheel: true,
+           minute_hand: true, seconds_hand: true, hour_hand: true },
+};
+
+let S = clone(DEFAULT_STATE);
+let scale = 1;  // print scale: multiplies every dimension; the minimum gap is in real mm
+
+const stageArbors = sid => S.stages[sid].gears.map(g => GEAR_DEFS[g].arbor);
+const stageTeeth = sid => S.stages[sid].gears.reduce((n, g) => n + GEAR_DEFS[g].z, 0);
+const meshName = sid => S.stages[sid].gears.map(g => GEAR_DEFS[g].label).join(' / ');
+const needDist = sid => S.stages[sid].m * stageTeeth(sid) / 2;
+const lockPinned = a => ARBOR[a].gears.some(g => S.locks[g.id]) || HAND_DEFS.some(h => h.arbor === a && S.locks[h.id]);
+const stageLocked = sid => S.stages[sid].gears.some(g => S.locks[g]);
+const lockersOf = a => [...ARBOR[a].gears.filter(g => S.locks[g.id]).map(g => g.label),
+                        ...HAND_DEFS.filter(h => h.arbor === a && S.locks[h.id]).map(h => h.name)];
+const emptyHeld = () => ({ pos: new Set(), m: new Set(), z: new Set() });
+function wheelPin(sid) {
+  const [a, b] = S.stages[sid].gears, w = GEAR_DEFS[a].z >= GEAR_DEFS[b].z ? a : b;
+  return [w, w === a ? b : a];
+}
+const lowZ = sid => { const [w, p] = wheelPin(sid); return Math.max(0, (S.thick[p] - S.thick[w]) / 2); };
+
+// ---------- state -> geometry, speeds, tooth phases ----------
+function derive(st, lite = false) {
+  const gears = {};
+  for (const [id, d] of Object.entries(GEAR_DEFS)) gears[id] = { ...d, t: st.thick[id] };
+  for (const [sid, s] of Object.entries(st.stages)) {
+    const [ga, gb] = s.gears.map(id => gears[id]);
+    const wheel = ga.z >= gb.z ? ga : gb, pin = wheel === ga ? gb : ga;
+    wheel.m = pin.m = s.m;
+    wheel.stage = pin.stage = sid;
+    wheel.z0 = s.z;
+    pin.z0 = s.z + wheel.t / 2 - pin.t / 2;
+    wheel.partner = pin.id;
+    pin.partner = wheel.id;
+    wheel.isWheel = true;
+  }
+  for (const [gid, s] of Object.entries(st.solo)) Object.assign(gears[gid], { m: s.m, z0: s.z, soloId: gid, isWheel: true });
+  for (const G of Object.values(gears)) {
+    G.rp = G.m * G.z / 2; G.ra = G.rp + G.m; G.rf = G.rp - 1.25 * G.m; G.rb = G.rp * Math.cos(PA); G.z1 = G.z0 + G.t;
+  }
+  const pos = lite ? st.pos : clonePos(st.pos);
+
+  const drum = {}, tops = {};
+  for (const a of ARBOR_DEFS) {
+    let top = Math.max(...a.gears.map(g => gears[g.id].z1)) + 0.3;
+    if (a.drumH) {
+      const T = gears[a.gears[0].id];
+      const inset = Math.max(0.05, st.minGap / scale);  // drum wall sits this far inside the tooth roots
+      const rIn = Math.max(T.rf - inset - 0.35, BARREL_ARBOR_R + 0.35);
+      drum[a.id] = { z0: T.z0, z1: T.z0 + a.drumH, rIn, rOut: Math.max(T.rf - inset, rIn + 0.1) };
+      top = Math.max(top, drum[a.id].z1 + 0.5);
+    }
+    for (const h of HAND_DEFS) if (h.arbor === a.id) top = Math.max(top, st.hands[h.id].z + st.hands[h.id].t + 0.15);
+    tops[a.id] = top;
+  }
+  if (lite) return { gears, pos, tops, drum };
+
+  const meshes = Object.values(st.stages).map(s => s.gears);
+  const omega = { [RATE_ROOT]: -2 * Math.PI / 3600 };  // 1 rev/h, clockwise seen from the dial side
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [g1, g2] of meshes) {
+      const a1 = gears[g1].arbor, a2 = gears[g2].arbor;
+      if (a1 in omega && !(a2 in omega)) { omega[a2] = -omega[a1] * gears[g1].z / gears[g2].z; changed = true; }
+      else if (a2 in omega && !(a1 in omega)) { omega[a1] = -omega[a2] * gears[g2].z / gears[g1].z; changed = true; }
+    }
+  }
+
+  // Tooth phase per gear so meshing teeth interleave: a driven gear's gap faces its driver's tooth.
+  const psi = {};
+  const settlePhase = id => { for (const g of ARBOR[id].gears) if (!(g.id in psi)) psi[g.id] = 0; };
+  settlePhase(RATE_ROOT);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [g1, g2] of meshes) for (const [d, n] of [[g1, g2], [g2, g1]]) {
+      if (!(d in psi) || n in psi) continue;
+      const Dg = gears[d], Ng = gears[n], pd = pos[Dg.arbor], pn = pos[Ng.arbor];
+      const th = Math.atan2(pn[1] - pd[1], pn[0] - pd[0]);
+      psi[n] = th + Math.PI - Math.PI / Ng.z + (th - psi[d]) * Dg.z / Ng.z;
+      settlePhase(Ng.arbor);
+      changed = true;
+    }
+  }
+  return { gears, pos, tops, drum, meshes, omega, psi };
+}
+
+// ---------- checks: speeds, meshes, collisions, envelope, tooth interference ----------
+// Every element is a disc or cylinder about Z, so a clash = plan overlap + height overlap.
+function elements(st, D) {
+  const els = [];
+  for (const a of ARBOR_DEFS) {
+    const [x, y] = D.pos[a.id];
+    els.push({ part: a.id, arbor: a.id, name: `${a.name} arbor`, x, y, r: a.staticArbor ? BARREL_ARBOR_R : ARBOR_R, z0: 0, z1: D.tops[a.id] });
+    for (const g of a.gears) {
+      const G = D.gears[g.id];
+      els.push({ part: a.id, arbor: a.id, gear: g.id, partner: G.partner, name: G.label, x, y, r: G.ra, z0: G.z0, z1: G.z1 });
+    }
+    const dr = D.drum[a.id];
+    if (dr) els.push({ part: a.id, arbor: a.id, drum: a.gears[0].id, name: 'Barrel drum', x, y, r: dr.rOut, z0: dr.z0, z1: dr.z1 });
+  }
+  for (const h of HAND_DEFS) {
+    const [x, y] = D.pos[h.arbor], hs = st.hands[h.id];
+    els.push({ part: h.id, arbor: h.arbor, hand: h.id, name: `${h.name} sweep`, x, y, r: hs.length, z0: hs.z, z1: hs.z + hs.t });
+  }
+  return els;
+}
+const meshError = (st, D, sid) => {
+  const s = st.stages[sid], [p, q] = s.gears.map(g => GEAR_DEFS[g].arbor);
+  return dist(D.pos[p], D.pos[q]) - s.m * s.gears.reduce((n, g) => n + GEAR_DEFS[g].z, 0) / 2;
+};
+
+// Sum of how far every pair is inside the minimum gap. Zero means nothing clashes.
+function clashCost(st, D) {
+  const els = elements(st, D), GAP = st.minGap / scale - 1e-9, R = st.movementD / 2 - st.minGap / scale + 1e-9;
+  let c = 0;
+  for (let i = 0; i < els.length; i++) {
+    const e1 = els[i];
+    for (let j = i + 1; j < els.length; j++) {
+      const e2 = els[j];
+      if (e1.arbor === e2.arbor || (e1.partner && e1.partner === e2.gear)) continue;
+      const up = Math.max(e1.z0 - e2.z1, e2.z0 - e1.z1);
+      if (up >= GAP) continue;
+      const clear = Math.max(Math.hypot(e1.x - e2.x, e1.y - e2.y) - e1.r - e2.r, up);
+      if (clear < GAP) c += GAP - clear;
+    }
+    const r = Math.hypot(e1.x, e1.y) + e1.r;
+    if (r > R) c += r - R;
+  }
+  for (const sid of STAGE_IDS) { const e = Math.abs(meshError(st, D, sid)); if (e > 1e-6) c += 10 * e; }
+  return c;
+}
+
+function analyse(st, D) {
+  const rates = [
+    { label: 'Minute arbor', arbor: 'minute', target: 3600 },
+    { label: 'Seconds arbor', arbor: 'fourth', target: 60 },
+    { label: 'Hour arbor', arbor: 'hour', target: 43200 },
+  ].map(r => {
+    const w = D.omega[r.arbor], T = 2 * Math.PI / Math.abs(w);
+    return { ...r, w, ok: Math.abs(T - r.target) < 1e-6 * r.target && w < 0 };
+  });
+
+  const els = elements(st, D);
+  // Two parts are apart by whichever is larger: their sideways gap or their vertical gap.
+  // Under the minimum gap counts as a clash; a negative gap is real overlap.
+  const GAP = st.minGap / scale;
+  const collisions = [], near = [];
+  for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+    const e1 = els[i], e2 = els[j];
+    if (e1.arbor === e2.arbor) continue;
+    if (e1.partner && e1.partner === e2.gear) continue;
+    const side = Math.hypot(e1.x - e2.x, e1.y - e2.y) - e1.r - e2.r;
+    const up = Math.max(e1.z0 - e2.z1, e2.z0 - e1.z1);
+    const clear = Math.max(side, up);
+    const names = [e1.name, e2.name].sort();
+    const c = { key: names.join(' × '), text: `${e1.name} × ${e2.name}`, a: e1.name, b: e2.name, clear, parts: [e1.part, e2.part], els: [e1, e2] };
+    (clear < GAP - 1e-9 ? collisions : near).push(c);
+  }
+  const R = st.movementD / 2;
+  let envelope = { name: '', r: 0 };
+  for (const e of els) {
+    const r = Math.hypot(e.x, e.y) + e.r;
+    if (r > envelope.r) envelope = { name: e.name, r };
+    if (r > R - GAP + 1e-9) collisions.push({ key: `${e.name} × edge`, text: `${e.name} ${r > R ? 'past' : 'too close to'} the movement edge`, a: e.name, b: 'movement edge', clear: R - r, parts: [e.part], els: [e], edge: true });
+  }
+  for (const sid of STAGE_IDS) {
+    const err = meshError(st, D, sid);
+    if (Math.abs(err) > 1e-6) {
+      const [p, q] = st.stages[sid].gears.map(g => GEAR_DEFS[g].arbor);
+      const name = st.stages[sid].gears.map(g => GEAR_DEFS[g].label).join(' / ');
+      collisions.push({ key: `${name} mesh`, text: `${name} ${err > 0 ? 'too far apart' : 'too close'} to mesh`, a: name, b: 'mesh', clear: -Math.abs(err), parts: [p, q], els: [], mesh: sid });
+    }
+  }
+  collisions.sort((p, q) => p.clear - q.clear);
+  near.sort((p, q) => p.clear - q.clear);
+
+  // Involute interference: a tip that reaches past the partner's interference point cuts into its flank.
+  const interference = [];
+  for (const [g1, g2] of D.meshes) {
+    const Ga = D.gears[g1], Gb = D.gears[g2], a = Ga.rp + Gb.rp;
+    for (const [X, Y] of [[Ga, Gb], [Gb, Ga]]) {
+      const lim = Math.sqrt(X.rb ** 2 + (a * Math.sin(PA)) ** 2);
+      if (X.ra > lim + 1e-9) interference.push({ from: X.label, into: Y.label, by: X.ra - lim, pair: [g1, g2].sort().join('|') });
+    }
+  }
+  return { rates, collisions, near, envelope, interference };
+}
+
+let D = derive(S), A = null;  // A is filled by the first solve(), once the view settings exist
+
+// ---------- keeping the train meshed ----------
+// A mesh's size is fixed when either gear in it is locked, or you are resizing it right now.
+// Its two arbors must then sit exactly one centre distance apart. Every other mesh takes its size from the spacing.
+function fixedEdges(a, fixedM) {
+  const out = [];
+  for (const sid of STAGE_IDS) {
+    if (!fixedM(sid)) continue;
+    const [p, q] = stageArbors(sid);
+    if (p === a) out.push([sid, q]); else if (q === a) out.push([sid, p]);
+  }
+  return out;
+}
+
+// Nearest point to `cur` that is the right distance from each fixed partner (one circle, or where two circles cross).
+function placeOn(cur, cons, prevP) {
+  const toward = (c, r) => {
+    let dx = cur[0] - c[0], dy = cur[1] - c[1], L = Math.hypot(dx, dy);
+    if (L < 1e-9) { dx = prevP[0] - c[0]; dy = prevP[1] - c[1]; L = Math.hypot(dx, dy); }
+    if (L < 1e-9) { dx = 1; dy = 0; L = 1; }
+    return [c[0] + dx / L * r, c[1] + dy / L * r];
   };
+  const [s1, o1] = cons[0], c1 = S.pos[o1], r1 = needDist(s1);
+  if (cons.length === 1) return toward(c1, r1);
+  const [s2, o2] = cons[1], c2 = S.pos[o2], r2 = needDist(s2), d = dist(c1, c2);
+  if (d < 1e-9 || d > r1 + r2 || d < Math.abs(r1 - r2)) return toward(c1, r1);  // can't reach both; the other shows as a mesh error
+  const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
+  const ux = (c2[0] - c1[0]) / d, uy = (c2[1] - c1[1]) / d, mx = c1[0] + a * ux, my = c1[1] + a * uy;
+  const p1 = [mx - h * uy, my + h * ux], p2 = [mx + h * uy, my - h * ux];
+  return dist(p1, cur) <= dist(p2, cur) ? p1 : p2;
+}
 
-  // =========================================================================
-  // GEOMETRY — cushion case generator
-  // =========================================================================
-  function cushionProfile(W, H, r, sagH, sagV) {
-    // Rounded-square outline traversed counter-clockwise, with optional
-    // outward-bulging arcs on each of the four straight edges.
-    //   sagH: bulge magnitude on top and bottom edges (both get it)
-    //   sagV: bulge magnitude on left and right edges (both get it)
-    r = Math.max(0.5, Math.min(r, Math.min(W, H) / 2 - 0.5));
-    const pts = [];
-    const cornerSegs = 14;
-    const edgeSegs = 16;
-
-    // TR corner: 0 → π/2, from (W/2, H/2-r) to (W/2-r, H/2)
-    const cTR = [W/2 - r, H/2 - r];
-    for (let i = 0; i <= cornerSegs; i++) {
-      const a = (i / cornerSegs) * (Math.PI / 2);
-      pts.push([cTR[0] + r * Math.cos(a), cTR[1] + r * Math.sin(a)]);
-    }
-
-    // TOP edge: (W/2-r, H/2) → (-W/2+r, H/2), bulges upward by sagH.
-    // If sagH is zero the shape's implicit lineTo closes the edge flat.
-    if (sagH > 0.01) {
-      const chord = W - 2 * r;
-      const arcR = (chord * chord + 4 * sagH * sagH) / (8 * sagH);
-      const cy = H/2 + sagH - arcR;
-      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
-      for (let i = 1; i < edgeSegs; i++) {
-        const t = i / edgeSegs;
-        const theta = halfA - t * (2 * halfA);
-        pts.push([arcR * Math.sin(theta), cy + arcR * Math.cos(theta)]);
-      }
-    }
-
-    // TL corner: π/2 → π, from (-W/2+r, H/2) to (-W/2, H/2-r)
-    const cTL = [-W/2 + r, H/2 - r];
-    for (let i = 0; i <= cornerSegs; i++) {
-      const a = Math.PI / 2 + (i / cornerSegs) * (Math.PI / 2);
-      pts.push([cTL[0] + r * Math.cos(a), cTL[1] + r * Math.sin(a)]);
-    }
-
-    // LEFT edge: (-W/2, H/2-r) → (-W/2, -H/2+r), bulges leftward by sagV.
-    if (sagV > 0.01) {
-      const chord = H - 2 * r;
-      const arcR = (chord * chord + 4 * sagV * sagV) / (8 * sagV);
-      const cx = -W/2 - sagV + arcR;
-      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
-      for (let i = 1; i < edgeSegs; i++) {
-        const t = i / edgeSegs;
-        const theta = halfA - t * (2 * halfA);
-        pts.push([cx - arcR * Math.cos(theta), arcR * Math.sin(theta)]);
-      }
-    }
-
-    // BL corner: π → 3π/2, from (-W/2, -H/2+r) to (-W/2+r, -H/2)
-    const cBL = [-W/2 + r, -H/2 + r];
-    for (let i = 0; i <= cornerSegs; i++) {
-      const a = Math.PI + (i / cornerSegs) * (Math.PI / 2);
-      pts.push([cBL[0] + r * Math.cos(a), cBL[1] + r * Math.sin(a)]);
-    }
-
-    // BOTTOM edge: (-W/2+r, -H/2) → (W/2-r, -H/2), bulges downward by sagH.
-    if (sagH > 0.01) {
-      const chord = W - 2 * r;
-      const arcR = (chord * chord + 4 * sagH * sagH) / (8 * sagH);
-      const cy = -H/2 - sagH + arcR;
-      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
-      for (let i = 1; i < edgeSegs; i++) {
-        const t = i / edgeSegs;
-        const theta = halfA - t * (2 * halfA);
-        pts.push([-arcR * Math.sin(theta), cy - arcR * Math.cos(theta)]);
-      }
-    }
-
-    // BR corner: 3π/2 → 2π, from (W/2-r, -H/2) to (W/2, -H/2+r)
-    const cBR = [W/2 - r, -H/2 + r];
-    for (let i = 0; i <= cornerSegs; i++) {
-      const a = (3 * Math.PI) / 2 + (i / cornerSegs) * (Math.PI / 2);
-      pts.push([cBR[0] + r * Math.cos(a), cBR[1] + r * Math.sin(a)]);
-    }
-
-    // RIGHT edge: (W/2, -H/2+r) → (W/2, H/2-r), bulges rightward by sagV.
-    if (sagV > 0.01) {
-      const chord = H - 2 * r;
-      const arcR = (chord * chord + 4 * sagV * sagV) / (8 * sagV);
-      const cx = W/2 + sagV - arcR;
-      const halfA = Math.asin(Math.min(1, chord / (2 * arcR)));
-      for (let i = 1; i < edgeSegs; i++) {
-        const t = i / edgeSegs;
-        const theta = halfA - t * (2 * halfA);
-        pts.push([cx + arcR * Math.cos(theta), -arcR * Math.sin(theta)]);
-      }
-    }
-
-    return pts;
+// After you change something: put every arbor back where its meshes need it. `held` is what you just changed.
+function settle(held, prev = clonePos(S.pos)) {
+  const fixedM = sid => stageLocked(sid) || held.m.has(sid);
+  const pinned = new Set(ARBOR_IDS.filter(lockPinned));
+  // 1. An unlocked part you move can only swing around a locked part it meshes with directly.
+  for (const L of held.pos) if (!pinned.has(L)) {
+    const cons = fixedEdges(L, fixedM).filter(([, o]) => pinned.has(o) && !held.pos.has(o));
+    if (cons.length) S.pos[L] = placeOn(S.pos[L], cons, prev[L]);
   }
+  // 2. A locked part meshed directly with a locked part you move goes with it, keeping its direction.
+  const queue = [...held.pos].filter(a => pinned.has(a)), done = new Set(held.pos);
+  while (queue.length) {
+    const X = queue.shift();
+    for (const [sid, F] of fixedEdges(X, fixedM)) {
+      if (!pinned.has(F) || done.has(F)) continue;
+      done.add(F);
+      const d = needDist(sid);
+      if (Math.abs(dist(S.pos[X], S.pos[F]) - d) > 1e-9) {
+        let dx = prev[F][0] - prev[X][0], dy = prev[F][1] - prev[X][1], L = Math.hypot(dx, dy);
+        if (L < 1e-9) { dx = 1; dy = 0; L = 1; }
+        S.pos[F] = [S.pos[X][0] + dx / L * d, S.pos[X][1] + dy / L * d];
+      }
+      queue.push(F);
+    }
+  }
+  // 3. Unlocked parts stay meshed with the fixed ones.
+  const fixed = new Set([...pinned, ...held.pos]);
+  for (const B of ARBOR_IDS) if (!fixed.has(B)) {
+    const cons = fixedEdges(B, fixedM).filter(([, o]) => fixed.has(o));
+    if (cons.length) S.pos[B] = placeOn(S.pos[B], cons, prev[B]);
+  }
+  // 4. Unlocked meshes take their size from the spacing.
+  for (const sid of STAGE_IDS) if (!fixedM(sid)) {
+    const [p, q] = stageArbors(sid);
+    S.stages[sid].m = clampM(2 * dist(S.pos[p], S.pos[q]) / stageTeeth(sid));
+  }
+}
 
-  function buildCushionCaseMesh(params, color) {
-    const { width, height, depth, corner_radius, sagitta_horizontal, sagitta_vertical } = params;
-    const pts = cushionProfile(width, height, corner_radius, sagitta_horizontal, sagitta_vertical);
-    const shape = new THREE.Shape();
-    shape.moveTo(pts[0][0], pts[0][1]);
-    for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], pts[i][1]);
-    shape.closePath();
-    const geo = new THREE.ExtrudeGeometry(shape, {
-      depth: depth,
-      bevelEnabled: true,
-      bevelSegments: 2,
-      bevelSize: 0.6,
-      bevelThickness: 0.6,
-      curveSegments: 20,
+// Auto-adjust: search the unlocked parts (swing, slide, raise, lower) for the smallest change that clears the clashes.
+function adapt(held) {
+  const fixedM = sid => stageLocked(sid) || held.m.has(sid);
+  const fixed = new Set([...ARBOR_IDS.filter(lockPinned), ...held.pos]);
+  const vars = [];
+  for (const B of ARBOR_IDS) if (!fixed.has(B)) {
+    const cons = fixedEdges(B, fixedM);
+    if (!cons.length) vars.push({ t: 'x', a: B }, { t: 'y', a: B });
+    else if (cons.length === 1) vars.push({ t: 'ang', a: B, c: cons[0][1], r: needDist(cons[0][0]) });
+  }
+  for (const sid of STAGE_IDS) if (!stageLocked(sid) && !held.z.has(sid)) vars.push({ t: 'z', sid, lo: lowZ(sid) });
+  for (const gid of Object.keys(S.solo)) if (!S.locks[gid] && !held.z.has(gid)) vars.push({ t: 'zs', gid, lo: 0 });
+  for (const h of HAND_DEFS) if (!S.locks[h.id] && !held.z.has(h.id)) vars.push({ t: 'zh', hid: h.id, lo: 0 });
+  if (!vars.length) return false;
+
+  const freeStages = STAGE_IDS.filter(sid => !fixedM(sid));
+  const p0 = clonePos(S.pos), m0 = Object.fromEntries(STAGE_IDS.map(sid => [sid, S.stages[sid].m]));
+  const read = v => (v.t === 'x' ? S.pos[v.a][0] : v.t === 'y' ? S.pos[v.a][1]
+    : v.t === 'ang' ? Math.atan2(S.pos[v.a][1] - S.pos[v.c][1], S.pos[v.a][0] - S.pos[v.c][0])
+    : v.t === 'z' ? S.stages[v.sid].z : v.t === 'zs' ? S.solo[v.gid].z : S.hands[v.hid].z);
+  const start = vars.map(read);
+  const bound = (v, x) => (v.lo != null ? Math.max(v.lo, x) : x);
+  function apply(x) {
+    vars.forEach((v, i) => {
+      const val = x[i];
+      if (v.t === 'x') S.pos[v.a][0] = val;
+      else if (v.t === 'y') S.pos[v.a][1] = val;
+      else if (v.t === 'ang') S.pos[v.a] = [S.pos[v.c][0] + v.r * Math.cos(val), S.pos[v.c][1] + v.r * Math.sin(val)];
+      else if (v.t === 'z') S.stages[v.sid].z = val;
+      else if (v.t === 'zs') S.solo[v.gid].z = val;
+      else S.hands[v.hid].z = val;
     });
-    geo.translate(0, 0, -depth / 2);
-    // Rotate so cushion plane is XY and depth extrudes along Z (Z up)
-    // ExtrudeGeometry already extrudes along +Z, and our profile is in XY, so no rotation needed.
-    const mat = new THREE.MeshStandardMaterial({
-      color: color,
-      metalness: 0.4,
-      roughness: 0.55,
-    });
-    return new THREE.Mesh(geo, mat);
+    for (const sid of freeStages) {
+      const [p, q] = stageArbors(sid);
+      S.stages[sid].m = clampM(2 * dist(S.pos[p], S.pos[q]) / stageTeeth(sid));
+    }
+  }
+  // Cost: clashes dominate. After that, prefer the smallest change touching the fewest parts:
+  // squared terms keep moves small, straight terms leave parts that don't need to move exactly where they are.
+  function cost(x) {
+    apply(x);
+    const clash = clashCost(S, derive(S, true));
+    let move = 0;
+    for (const a of ARBOR_IDS) {
+      const d2 = (S.pos[a][0] - p0[a][0]) ** 2 + (S.pos[a][1] - p0[a][1]) ** 2;
+      move += d2 + Math.sqrt(d2);
+    }
+    vars.forEach((v, i) => { if (v.t[0] === 'z') { const d = Math.abs(x[i] - start[i]); move += d * d + d; } });
+    for (const sid of freeStages) { const l = Math.abs(Math.log(S.stages[sid].m / m0[sid])); move += 20 * l * l + 3 * l; }
+    return { x, f: 1000 * clash + move, clash };
+  }
+  const STEP = { x: 1, y: 1, ang: 0.15, z: 0.5, zs: 0.5, zh: 0.5 };
+  const MIN = { x: 0.01, y: 0.01, ang: 0.002, z: 0.01, zs: 0.01, zh: 0.01 };
+  const deg = d => d * Math.PI / 180;
+  const OFFS = { x: [-6, -3, -1, 1, 3, 6], y: [-6, -3, -1, 1, 3, 6], ang: [-135, -90, -60, -30, -15, 15, 30, 60, 90, 135, 180].map(deg),
+                 z: [-3, -1.5, -0.8, -0.3, 0.3, 0.8, 1.5, 3], zs: [-1.5, -0.6, 0.6, 1.5], zh: [-1, -0.4, 0.4, 1] };
+  function refine(seed) {
+    let x = seed.x.slice(), cur = seed, evals = 0;
+    const steps = vars.map(v => STEP[v.t]);
+    while (evals < 600) {
+      let moved = false;
+      for (let i = 0; i < vars.length; i++) {
+        if (steps[i] < MIN[vars[i].t]) continue;
+        for (const sg of [1, -1]) {
+          const y = x.slice();
+          y[i] = bound(vars[i], y[i] + sg * steps[i]);
+          const c = cost(y);
+          evals++;
+          if (c.f < cur.f - 1e-12) { x = y; cur = c; moved = true; break; }
+        }
+      }
+      if (!moved) {
+        let any = false;
+        for (let i = 0; i < steps.length; i++) { steps[i] /= 2; if (steps[i] >= MIN[vars[i].t]) any = true; }
+        if (!any) break;
+      }
+    }
+    return cur;
   }
 
-  // =========================================================================
-  // SCENE
-  // =========================================================================
-  const viewport = $('viewport');
-  const scene = new THREE.Scene();
-  const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const colorFromCss = (name) => new THREE.Color(cssVar(name));
-
-  function updateSceneBg() { scene.background = colorFromCss('--scene-bg'); }
-  updateSceneBg();
-
-  const camera = new THREE.PerspectiveCamera(42, 1, 1, 10000);
-  camera.up.set(0, 0, 1);
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  viewport.appendChild(renderer.domElement);
-
-  function resize() {
-    const w = viewport.clientWidth, h = viewport.clientHeight;
-    if (!w || !h) return;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
+  const base = cost(start);
+  if (base.clash <= 1e-12) { apply(start); return false; }
+  const keysAt = x => { apply(x); return new Set(analyse(S, derive(S)).collisions.map(c => c.key)); };
+  const k0 = keysAt(start);
+  // Rounds: try big single moves (swing, lift) from the current best, polish the most promising, repeat.
+  // Each round can fix one more clash, so fixes that need two parts moved get found too.
+  let cur = base;
+  const found = [];
+  for (let round = 0; round < 4 && cur.clash > 1e-12; round++) {
+    const cands = [cur];
+    vars.forEach((v, i) => OFFS[v.t].forEach(o => { const x = cur.x.slice(); x[i] = bound(v, x[i] + o); cands.push(cost(x)); }));
+    cands.sort((p, q) => p.f - q.f);
+    const seeds = cands.slice(0, 6);
+    if (!seeds.includes(cur)) seeds.push(cur);
+    const best = seeds.map(refine).sort((p, q) => p.f - q.f)[0];
+    if (best.f >= cur.f - 1e-9) break;
+    cur = best;
+    found.push(best);
   }
-  window.addEventListener('resize', resize);
-  new ResizeObserver(resize).observe(viewport);
+  // Keep a result only if it fully clears at least one clash and starts none: no half-fixes that just shuffle parts.
+  for (const r of found.reverse()) {
+    const k1 = keysAt(r.x);
+    if (k1.size < k0.size && [...k1].every(k => k0.has(k))) return true;
+  }
+  apply(start);
+  return false;
+}
 
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
+// What changed between two states, apart from what you changed yourself.
+// Changes under about 1% / 0.05 mm / 0.5° are counted, not listed, so the log reads as the moves that matter.
+function changeNotes(a, b, held) {
+  const out = [], follow = [];
+  let small = 0;
+  const fixedM = sid => stageLocked(sid) || held.m.has(sid);
+  for (const id of ARBOR_IDS) {
+    if (held.pos.has(id)) continue;
+    const d = dist(a.pos[id], b.pos[id]);
+    if (d < 0.002) continue;
+    if (lockPinned(id)) { follow.push(ARBOR[id].name); continue; }
+    if (d < 0.05 / scale) { small++; continue; }
+    const anc = fixedEdges(id, fixedM);
+    const c = anc.length === 1 && dist(a.pos[anc[0][1]], b.pos[anc[0][1]]) < 0.002 ? anc[0][1] : null;
+    const dg = c ? normDeg((Math.atan2(b.pos[id][1] - b.pos[c][1], b.pos[id][0] - b.pos[c][0]) - Math.atan2(a.pos[id][1] - a.pos[c][1], a.pos[id][0] - a.pos[c][0])) * 180 / Math.PI) : 0;
+    if (c && Math.abs(dg) >= 0.5) out.push(`swung ${ARBOR[id].name} ${dg > 0 ? '+' : '−'}${f1(Math.abs(dg))}° around ${ARBOR[c].name}`);
+    else out.push(`moved ${ARBOR[id].name} ${f2(d * scale)} mm`);
+  }
+  for (const sid of STAGE_IDS) {
+    if (!held.m.has(sid)) {
+      const r = b.stages[sid].m / a.stages[sid].m;
+      if (Math.abs(r - 1) >= 0.01) out.push(`resized the ${meshName(sid)} mesh ${f2(r)}×`);
+      else if (Math.abs(r - 1) > 1e-4) small++;
+    }
+    if (!held.z.has(sid)) {
+      const dz = b.stages[sid].z - a.stages[sid].z;
+      if (Math.abs(dz) >= 0.02) out.push(`${dz > 0 ? 'raised' : 'lowered'} the ${meshName(sid)} mesh ${f2(Math.abs(dz) * scale)} mm`);
+      else if (Math.abs(dz) > 1e-4) small++;
+    }
+  }
+  for (const gid of Object.keys(b.solo)) if (!held.z.has(gid)) {
+    const dz = b.solo[gid].z - a.solo[gid].z;
+    if (Math.abs(dz) > 0.004) out.push(`${dz > 0 ? 'raised' : 'lowered'} the ${GEAR_DEFS[gid].label} ${f2(Math.abs(dz) * scale)} mm`);
+  }
+  for (const h of HAND_DEFS) if (!held.z.has(h.id)) {
+    const dz = b.hands[h.id].z - a.hands[h.id].z;
+    if (Math.abs(dz) > 0.004) out.push(`${dz > 0 ? 'raised' : 'lowered'} the ${h.name.toLowerCase()} ${f2(Math.abs(dz) * scale)} mm`);
+  }
+  if (small) out.push(`${out.length ? 'and ' : ''}nudged ${small} more by under 1%`);
+  return { out, follow };
+}
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const key = new THREE.DirectionalLight(0xffffff, 0.9);
-  key.position.set(60, -40, 100);
-  scene.add(key);
-  const fill = new THREE.DirectionalLight(0xffffff, 0.35);
-  fill.position.set(-80, 60, 40);
-  scene.add(fill);
+// Is this element something auto-adjust may not move: locked, or what you just placed?
+function elFixed(e, held) {
+  const posFixed = lockPinned(e.arbor) || held.pos.has(e.arbor);
+  if (e.hand) return posFixed && (S.locks[e.hand] || held.z.has(e.hand));
+  const k = e.gear ? gearStage[e.gear] : e.drum ? gearStage[e.drum] : null;
+  if (e.gear && !k) return posFixed && (S.locks[e.gear] || held.z.has(e.gear));
+  if (k) return posFixed && (stageLocked(k) || held.z.has(k));
+  return posFixed;
+}
+const elName = e => (e.hand ? HAND[e.hand].name : e.gear ? GEAR_DEFS[e.gear].label : e.drum ? 'Barrel' : `${ARBOR[e.arbor].name} arbor`);
+const elLocked = e => (e.hand ? !!S.locks[e.hand] : e.gear ? !!S.locks[e.gear] : e.drum ? !!S.locks[e.drum] : lockPinned(e.arbor));
+const elHeld = (e, held) => held.pos.has(e.arbor) || held.z.has(e.hand || gearStage[e.gear || e.drum] || e.gear || '');
 
-  const grid = new THREE.GridHelper(400, 40, 0x666666, 0x444444);
+// Concrete ways out for a clash auto-adjust couldn't clear: a height or length for Y that clears
+// everything Y is clashing with right now, not just this one pair.
+function fixHint(Y, all) {
+  if (!Y.hand && !Y.gear) return '';
+  const Os = all.filter(k => !k.edge && !k.mesh && k.els.some(e => e.name === Y.name)).map(k => k.els.find(e => e.name !== Y.name));
+  if (!Os.length) return '';
+  const GAP = S.minGap / scale, t = Y.z1 - Y.z0, n = elName(Y);
+  const opts = [`raise ${n} to ${f2((Math.max(...Os.map(O => O.z1)) + GAP) * scale)} mm`];
+  const down = Math.min(...Os.map(O => O.z0)) - GAP - t;
+  if (down >= 0) opts.push(`lower it to ${f2(down * scale)} mm`);
+  if (Y.hand) {
+    const L = Math.min(...Os.map(O => Math.hypot(Y.x - O.x, Y.y - O.y) - O.r)) - GAP;
+    if (L > 0.5) opts.push(`shorten it to ${f2(L * scale)} mm`);
+  }
+  if (elLocked(Y)) opts.push('unlock it');
+  return ` Options: ${listText(opts, 'or')}.`;
+}
+// Why an unlocked part couldn't get out of the way: what it has to stay meshed with.
+function tiedTo(e, held) {
+  const ties = fixedEdges(e.arbor, sid => stageLocked(sid) || held.m.has(sid)).map(([sid, o]) => {
+    const g = S.stages[sid].gears.find(x => GEAR_DEFS[x].arbor === o);
+    return S.locks[g] ? `the locked ${GEAR_DEFS[g].label}` : `the ${GEAR_DEFS[g].label} you just resized`;
+  });
+  return ties.length ? `${ARBOR[e.arbor].name} has to stay meshed with ${listText(ties)}` : '';
+}
+function stuckText(c, held, all) {
+  const amt = clashAmount(c);
+  if (c.mesh) return `${c.text}: ${amt}. A locked size or position stops it reaching. Move or unlock one of them.`;
+  if (c.edge) return `${c.text} (${amt}). ${elFixed(c.els[0], held) ? 'It’s locked or just placed by you.' : 'Nothing unlocked could pull it back in.'}`;
+  const [e1, e2] = c.els, f1 = elFixed(e1, held), f2v = elFixed(e2, held);
+  if (f1 && f2v) {
+    const Y = elHeld(e1, held) ? e1 : elHeld(e2, held) ? e2 : e1.hand ? e1 : e2.hand ? e2 : e1;
+    return `Can’t clear ${c.text} (${amt}): both are yours, locked or just placed.${fixHint(Y, all) || ' Move one, or unlock one so I can.'}`;
+  }
+  const ties = [e1, e2].filter(e => !elFixed(e, held)).map(e => tiedTo(e, held)).filter(Boolean);
+  const why = ties.length ? `${listText(ties)}, and nowhere it can reach is clear. Unlocking what it’s tied to would let that adapt too` : 'nothing unlocked had room to move';
+  const Y = f1 ? e1 : f2v ? e2 : null;
+  return `Couldn’t clear ${c.text} (${amt}): ${why}.${Y ? fixHint(Y, all) : ''}`;
+}
+const clashAmount = c => (c.mesh ? `${f3(-c.clear * scale)} mm off` : c.clear < 0 ? `${f3(-c.clear * scale)} mm overlap` : `only ${f3(c.clear * scale)} mm apart, under the ${S.minGap} mm minimum gap`);
+
+// ---------- your edits ----------
+// An edit runs live while you drag (meshes follow), and is recorded when you let go (auto-adjust runs then).
+let pending = null;
+function beginEdit() {
+  if (!pending) pending = { base: clone(S), baseKeys: new Set(A ? A.collisions.map(c => c.key) : []), held: emptyHeld() };
+  return pending;
+}
+function liveEdit(mutate) {
+  const p = beginEdit(), prev = clonePos(S.pos);
+  mutate(p.held);
+  settle(p.held, prev);
+  requestSolve();
+}
+function cancelPending() {
+  if (!pending) return;
+  S = clone(pending.base);
+  pending = null;
+  solve();
+}
+function setGearZ(gid, z) {
+  const sid = gearStage[gid];
+  if (!sid) { S.solo[gid].z = Math.max(0, z); return gid; }
+  const [w, p] = wheelPin(sid);
+  S.stages[sid].z = Math.max(lowZ(sid), gid === w ? z : z + (S.thick[p] - S.thick[w]) / 2);
+  return sid;
+}
+const EDIT = {
+  move: (a, x, y) => held => { S.pos[a] = [x, y]; held.pos.add(a); },
+  pitch: (gid, pd) => held => {
+    const sid = gearStage[gid], m = clampM(pd / GEAR_DEFS[gid].z);
+    if (sid) { S.stages[sid].m = m; held.m.add(sid); } else S.solo[gid].m = m;
+    held.pos.add(GEAR_DEFS[gid].arbor);
+  },
+  z: (gid, z) => held => { held.z.add(setGearZ(gid, z)); },
+  thick: (gid, t) => held => { S.thick[gid] = Math.max(0.02, t); held.z.add(gearStage[gid] || gid); },
+  hand: (hid, field, v) => held => { S.hands[hid][field] = v; if (field !== 'length') held.z.add(hid); },
+};
+const partnerOf = gid => { const sid = gearStage[gid]; return sid ? S.stages[sid].gears.find(g => g !== gid) : null; };
+function withPartner(gid, verb) {
+  const p = partnerOf(gid);
+  return p ? `; ${GEAR_DEFS[p].label}${S.locks[p] ? ' (locked)' : ''} ${verb} with it` : '';
+}
+
+// ---------- three.js scene ----------
+const canvas = document.getElementById('view');
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 2000);
+camera.up.set(0, 0, 1);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.12;
+
+scene.add(new THREE.HemisphereLight(0xe4edf5, 0x1c2630, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 0.8);
+key.position.set(1.2, -1.6, 2.2);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x9fc4dc, 0.35);
+fill.position.set(-1.5, 1.2, -0.6);
+scene.add(fill);
+
+const world = new THREE.Group();
+scene.add(world);
+
+const parts = {}, partOrder = [];
+let pickables = [];
+let selectedId = null, activeGear = null, hoveredId = null, hoverSource = null;
+let focus = 'all', edgesOn = true, labelsOn = true, explode = 0;
+
+function makePart({ id, name, group, role, kind, level }) {
+  const color = GROUPS[group].color;
+  const mat = new THREE.MeshStandardMaterial({
+    color, metalness: 0.3, roughness: 0.45, side: THREE.DoubleSide,
+    polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
+  });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x0b1117, transparent: true, opacity: 0.6 });
+  const root = new THREE.Group(), statics = new THREE.Group(), spin = new THREE.Group();
+  root.add(statics, spin);
+  world.add(root);
+  const part = { id, name, group, role, kind, level, color, mat, mats: [mat], edgeMat, root, statics, spin,
+                 edges: [], gearMeshes: {}, key: null, visible: true, anchorLocal: new THREE.Vector3() };
+  parts[id] = part;
+  partOrder.push(id);
+  return part;
+}
+
+function addMesh(part, geom, parent, { edges = true, mat = part.mat, gear = null } = {}) {
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.userData.part = part.id;
+  if (gear) mesh.userData.gear = gear;
+  parent.add(mesh);
+  if (edges) {
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(geom, 28), part.edgeMat);
+    e.visible = edgesOn;
+    mesh.add(e);
+    part.edges.push(e);
+  }
+  return mesh;
+}
+
+function clearPart(part) {
+  for (const g of [part.statics, part.spin]) for (const c of [...g.children]) {
+    g.remove(c);
+    c.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  }
+  part.edges = [];
+  part.gearMeshes = {};
+}
+
+function addCrossings(shape, rf, arms) {
+  const rim = Math.max(0.12 * rf, 0.3), hub = Math.max(0.22 * rf, 3 * ARBOR_R), arm = Math.max(0.1 * rf, 0.25);
+  const rOut = rf - rim, rIn = hub;
+  if (rOut - rIn < 0.5) return;
+  const step = 2 * Math.PI / arms;
+  const dOut = Math.asin(arm / 2 / rOut), dIn = Math.asin(Math.min(0.95, arm / 2 / rIn));
+  if (step - 2 * dIn < 0.15) return;
+  for (let k = 0; k < arms; k++) {
+    const a0 = k * step, p = new THREE.Path(), N = 20;
+    for (let i = 0; i <= N; i++) {
+      const a = a0 + dOut + (step - 2 * dOut) * i / N;
+      if (i === 0) p.moveTo(rOut * Math.cos(a), rOut * Math.sin(a)); else p.lineTo(rOut * Math.cos(a), rOut * Math.sin(a));
+    }
+    for (let i = N; i >= 0; i--) {
+      const a = a0 + dIn + (step - 2 * dIn) * i / N;
+      p.lineTo(rIn * Math.cos(a), rIn * Math.sin(a));
+    }
+    p.closePath();
+    shape.holes.push(p);
+  }
+}
+
+function gearGeometry(G, { hole = 0, crossings = false } = {}) {
+  const g = computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG });
+  const shape = new THREE.Shape(outline(g).map(([x, y]) => new THREE.Vector2(x, y)));
+  if (hole > 0) {
+    const h = new THREE.Path();
+    h.absarc(0, 0, hole, 0, Math.PI * 2, true);
+    shape.holes.push(h);
+  } else if (crossings) {
+    addCrossings(shape, g.rf, G.z >= 60 ? 5 : 4);
+  }
+  return new THREE.ExtrudeGeometry(shape, { depth: G.t, bevelEnabled: false, curveSegments: 32 });
+}
+
+function ring(rOut, rIn, depth) {
+  const s = new THREE.Shape();
+  s.absarc(0, 0, rOut, 0, Math.PI * 2, false);
+  if (rIn > 0) {
+    const h = new THREE.Path();
+    h.absarc(0, 0, rIn, 0, Math.PI * 2, true);
+    s.holes.push(h);
+  }
+  return new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false, curveSegments: 96 });
+}
+
+function zCylinder(r, z0, z1, segs = 20) {
+  const g = new THREE.CylinderGeometry(r, r, z1 - z0, segs);
+  g.rotateX(Math.PI / 2);
+  g.translate(0, 0, (z0 + z1) / 2);
+  return g;
+}
+
+const springMat = new THREE.MeshStandardMaterial({ color: 0x8c96a3, metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide });
+const jewelMat = new THREE.MeshStandardMaterial({ color: 0xb3264b, metalness: 0.1, roughness: 0.25 });
+
+function buildArbor(part, a) {
+  clearPart(part);
+  addMesh(part, zCylinder(a.staticArbor ? BARREL_ARBOR_R : ARBOR_R, 0, D.tops[a.id]), a.staticArbor ? part.statics : part.spin, { edges: false });
+  for (const g of a.gears) {
+    const G = D.gears[g.id];
+    const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { crossings: G.z >= 16 });
+    const mesh = addMesh(part, geom, part.spin, { gear: g.id });
+    mesh.position.z = G.z0;
+    part.gearMeshes[g.id] = mesh;
+  }
+  if (a.drumH) {
+    const dr = D.drum[a.id], T = D.gears[a.gears[0].id];
+    if (dr.z1 > T.z1) addMesh(part, ring(dr.rOut, dr.rIn, dr.z1 - T.z1), part.spin).position.z = T.z1;
+    addMesh(part, ring(dr.rIn, BARREL_ARBOR_R + 0.05, 0.15), part.spin).position.z = dr.z0;
+    // Mainspring: a tall thin ribbon spiralling from the arbor out to the drum wall.
+    const r0 = BARREL_ARBOR_R + 0.25, r1 = dr.rIn - 0.15, turns = 9, n = turns * 72;
+    if (r1 > r0 + 0.2) {
+      const zb = dr.z0 + 0.3, zt = dr.z1 - 0.15, verts = [], idx = [];
+      for (let i = 0; i <= n; i++) {
+        const th = i / n * turns * 2 * Math.PI, r = r0 + (r1 - r0) * i / n;
+        const x = r * Math.cos(th), y = r * Math.sin(th);
+        verts.push(x, y, zb, x, y, zt);
+        if (i < n) { const k = 2 * i; idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
+      }
+      const sg = new THREE.BufferGeometry();
+      sg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+      sg.setIndex(idx);
+      sg.computeVertexNormals();
+      addMesh(part, sg, part.spin, { edges: false, mat: springMat });
+    }
+  }
+}
+
+function buildHand(part, h, hs) {
+  clearPart(part);
+  const tip = h.w1 * 1.6, tail = h.tail || 0.6;
+  const shape = new THREE.Shape([[-h.w0 / 2, -tail], [-h.w1 / 2, hs.length - tip], [0, hs.length], [h.w1 / 2, hs.length - tip], [h.w0 / 2, -tail]]
+    .map(([px, py]) => new THREE.Vector2(px, py)));
+  addMesh(part, new THREE.ExtrudeGeometry(shape, { depth: hs.t, bevelEnabled: false }), part.spin).position.z = hs.z;
+  const cr = Math.max(h.w0 * 0.9, 0.5);
+  addMesh(part, zCylinder(cr, hs.z - hs.t / 2, hs.z + hs.t * 1.5, 28), part.spin);
+  part.anchorSpin = new THREE.Vector3(0, hs.length * 0.72, hs.z + hs.t);
+}
+
+const plate = makePart({ id: 'plate', name: 'Mainplate', group: 'plate', kind: 'plate', level: -1,
+  role: 'Base plate and movement envelope. Red dots mark the jewel under each arbor. Resize it to change the package you’re designing into.' });
+plate.mat.transparent = true;
+plate.mat.opacity = 0.55;
+plate.mat.userData.baseOpacity = 0.55;
+plate.mats.push(jewelMat);
+for (const a of ARBOR_DEFS) makePart({ id: a.id, name: a.name, group: a.group, role: a.role, kind: 'arbor', level: a.level });
+for (const h of HAND_DEFS) makePart({ id: h.id, name: h.name, group: h.group, role: h.role, kind: 'hand', level: h.level });
+parts.barrel.mats.push(springMat);
+
+function syncScene() {
+  let rebuilt = false;
+  const pk = String(S.movementD);
+  if (plate.key !== pk) {
+    clearPart(plate);
+    addMesh(plate, zCylinder(S.movementD / 2, -1, 0, 160), plate.statics);
+    plate.jewels = {};
+    for (const a of ARBOR_DEFS) plate.jewels[a.id] = addMesh(plate, zCylinder((a.staticArbor ? BARREL_ARBOR_R : ARBOR_R) + 0.3, 0, 0.06, 24), plate.statics, { edges: false, mat: jewelMat });
+    plate.anchorLocal.set(S.movementD / 2 * Math.cos(-2.4), S.movementD / 2 * Math.sin(-2.4), 0);
+    plate.key = pk;
+    rebuilt = true;
+  }
+  for (const a of ARBOR_DEFS) plate.jewels[a.id].position.set(D.pos[a.id][0], D.pos[a.id][1], 0);
+
+  for (const a of ARBOR_DEFS) {
+    const p = parts[a.id], [x, y] = D.pos[a.id];
+    p.root.position.x = x;
+    p.root.position.y = y;
+    const k = JSON.stringify([a.gears.map(g => [D.gears[g.id].m, D.gears[g.id].z0, D.gears[g.id].t]), D.tops[a.id]]);
+    if (p.key !== k) { buildArbor(p, a); p.key = k; rebuilt = true; }
+    for (const g of a.gears) p.gearMeshes[g.id].rotation.z = D.psi[g.id];
+    const big = a.gears.map(g => D.gears[g.id]).sort((u, v) => v.ra - u.ra)[0];
+    const out = Math.hypot(x, y) < 0.5 ? -2.25 : Math.atan2(y, x);
+    p.anchorLocal.set(Math.cos(out) * big.ra * 0.9, Math.sin(out) * big.ra * 0.9, D.drum[a.id] ? D.drum[a.id].z1 : big.z1);
+  }
+  for (const h of HAND_DEFS) {
+    const p = parts[h.id], hs = S.hands[h.id];
+    p.root.position.x = D.pos[h.arbor][0];
+    p.root.position.y = D.pos[h.arbor][1];
+    const k = JSON.stringify([hs.length, hs.z, hs.t]);
+    if (p.key !== k) { buildHand(p, h, hs); p.key = k; rebuilt = true; }
+  }
+  if (rebuilt) {
+    pickables = [];
+    world.traverse(o => { if (o.isMesh && o.userData.part) pickables.push(o); });
+  }
+}
+
+function solve() {
+  D = derive(S);
+  A = analyse(S, D);
+  syncScene();
+  refreshLook();
+  renderChecks();
+  renderPartsList();
+}
+let solveQueued = false;
+const requestSolve = () => { solveQueued = true; };
+
+// ---------- move arrows: drag one to move the selected part along X, Y or Z ----------
+const gizmo = new THREE.TransformControls(camera, canvas);
+gizmo.setSpace('world');
+gizmo.setSize(1.15);
+scene.add(gizmo);
+const proxy = new THREE.Object3D();
+world.add(proxy);
+let gz = null;
+const lift = id => explode * EXPLODE_STEP * parts[id].level;
+
+function gizmoTarget() {
+  if (!selectedId || !parts[selectedId].visible || !inFocus(selectedId)) return null;
+  const p = parts[selectedId];
+  if (p.kind === 'arbor') {
+    const gid = activeGear || mainGear(selectedId), G = D.gears[gid];
+    return { id: selectedId, arbor: selectedId, gear: gid, z: G.z0 + G.t / 2, lift: lift(selectedId) };
+  }
+  if (p.kind === 'hand') {
+    const hs = S.hands[selectedId];
+    return { id: selectedId, arbor: HAND[selectedId].arbor, hand: selectedId, z: hs.z + hs.t / 2, lift: lift(selectedId) };
+  }
+  return null;
+}
+function placeGizmo() {
+  const t = gizmoTarget();
+  if (!t) { if (gizmo.object) gizmo.detach(); return; }
+  if (!gizmo.object) gizmo.attach(proxy);
+  if (!gz) proxy.position.set(S.pos[t.arbor][0], S.pos[t.arbor][1], t.z + t.lift);
+}
+gizmo.addEventListener('dragging-changed', e => {
+  controls.enabled = !e.value;
+  if (e.value) {
+    const t = gizmoTarget();
+    if (!t) return;
+    gz = { ...t, x0: S.pos[t.arbor][0], y0: S.pos[t.arbor][1], z0: t.z, xy: false, zMoved: false, slid: false };
+    beginEdit();
+    return;
+  }
+  if (!gz) return;
+  const g = gz;
+  gz = null;
+  if (!g.xy && !g.zMoved) { cancelPending(); return; }
+  const name = parts[g.id].name, bits = [];
+  if (g.xy) bits.push(`Moved ${name} from ${f2(g.x0 * scale)}, ${f2(g.y0 * scale)} to ${f2(S.pos[g.arbor][0] * scale)}, ${f2(S.pos[g.arbor][1] * scale)} mm`);
+  if (g.zMoved) {
+    if (g.hand) bits.push(`${HAND[g.hand].name} height ${f2((g.z0 - S.hands[g.hand].t / 2) * scale)} → ${f2(S.hands[g.hand].z * scale)} mm`);
+    else bits.push(`${GEAR_DEFS[g.gear].label} height ${f2((g.z0 - S.thick[g.gear] / 2) * scale)} → ${f2(derive(S, true).gears[g.gear].z0 * scale)} mm${withPartner(g.gear, 'moved')}`);
+  }
+  commit({ text: bits.join('; ') + (g.slid ? ` (it can only swing around the locked part it meshes with)` : '') });
+});
+gizmo.addEventListener('objectChange', () => {
+  if (!gz) return;
+  const p = proxy.position, ax = gizmo.axis || '';
+  liveEdit(held => {
+    if (/[XY]/.test(ax) && (Math.abs(p.x - S.pos[gz.arbor][0]) > 1e-9 || Math.abs(p.y - S.pos[gz.arbor][1]) > 1e-9)) {
+      EDIT.move(gz.arbor, p.x, p.y)(held);
+      gz.xy = true;
+    }
+    if (ax.includes('Z')) {
+      const z = Math.max(0, p.z - gz.lift - (gz.hand ? S.hands[gz.hand].t : S.thick[gz.gear]) / 2);
+      if (gz.hand) EDIT.hand(gz.hand, 'z', z)(held); else EDIT.z(gz.gear, z)(held);
+      gz.zMoved = true;
+    }
+  });
+  if (gz.xy) gz.slid = Math.hypot(p.x - S.pos[gz.arbor][0], p.y - S.pos[gz.arbor][1]) > 0.02;
+});
+
+// ---------- labels, hover, selection ----------
+const labelLayer = document.getElementById('labels');
+const tipEl = document.getElementById('tip');
+for (const id of partOrder) {
+  const p = parts[id];
+  const el = document.createElement('div');
+  el.className = 'lbl';
+  el.innerHTML = `<i style="background:${hex(p.color)}"></i>${p.name}`;
+  el.addEventListener('click', () => select(id));
+  el.addEventListener('mouseenter', () => setHover(id, 'label'));
+  el.addEventListener('mouseleave', () => setHover(null, 'label'));
+  labelLayer.appendChild(el);
+  p.labelEl = el;
+}
+
+function periodText(w) {
+  const T = 2 * Math.PI / Math.abs(w);
+  if (T >= 3600) return `${+(T / 3600).toFixed(2)} h`;
+  if (T >= 60) return `${+(T / 60).toFixed(2)} min`;
+  return `${+T.toFixed(2)} s`;
+}
+const dirText = w => (w < 0 ? 'clockwise' : 'counter-clockwise');
+
+function rateLine(id) {
+  if (parts[id].kind === 'plate') return `Ø ${f1(S.movementD * scale)} mm · fixed`;
+  const w = D.omega[arborOf(id)];
+  return `1 rev / ${periodText(w)} · ${dirText(w)}`;
+}
+
+function teethLine(id) {
+  const p = parts[id];
+  if (p.kind === 'arbor') return ARBOR[id].gears.map(g => `${GEAR_DEFS[g.id].label.toLowerCase()} ${g.z}`).join(' · ');
+  if (p.kind === 'hand') return `on ${ARBOR[HAND[id].arbor].name.toLowerCase()} arbor · ${f2(S.hands[id].length * scale)} mm`;
+  return `${ARBOR_DEFS.length} jewels`;
+}
+const partLocked = id => (parts[id].kind === 'arbor' ? lockPinned(id) : parts[id].kind === 'hand' ? !!S.locks[id] : false);
+
+const inFocus = id => !FOCUS[focus] || FOCUS[focus].includes(id);
+
+function setHover(id, source) {
+  if (id === hoveredId && source === hoverSource) return;
+  hoveredId = id;
+  hoverSource = id ? source : null;
+  refreshLook();
+}
+
+function select(id, gear = null) {
+  cancelPending();
+  selectedId = id;
+  activeGear = id && ARBOR[id] ? (gear && ARBOR[id].gears.some(g => g.id === gear) ? gear : mainGear(id)) : null;
+  refreshLook();
+  renderSelected();
+}
+function setActiveGear(gid) {
+  activeGear = gid;
+  document.querySelectorAll('#selected .gear-card').forEach(c => c.classList.toggle('active', c.dataset.gear === gid));
+  const hint = document.getElementById('zHint');
+  if (hint) hint.textContent = GEAR_DEFS[gid].label;
+}
+
+function refreshLook() {
+  const bad = new Set(A.collisions.flatMap(c => c.parts));
+  for (const id of partOrder) {
+    const p = parts[id], focused = inFocus(id), isBad = bad.has(id);
+    const glow = isBad ? 0.6 : id === selectedId ? 0.55 : id === hoveredId ? 0.3 : 0;
+    for (const m of p.mats) {
+      m.emissive.setHex(isBad ? 0xff4a3a : glow ? 0x6fb6d8 : 0x000000);
+      m.emissiveIntensity = glow;
+      const base = m.userData.baseOpacity ?? 1;
+      const op = focused ? base : 0.1;
+      if (m.opacity !== op) { m.opacity = op; m.transparent = op < 1; m.depthWrite = op >= 0.5; m.needsUpdate = true; }
+    }
+    p.edgeMat.opacity = focused ? 0.6 : 0.04;
+    for (const e of p.edges) e.visible = edgesOn;
+    p.root.visible = p.visible;
+    p.labelEl.classList.toggle('dim', !focused);
+    p.labelEl.classList.toggle('hot', id === hoveredId || id === selectedId);
+    p.labelEl.classList.toggle('bad', isBad);
+    if (p.row) {
+      p.row.classList.toggle('on', id === selectedId);
+      p.row.classList.toggle('hot', id === hoveredId);
+      p.row.classList.toggle('off', !p.visible);
+      p.row.classList.toggle('bad', isBad);
+    }
+  }
+  renderTip();
+}
+
+const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function hitAt(cx, cy) {
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  const live = pickables.filter(m => parts[m.userData.part].visible && inFocus(m.userData.part));
+  const hit = raycaster.intersectObjects(live, false)[0];
+  return hit ? { part: hit.object.userData.part, gear: hit.object.userData.gear || null, point: hit.point } : null;
+}
+const pickAt = (cx, cy) => { const h = hitAt(cx, cy); return h ? h.part : null; };
+
+let pointerXY = null, pointerDirty = false, dragging = false, downAt = null, gizmoGrab = false;
+
+// The arrows measure a drag against a helper plane that only turns to face the grabbed axis on the next frame.
+// A press with no hover first (touch, or a quick click) would measure from a stale plane and make the part jump,
+// so pick the axis and turn the plane before the arrows see the press.
+canvas.addEventListener('pointerdown', e => {
+  if (!gizmo.object || e.button !== 0) return;
+  const r = canvas.getBoundingClientRect();
+  gizmo.pointerHover({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1, button: -1 });
+  gizmo.updateMatrixWorld(true);
+}, { capture: true });
+
+// Registered after the move arrows, so a grab on an arrow is already known here.
+canvas.addEventListener('pointerdown', e => {
+  downAt = [e.clientX, e.clientY];
+  dragging = false;
+  gizmoGrab = gizmo.dragging;
+});
+canvas.addEventListener('pointermove', e => {
+  const r = stage.getBoundingClientRect();
+  pointerXY = { x: e.clientX - r.left, y: e.clientY - r.top, cx: e.clientX, cy: e.clientY };
+  pointerDirty = true;
+  if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) dragging = true;
+});
+window.addEventListener('pointerup', e => {
+  if (e.target === canvas && downAt && !dragging && !gizmoGrab) {
+    const h = hitAt(e.clientX, e.clientY);
+    select(h ? h.part : null, h ? h.gear : null);
+  }
+  downAt = null;
+  dragging = false;
+  gizmoGrab = false;
+});
+canvas.addEventListener('pointerleave', () => { pointerXY = null; if (hoverSource === 'view') setHover(null, 'view'); });
+canvas.addEventListener('dblclick', e => {
+  if (gizmo.axis) return;
+  const h = hitAt(e.clientX, e.clientY);
+  if (h) { select(h.part, h.gear); frame(h.part); } else fit();
+});
+window.addEventListener('keydown', e => {
+  const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement && document.activeElement.tagName);
+  if (e.key === 'Escape') select(null);
+  if (!typing && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+});
+
+function renderTip() {
+  if (gz && (gz.xy || gz.zMoved) && pointerXY) {
+    const n = A.collisions.length, [x, y] = S.pos[gz.arbor];
+    const z = gz.hand ? S.hands[gz.hand].z : D.gears[gz.gear] ? D.gears[gz.gear].z0 : 0;
+    tipEl.innerHTML = `<b>${parts[gz.id].name}</b><span>X ${f2(x * scale)} · Y ${f2(y * scale)} · Z ${f2(z * scale)} mm</span>` +
+      (gz.slid ? '<span class="warn">it meshes directly with a locked part, so it can only swing around it</span>' : '') +
+      (n ? `<span class="bad">${n} clash${n > 1 ? 'es' : ''} now · auto-adjust runs when you let go</span>` : '<span>no clashes</span>');
+  } else if (hoveredId && hoverSource === 'view' && pointerXY && !dragging) {
+    tipEl.innerHTML = `<b>${parts[hoveredId].name}${partLocked(hoveredId) ? ' · locked' : ''}</b><span>${rateLine(hoveredId)}</span><span>${teethLine(hoveredId)}</span>` +
+      (hoveredId === selectedId && parts[hoveredId].kind !== 'plate' ? '<span>drag an arrow to move it</span>' : '');
+  } else { tipEl.hidden = true; return; }
+  tipEl.hidden = false;
+  const w = stage.clientWidth, tw = tipEl.offsetWidth;
+  const x = pointerXY.x + 16 + tw > w ? pointerXY.x - tw - 12 : pointerXY.x + 16;
+  tipEl.style.transform = `translate(${x}px, ${pointerXY.y + 14}px)`;
+}
+
+const tmpV = new THREE.Vector3();
+const LABEL_H = 20;
+function updateLabels() {
+  const w = stage.clientWidth, h = stage.clientHeight, placed = [];
+  for (const id of partOrder) {
+    const p = parts[id], el = p.labelEl;
+    if (!labelsOn || !p.visible) { el.hidden = true; continue; }
+    if (p.kind === 'hand') p.spin.localToWorld(tmpV.copy(p.anchorSpin));
+    else p.root.localToWorld(tmpV.copy(p.anchorLocal));
+    tmpV.project(camera);
+    if (tmpV.z > 1 || Math.abs(tmpV.x) > 1.2 || Math.abs(tmpV.y) > 1.2) { el.hidden = true; continue; }
+    el.hidden = false;
+    const ax = ((tmpV.x + 1) / 2) * w, ay = ((1 - tmpV.y) / 2) * h, lw = el._w || (el._w = el.offsetWidth);
+    // Right of the anchor, else left of it, stepping a row up or down at a time until it doesn't overlap.
+    const free = (x, y) => !placed.some(q => x < q.x + q.w + 4 && q.x < x + lw + 4 && Math.abs(y - q.y) < LABEL_H + 2);
+    let spot = [ax + 6, ay];
+    for (const k of [0, -1, 1, -2, 2, -3, 3, 4, 5]) {
+      const y = ay + k * (LABEL_H + 3);
+      if (free(ax + 6, y)) { spot = [ax + 6, y]; break; }
+      if (free(ax - lw - 6, y)) { spot = [ax - lw - 6, y]; break; }
+    }
+    placed.push({ x: spot[0], y: spot[1], w: lw });
+    el.style.transform = `translate(${spot[0]}px, ${spot[1]}px) translateY(-50%)`;
+  }
+}
+function renderLabelLocks() {
+  for (const id of partOrder) {
+    const p = parts[id], lk = partLocked(id);
+    if (p.labelLock === lk) continue;
+    p.labelLock = lk;
+    p.labelEl.innerHTML = `<i style="background:${hex(p.color)}"></i>${p.name}${lk ? LOCK_SVG : ''}`;
+    p.labelEl._w = 0;
+  }
+}
+
+// ---------- panel ----------
+const row = (k, v) => `<dt>${k}</dt><dd>${v}</dd>`;
+const subHead = text => { const d = document.createElement('div'); d.className = 'sub-h'; d.textContent = text; return d; };
+const para = (cls, html) => { const d = document.createElement('p'); d.className = cls; d.innerHTML = html; return d; };
+
+// A slider + number box pair. onInput previews live; onCommit(from, to) records the change.
+function control({ label, unit, min, max, step, value, onInput, onCommit }) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ctl';
+  wrap.innerHTML = `<div class="ctl-head"><span>${label}</span><span class="ctl-val"><input type="number" step="${step}" aria-label="${label}"><em>${unit}</em></span></div>` +
+    `<input type="range" min="${min}" max="${max}" step="${step}" aria-label="${label}">`;
+  const num = wrap.querySelector('input[type=number]'), rng = wrap.querySelector('input[type=range]');
+  const start = value;
+  num.value = +(+value).toFixed(3);
+  rng.value = value;
+  rng.addEventListener('input', () => { num.value = +(+rng.value).toFixed(3); onInput(+rng.value); });
+  const done = v => { if (Math.abs(v - start) > 1e-9) onCommit(start, v); else cancelPending(); };
+  rng.addEventListener('change', () => done(+rng.value));
+  num.addEventListener('input', () => { if (num.value !== '' && isFinite(+num.value)) { rng.value = +num.value; onInput(+num.value); } });
+  num.addEventListener('change', () => { if (num.value !== '' && isFinite(+num.value)) done(+num.value); });
+  return wrap;
+}
+
+function lockButton(id, label) {
+  const on = !!S.locks[id];
+  const b = document.createElement('button');
+  b.className = 'lockbtn' + (on ? ' on' : '');
+  b.setAttribute('aria-pressed', String(on));
+  b.title = on ? 'Locked: only you change it. Click to let auto-adjust move, resize and re-height it.'
+               : 'Unlocked: auto-adjust may move, resize and re-height it to keep the train working. Click to lock it.';
+  b.innerHTML = `${on ? LOCK_SVG : UNLOCK_SVG}${on ? 'Locked' : 'Unlocked'}`;
+  b.addEventListener('click', e => { e.stopPropagation(); toggleLock(id, label); });
+  return b;
+}
+function toggleLock(id, label) {
+  cancelPending();
+  const on = !S.locks[id];
+  if (on) S.locks[id] = true; else delete S.locks[id];
+  commit({ text: on ? `Locked ${label}: only you change it now` : `Unlocked ${label}: auto-adjust may now move, resize and re-height it`, adapt: false });
+}
+
+function positionStatus(a) {
+  const lk = lockersOf(a);
+  if (lk.length) return `<b>Held in place</b>: ${listText(lk)} ${lk.length > 1 ? 'are' : 'is'} locked, so auto-adjust won’t move this arbor. You still can.`;
+  const anchors = fixedEdges(a, stageLocked).map(([, o]) => ARBOR[o].name);
+  if (anchors.length === 1) return `<b>Unlocked</b>, but it meshes directly with the locked ${anchors[0]}, so it can only swing around it.`;
+  if (anchors.length > 1) return `<b>Unlocked</b>, but it meshes directly with the locked ${listText(anchors)}, which set where it sits.`;
+  return '<b>Unlocked</b>: auto-adjust may move it to keep the train meshed and clear.';
+}
+
+function xyControls(el, arbor, who) {
+  const sc = scale, lim = S.movementD / 2 * 1.3 * sc;
+  for (const axis of [0, 1]) {
+    const L = axis ? 'Y' : 'X';
+    el.appendChild(control({ label: L, unit: 'mm', min: -lim, max: lim, step: 0.01, value: S.pos[arbor][axis] * sc,
+      onInput: v => liveEdit(held => { const p = S.pos[arbor].slice(); p[axis] = v / sc; EDIT.move(arbor, p[0], p[1])(held); }),
+      onCommit: (v0, v1) => commit({ key: `${L}:${arbor}`, from: v0, to: v1, make: (a, b) => `Moved ${who} ${L} ${f2(a)} → ${f2(b)} mm` }) }));
+  }
+}
+
+function renderSelected() {
+  const el = document.getElementById('selected');
+  el.innerHTML = '';
+  if (!selectedId) {
+    el.innerHTML = '<div class="sel-empty">Click a part in the view, its label, or the list. Arrows appear on it: drag one to move the part along that axis, or type values here. Lock the parts you’ve placed. Esc clears.</div>';
+    return;
+  }
+  const p = parts[selectedId], sc = scale;
+  const head = document.createElement('div');
+  head.innerHTML = `<div class="sel-head"><span class="sw" style="background:${hex(p.color)}"></span><b>${p.name}</b><span class="chip">${GROUPS[p.group].label}</span></div><p class="role">${p.role}</p>`;
+  el.appendChild(head);
+
+  if (p.kind === 'arbor') {
+    const a = ARBOR[p.id], id = a.id;
+    const info = document.createElement('dl');
+    info.innerHTML = row('Turns', rateLine(id).replace(' · ', ', ')) + (a.staticArbor ? row('Arbor', 'held still; the drum turns') : '');
+    el.appendChild(info);
+    el.appendChild(subHead('Position · X and Y of the arbor'));
+    el.appendChild(para('pin', positionStatus(id)));
+    xyControls(el, id, a.name);
+    el.appendChild(para('pin', `The Z arrow moves <b id="zHint">${GEAR_DEFS[activeGear].label}</b>. Click a gear below to switch.`));
+
+    el.appendChild(subHead('Gears · meshing gears share a tooth size and a height'));
+    for (const g of a.gears) {
+      const G = D.gears[g.id], partner = G.partner ? D.gears[G.partner] : null;
+      const card = document.createElement('div');
+      card.className = 'gear-card' + (g.id === activeGear ? ' active' : '');
+      card.dataset.gear = g.id;
+      const gh = document.createElement('div');
+      gh.className = 'gh';
+      gh.innerHTML = `<div><b>${G.label}</b><small>${G.z} teeth · module ${f3(G.m * sc)}</small></div>`;
+      gh.appendChild(lockButton(g.id, G.label));
+      card.appendChild(gh);
+      card.appendChild(para('gl', partner
+        ? `Meshes with ${partner.label}${S.locks[partner.id] ? ' (locked)' : ''} on <button class="link" data-go="${partner.arbor}">${ARBOR[partner.arbor].name}</button>. Resize or raise one and the other follows; speeds stay the same.`
+        : 'Nothing meshes with its teeth, so it sizes on its own.'));
+      const defM = G.stage ? DEFAULT_STAGES[G.stage].m : DEFAULT_STATE.solo[g.id].m;
+      card.appendChild(control({ label: 'Scale · pitch Ø', unit: 'mm', min: defM * G.z * 0.3 * sc, max: defM * G.z * 3 * sc, step: 0.01, value: G.m * G.z * sc,
+        onInput: v => liveEdit(EDIT.pitch(g.id, v / sc)),
+        onCommit: (v0, v1) => commit({ key: `pitch:${g.id}`, from: v0, to: v1, make: (x, y) => `${G.label} pitch Ø ${f2(x)} → ${f2(y)} mm${withPartner(g.id, 'resized')}` }) }));
+      card.appendChild(control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: G.z0 * sc,
+        onInput: v => liveEdit(EDIT.z(g.id, v / sc)),
+        onCommit: (v0, v1) => commit({ key: `z:${g.id}`, from: v0, to: v1, make: (x, y) => `${G.label} height ${f2(x)} → ${f2(y)} mm${withPartner(g.id, 'moved')}` }) }));
+      card.appendChild(control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: 3 * sc, step: 0.01, value: G.t * sc,
+        onInput: v => liveEdit(EDIT.thick(g.id, v / sc)),
+        onCommit: (v0, v1) => commit({ key: `t:${g.id}`, from: v0, to: v1, make: (x, y) => `${G.label} thickness ${f2(x)} → ${f2(y)} mm` }) }));
+      card.addEventListener('click', e => { if (!e.target.closest('input,button')) setActiveGear(g.id); });
+      el.appendChild(card);
+    }
+  } else if (p.kind === 'hand') {
+    const h = HAND[p.id], hs = S.hands[p.id];
+    const info = document.createElement('dl');
+    info.innerHTML = row('On arbor', ARBOR[h.arbor].name) + row('Turns', rateLine(p.id).replace(' · ', ', '));
+    el.appendChild(info);
+    const lr = document.createElement('div');
+    lr.className = 'lockrow';
+    lr.appendChild(para('pin', S.locks[p.id] ? 'Locked: auto-adjust won’t move, lengthen or re-height it.' : 'Unlocked: auto-adjust may raise or lower it.'));
+    lr.appendChild(lockButton(p.id, h.name));
+    el.appendChild(lr);
+    el.appendChild(subHead(`Position · moves the ${ARBOR[h.arbor].name.toLowerCase()} arbor it sits on`));
+    xyControls(el, h.arbor, `${h.name} (${ARBOR[h.arbor].name} arbor)`);
+    el.appendChild(subHead('Size'));
+    el.appendChild(control({ label: 'Scale · length', unit: 'mm', min: 1 * sc, max: S.movementD / 2 * sc, step: 0.05, value: hs.length * sc,
+      onInput: v => liveEdit(EDIT.hand(p.id, 'length', Math.max(0.5, v / sc))),
+      onCommit: (v0, v1) => commit({ key: `len:${p.id}`, from: v0, to: v1, make: (x, y) => `${h.name} length ${f2(x)} → ${f2(y)} mm` }) }));
+    el.appendChild(control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: hs.z * sc,
+      onInput: v => liveEdit(EDIT.hand(p.id, 'z', Math.max(0, v / sc))),
+      onCommit: (v0, v1) => commit({ key: `hz:${p.id}`, from: v0, to: v1, make: (x, y) => `${h.name} height ${f2(x)} → ${f2(y)} mm` }) }));
+    el.appendChild(control({ label: 'Thickness', unit: 'mm', min: 0.03 * sc, max: 1 * sc, step: 0.01, value: hs.t * sc,
+      onInput: v => liveEdit(EDIT.hand(p.id, 't', Math.max(0.02, v / sc))),
+      onCommit: (v0, v1) => commit({ key: `ht:${p.id}`, from: v0, to: v1, make: (x, y) => `${h.name} thickness ${f2(x)} → ${f2(y)} mm` }) }));
+  } else {
+    el.appendChild(control({ label: 'Movement Ø', unit: 'mm', min: 15 * sc, max: 120 * sc, step: 0.5, value: S.movementD * sc,
+      onInput: v => { beginEdit(); S.movementD = Math.max(5, v / sc); requestSolve(); },
+      onCommit: (v0, v1) => commit({ key: 'plate', from: v0, to: v1, make: (x, y) => `Movement Ø ${f1(x)} → ${f1(y)} mm` }) }));
+  }
+
+  const near = A.near.filter(n => n.parts.includes(p.id)).slice(0, 2);
+  const mine = A.collisions.filter(c => c.parts.includes(p.id));
+  if (mine.length || near.length) {
+    el.appendChild(subHead(mine.length ? 'Clashing now' : 'Closest non-meshing neighbours'));
+    const ul = document.createElement('ul');
+    ul.className = 'mesh-list';
+    ul.innerHTML = (mine.length ? mine.map(n => `<li>${n.text}: <b>${clashAmount(n)}</b></li>`) : near.map(n => `<li>${n.text}: <b>${f3(n.clear * sc)} mm</b></li>`)).join('');
+    el.appendChild(ul);
+  }
+}
+document.getElementById('selected').addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go) select(go.dataset.go);
+});
+
+const partsEl = document.getElementById('parts');
+for (const id of partOrder) {
+  const p = parts[id];
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="sw" style="background:${hex(p.color)}"></span><span class="nm"><span>${p.name}<i class="lk" hidden>${LOCK_SVG}</i></span><small></small></span><input type="checkbox" checked aria-label="Show ${p.name}">`;
+  const cb = li.querySelector('input');
+  cb.addEventListener('click', e => e.stopPropagation());
+  cb.addEventListener('change', () => { p.visible = cb.checked; if (!p.visible && selectedId === id) selectedId = null; refreshLook(); renderSelected(); });
+  li.addEventListener('click', () => select(id));
+  li.addEventListener('mouseenter', () => setHover(id, 'list'));
+  li.addEventListener('mouseleave', () => setHover(null, 'list'));
+  partsEl.appendChild(li);
+  p.row = li;
+}
+function renderPartsList() {
+  for (const id of partOrder) {
+    parts[id].row.querySelector('small').textContent = rateLine(id);
+    parts[id].row.querySelector('.lk').hidden = !partLocked(id);
+  }
+  renderLabelLocks();
+}
+
+function renderChecks() {
+  const s = scale, items = [];
+  for (const r of A.rates) items.push([r.ok ? 'ok' : 'err', `<b>${r.label}</b>: 1 rev / ${periodText(r.w)}, ${dirText(r.w)}`]);
+  items.push(['info', `<b>Beat</b>: ${Math.round(VPH).toLocaleString()} vph (${f1(BEAT_HZ)} beats/s). Barrel: 1 rev / ${periodText(D.omega.barrel)}.`]);
+  items.push(A.collisions.length
+    ? ['err', `<b>${A.collisions.length} clash${A.collisions.length > 1 ? 'es' : ''}</b> (parts shown red)<div class="mono">${A.collisions.map(c => `${c.text}: ${clashAmount(c)}`).join('<br>')}</div>`]
+    : ['ok', `<b>Collisions</b>: none. Every non-meshing pair (arbors, wheels, pinions, drum, hand sweeps) is at least ${S.minGap} mm apart and inside the movement`]);
+  items.push(['info', `<b>Furthest reach</b>: ${A.envelope.name} at r ${f2(A.envelope.r * s)} of ${f2(S.movementD / 2 * s)} mm`]);
+  items.push(['info', `<b>Tightest clearances</b><div class="mono">${A.near.slice(0, 3).map(n => `${n.text}: ${f3(n.clear * s)} mm`).join('<br>')}</div>`]);
+  if (A.interference.length) {
+    const meshes = new Set(A.interference.map(i => i.pair)).size;
+    items.push(['warn', `<b>Tooth interference on ${meshes} of ${D.meshes.length} meshes</b>
+      <div class="mono">${A.interference.map(i => `${i.from} tip into ${i.into}: ${f3(i.by * s)} mm`).join('<br>')}</div>
+      These pinions have 8–14 leaves, below the ~17-tooth involute minimum, so wheel tips cut into the pinion flanks below the base circle.
+      Watch trains use cycloidal teeth for this reason. Resizing doesn't fix it; it's set by tooth counts.
+      Options: cycloidal teeth, profile-shifted pinions, or more pinion leaves.`]);
+  }
+  document.getElementById('checks').innerHTML = items.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+}
+
+// ---------- history: every change is logged and undoable ----------
+let history = [{ state: clone(S), entries: [] }], hIndex = 0, autoAvoid = true;
+const MERGE_MS = 3000;
+
+// spec: { text } or { make(from, to), from, to, key }; key merges quick repeats of the same edit into one step.
+function commit(spec) {
+  const p = pending || { base: clone(S), baseKeys: new Set(A.collisions.map(c => c.key)), held: emptyHeld() };
+  pending = null;
+  const held = p.held;
+  settle(held);
+  const text = spec.make ? spec.make(spec.from, spec.to) : spec.text;
+  const entries = [{ who: 'you', text }];
+  const meshed = changeNotes(p.base, S, held);
+  if (meshed.follow.length) entries.push({ who: 'auto', text: `${listText(meshed.follow)} came along: locked, but meshed directly with what you moved, so ${meshed.follow.length > 1 ? 'they' : 'it'} had to follow.` });
+  if (meshed.out.length) entries.push({ who: 'auto', text: `To stay meshed: ${meshed.out.join('; ')}.` });
+  if (autoAvoid && spec.adapt !== false) {
+    const before = clone(S), had = analyse(S, derive(S)).collisions;
+    if (adapt(held)) {
+      const now = analyse(S, derive(S)).collisions, cleared = had.filter(c => !now.some(n => n.key === c.key)).map(c => c.text);
+      const fx = changeNotes(before, S, held);
+      if (fx.out.length) entries.push({ who: 'auto', text: `To clear ${cleared.length ? listText(cleared) : 'clashes'}: ${fx.out.join('; ')}.` });
+    }
+  }
+  const left = analyse(S, derive(S)).collisions;
+  for (const c of left) if (!p.baseKeys.has(c.key)) entries.push({ who: 'auto', stuck: true, text: stuckText(c, held, left) });
+  record(spec, entries);
+  solve();
+  renderSelected();
+  renderLog();
+}
+
+function record(spec, entries) {
+  const now = performance.now(), last = history[hIndex];
+  if (spec.key && hIndex > 0 && hIndex === history.length - 1 && last.key === spec.key && now - last.time < MERGE_MS) {
+    entries[0].text = spec.make(last.from, spec.to);
+    history[hIndex] = { state: clone(S), entries: [entries[0], ...last.entries.slice(1), ...entries.slice(1)], key: spec.key, from: last.from, time: now };
+    return;
+  }
+  history = history.slice(0, hIndex + 1);
+  history.push({ state: clone(S), entries, key: spec.key, from: spec.from, time: now });
+  hIndex = history.length - 1;
+}
+
+function restore(i) {
+  pending = null;
+  hIndex = i;
+  S = clone(history[hIndex].state);
+  solve();
+  renderSelected();
+  renderLog();
+}
+const undo = () => { if (hIndex > 0) restore(hIndex - 1); };
+const redo = () => { if (hIndex < history.length - 1) restore(hIndex + 1); };
+
+function renderLog() {
+  const items = [];
+  for (let i = hIndex; i >= 1; i--) for (const en of history[i].entries) {
+    items.push(`<li class="${en.who}${en.stuck ? ' stuck' : ''}"><b>${en.who === 'you' ? 'You' : 'Auto'}</b>${en.text}</li>`);
+  }
+  document.getElementById('log').innerHTML = items.length ? items.join('') : '<li class="empty">No changes yet. Select a part and drag its arrows, or type values.</li>';
+  document.getElementById('minGap').value = S.minGap;
+  document.getElementById('undo').disabled = hIndex === 0;
+  document.getElementById('redo').disabled = hIndex >= history.length - 1;
+}
+
+// ---------- motion ----------
+const VPH = Math.abs(D.omega.escape) / (2 * Math.PI) * 3600 * GEAR_DEFS.escape_wheel.z * 2;
+const BEAT_HZ = VPH / 3600;
+let t = 0, playing = true, speedIdx = 0, stepped = true;
+const tEff = () => (stepped ? Math.floor(t * BEAT_HZ + 1e-9) / BEAT_HZ : t);
+
+function dialText(te) {
+  const s = ((te % 43200) + 43200) % 43200;
+  const h = Math.floor(s / 3600) || 12, m = Math.floor(s / 60) % 60, sec = Math.floor(s) % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+const dialEl = document.getElementById('dial'), beatEl = document.getElementById('beat'), statsEl = document.getElementById('motionStats');
+let lastBeat = -1, beatFlashUntil = 0;
+function updateClock(te, now) {
+  dialEl.textContent = dialText(te);
+  const beat = Math.floor(t * BEAT_HZ + 1e-9);
+  if (beat !== lastBeat) { lastBeat = beat; beatFlashUntil = now + 60; }
+  beatEl.classList.toggle('on', SPEEDS[speedIdx] > 10 ? playing : now < beatFlashUntil);
+  const el = Math.floor(t);
+  statsEl.innerHTML = row('Elapsed', `${Math.floor(el / 3600)}h ${String(Math.floor(el / 60) % 60).padStart(2, '0')}m ${String(el % 60).padStart(2, '0')}s`)
+    + row('Beats', beat.toLocaleString())
+    + row('Escape wheel', `${f1(Math.abs(D.omega.escape) * 60 / (2 * Math.PI))} rpm`);
+}
+document.getElementById('beatTxt').textContent = `${Math.round(VPH).toLocaleString()} vph`;
+
+function setSpeed(i) {
+  speedIdx = Math.max(0, Math.min(SPEEDS.length - 1, i));
+  document.getElementById('speed').value = speedIdx;
+  const v = SPEEDS[speedIdx];
+  document.getElementById('speedTxt').textContent = v >= 3600 ? `${v}× · ${v / 3600} h per second` : v >= 60 ? `${v}× · ${v / 60} min per second` : `${v}×`;
+}
+
+// ---------- view ----------
+let grid = null;
+const VIEWS = { iso: [1, -1.15, 0.95], top: [0, -0.001, 1], back: [0, -0.001, -1], side: [0, -1, 0.02] };
+const stackMid = () => (4.2 + explode * EXPLODE_STEP * LMAX / 2) * scale;
+
+function rebuildGrid() {
+  if (grid) { scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
+  const Dm = S.movementD * scale * 1.3;
+  const cell = Math.pow(10, Math.floor(Math.log10(Dm / 8)));
+  const n = 2 * Math.ceil(Dm / 2 / cell);
+  grid = new THREE.GridHelper(n * cell, n, 0x33465a, 0x1e2b39);
   grid.rotation.x = Math.PI / 2;
+  grid.position.z = (-1 - EXPLODE_STEP * explode) * scale - 0.02 * scale;
   scene.add(grid);
+  document.getElementById('gridLabel').textContent = `grid ${+cell.toPrecision(1)} mm/cell`;
+}
 
-  // Highlight outline ring — a torus that draws around a selected part's AABB
-  const highlightGroup = new THREE.Group();
-  scene.add(highlightGroup);
-
-  // =========================================================================
-  // STATE
-  // =========================================================================
-  const DEFAULT_SCENE = {
-    version: '0.1',
-    project: 'hemistitch',
-    parts: [
-      {
-        id: 'case_middle',
-        type: 'cushion_case',
-        visible: true,
-        params: Object.fromEntries(PART_TYPES.cushion_case.schema.map(p => [p.name, p.default])),
-      },
-    ],
-    view: {
-      camera_position: [120, -240, 180],
-      camera_target: [0, 0, 0],
-    },
-  };
-
-  let state = structuredClone(DEFAULT_SCENE);
-  let selectedPartId = state.parts[0]?.id ?? null;
-  const partMeshes = new Map();   // partId -> THREE.Mesh
-  let dirty = false;
-
-  // Undo / redo
-  const history = { stack: [structuredClone(state)], ptr: 0, max: 100 };
-  function pushHistory() {
-    history.stack.length = history.ptr + 1;
-    history.stack.push(structuredClone(state));
-    if (history.stack.length > history.max) history.stack.shift();
-    history.ptr = history.stack.length - 1;
-    updateUndoButtons();
-    markDirty(true);
-  }
-  function undo() {
-    if (history.ptr === 0) return;
-    history.ptr--;
-    state = structuredClone(history.stack[history.ptr]);
-    syncFromState();
-    updateUndoButtons();
-    markDirty(true);
-  }
-  function redo() {
-    if (history.ptr >= history.stack.length - 1) return;
-    history.ptr++;
-    state = structuredClone(history.stack[history.ptr]);
-    syncFromState();
-    updateUndoButtons();
-    markDirty(true);
-  }
-  function updateUndoButtons() {
-    $('btn-undo').disabled = history.ptr === 0;
-    $('btn-redo').disabled = history.ptr >= history.stack.length - 1;
-  }
-
-  function markDirty(d) {
-    dirty = d;
-    $('dirty-flag').textContent = d ? '· modified' : '';
-    $('dirty-flag').className = d ? 'dirty' : '';
-  }
-
-  // =========================================================================
-  // RENDER / REBUILD
-  // =========================================================================
-  function disposeMesh(mesh) {
-    if (mesh.geometry) mesh.geometry.dispose();
-    if (mesh.material) mesh.material.dispose();
-    if (mesh.parent) mesh.parent.remove(mesh);
-  }
-
-  function rebuildPart(part) {
-    const prev = partMeshes.get(part.id);
-    if (prev) disposeMesh(prev);
-    const typeDef = PART_TYPES[part.type];
-    if (!typeDef) return;
-    const color = colorFromCss(typeDef.color).getHex();
-    const mesh = typeDef.build(part.params, color);
-    mesh.visible = part.visible !== false;
-    mesh.userData.partId = part.id;
-    scene.add(mesh);
-    partMeshes.set(part.id, mesh);
-  }
-
-  function rebuildAll() {
-    for (const mesh of partMeshes.values()) disposeMesh(mesh);
-    partMeshes.clear();
-    for (const part of state.parts) rebuildPart(part);
-    updateHighlight();
-    updateStatus();
-  }
-
-  function updateHighlight() {
-    while (highlightGroup.children.length) {
-      const c = highlightGroup.children[0];
-      highlightGroup.remove(c);
-      if (c.geometry) c.geometry.dispose();
-      if (c.material) c.material.dispose();
-    }
-    if (!selectedPartId) return;
-    const mesh = partMeshes.get(selectedPartId);
-    if (!mesh || !mesh.visible) return;
-    const box = new THREE.Box3().setFromObject(mesh);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const geo = new THREE.BoxGeometry(size.x + 2, size.y + 2, size.z + 2);
-    const edges = new THREE.EdgesGeometry(geo);
-    const mat = new THREE.LineBasicMaterial({ color: colorFromCss('--highlight').getHex() });
-    const lines = new THREE.LineSegments(edges, mat);
-    lines.position.copy(center);
-    highlightGroup.add(lines);
-    geo.dispose();
-  }
-
-  function updateStatus() {
-    const part = state.parts.find(p => p.id === selectedPartId);
-    if (!part) { $('dims').textContent = `${state.parts.length} part${state.parts.length === 1 ? '' : 's'}`; return; }
-    const p = part.params;
-    if (part.type === 'cushion_case') {
-      $('dims').textContent = `${part.id}  ${p.width}×${p.height}×${p.depth} mm`;
-    } else {
-      $('dims').textContent = part.id;
-    }
-  }
-
-  // =========================================================================
-  // PARTS PANEL
-  // =========================================================================
-  function renderPartsList() {
-    const list = $('parts-list');
-    list.innerHTML = '';
-    if (!state.parts.length) {
-      const empty = document.createElement('p');
-      empty.className = 'empty-note';
-      empty.textContent = 'No parts in scene.';
-      list.appendChild(empty);
-      return;
-    }
-    for (const part of state.parts) {
-      const typeDef = PART_TYPES[part.type];
-      const row = document.createElement('div');
-      row.className = 'part-row';
-      row.setAttribute('role', 'listitem');
-      if (part.id === selectedPartId) row.classList.add('selected');
-      if (part.visible === false) row.classList.add('hidden');
-
-      const sw = document.createElement('span');
-      sw.className = 'part-swatch';
-      sw.style.background = cssVar(typeDef.color);
-
-      const name = document.createElement('span');
-      name.className = 'part-name';
-      name.innerHTML = `${part.id}<span class="part-type">${typeDef.label}</span>`;
-
-      const eye = document.createElement('button');
-      eye.className = 'part-eye';
-      eye.textContent = part.visible === false ? '○' : '●';
-      eye.title = part.visible === false ? 'Show' : 'Hide';
-      eye.setAttribute('aria-label', part.visible === false ? 'Show part' : 'Hide part');
-      eye.addEventListener('click', (e) => {
-        e.stopPropagation();
-        togglePartVisibility(part.id);
-      });
-
-      row.addEventListener('click', () => selectPart(part.id));
-      row.appendChild(sw);
-      row.appendChild(name);
-      row.appendChild(eye);
-      list.appendChild(row);
-    }
-    $('part-count').textContent = `${state.parts.length} part${state.parts.length === 1 ? '' : 's'}`;
-  }
-
-  function selectPart(id) {
-    selectedPartId = id;
-    renderPartsList();
-    renderParamsPanel();
-    updateHighlight();
-    updateStatus();
-  }
-
-  function togglePartVisibility(id) {
-    const part = state.parts.find(p => p.id === id);
-    if (!part) return;
-    part.visible = !part.visible;
-    const mesh = partMeshes.get(id);
-    if (mesh) mesh.visible = part.visible;
-    renderPartsList();
-    updateHighlight();
-    pushHistory();
-  }
-
-  // =========================================================================
-  // PARAMETERS PANEL
-  // =========================================================================
-  function renderParamsPanel() {
-    const panel = $('params-list');
-    panel.innerHTML = '';
-    const part = state.parts.find(p => p.id === selectedPartId);
-    if (!part) {
-      $('selected-name').textContent = '';
-      const empty = document.createElement('p');
-      empty.className = 'empty-note';
-      empty.textContent = 'Select a part to edit its parameters.';
-      panel.appendChild(empty);
-      return;
-    }
-    $('selected-name').textContent = part.id;
-    const typeDef = PART_TYPES[part.type];
-    let paramDebounce = null;
-    for (const def of typeDef.schema) {
-      const row = document.createElement('div');
-      row.className = 'param-row';
-
-      const label = document.createElement('label');
-      label.setAttribute('for', `p_${def.name}`);
-      label.innerHTML = `${def.label}<span class="unit">${def.unit || ''}</span>`;
-
-      const val = document.createElement('span');
-      val.className = 'val';
-      val.textContent = formatValue(part.params[def.name], def);
-
-      const input = document.createElement('input');
-      input.type = def.type;
-      input.id = `p_${def.name}`;
-      input.min = def.min;
-      input.max = def.max;
-      input.step = def.step;
-      input.value = part.params[def.name];
-      input.addEventListener('input', () => {
-        const v = parseFloat(input.value);
-        part.params[def.name] = v;
-        val.textContent = formatValue(v, def);
-        rebuildPart(part);
-        updateHighlight();
-        updateStatus();
-        markDirty(true);
-        if (paramDebounce) clearTimeout(paramDebounce);
-        paramDebounce = setTimeout(() => pushHistory(), 400);
-      });
-
-      row.appendChild(label);
-      row.appendChild(val);
-      row.appendChild(input);
-      panel.appendChild(row);
-    }
-  }
-
-  function formatValue(v, def) {
-    const step = def.step || 1;
-    const decimals = step >= 1 ? 0 : (step >= 0.1 ? 1 : 2);
-    return Number(v).toFixed(decimals);
-  }
-
-  // =========================================================================
-  // VIEWS
-  // =========================================================================
-  function frameAll() {
-    const box = new THREE.Box3();
-    for (const mesh of partMeshes.values()) box.expandByObject(mesh);
-    if (box.isEmpty()) return { center: new THREE.Vector3(), radius: 100 };
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const radius = Math.max(size.x, size.y, size.z) * 0.9;
-    return { center, radius };
-  }
-  function setView(preset) {
-    const { center, radius } = frameAll();
-    const d = radius * 2.8;
-    if (preset === 'iso')   camera.position.set(center.x + d * 0.6, center.y - d * 0.9, center.z + d * 0.7);
-    if (preset === 'top')   camera.position.set(center.x, center.y, center.z + d);
-    if (preset === 'side')  camera.position.set(center.x + d, center.y, center.z);
-    if (preset === 'front') camera.position.set(center.x, center.y - d, center.z);
-    controls.target.copy(center);
-    controls.update();
-  }
-
-  // =========================================================================
-  // SAVE / LOAD
-  // =========================================================================
-  function serializeState() {
-    const camPos = camera.position.toArray();
-    const camTarget = controls.target.toArray();
-    const snap = structuredClone(state);
-    snap.view = { camera_position: camPos, camera_target: camTarget };
-    return JSON.stringify(sortKeys(snap), null, 2) + '\n';
-  }
-
-  function sortKeys(obj) {
-    if (Array.isArray(obj)) return obj.map(sortKeys);
-    if (obj && typeof obj === 'object') {
-      const out = {};
-      for (const k of Object.keys(obj).sort()) out[k] = sortKeys(obj[k]);
-      return out;
-    }
-    return obj;
-  }
-
-  async function saveJson() {
-    const json = serializeState();
-    try {
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${state.project || 'scene'}.params.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {}
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(json);
-        const btn = document.getElementById('btn-save');
-        const orig = btn.textContent;
-        btn.textContent = 'JSON copied';
-        setTimeout(() => { btn.textContent = orig; }, 1800);
-      } catch (e) {}
-    }
-    markDirty(false);
-  }
-
-  function loadJsonFromFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const loaded = JSON.parse(e.target.result);
-        if (!loaded.parts || !Array.isArray(loaded.parts)) throw new Error('Invalid: missing parts array');
-        state = loaded;
-        selectedPartId = state.parts[0]?.id ?? null;
-        history.stack.length = 0;
-        history.stack.push(structuredClone(state));
-        history.ptr = 0;
-        updateUndoButtons();
-        syncFromState();
-        if (state.view?.camera_position) camera.position.fromArray(state.view.camera_position);
-        if (state.view?.camera_target) controls.target.fromArray(state.view.camera_target);
-        controls.update();
-        markDirty(false);
-      } catch (err) {
-        alert(`Could not load JSON: ${err.message}`);
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  // =========================================================================
-  // STATE SYNC
-  // =========================================================================
-  function syncFromState() {
-    $('project-name').textContent = state.project || '(untitled)';
-    rebuildAll();
-    renderPartsList();
-    renderParamsPanel();
-  }
-
-  // =========================================================================
-  // THEME
-  // =========================================================================
-  function applyTheme(mode) {
-    const root = document.documentElement;
-    if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode);
-    else root.removeAttribute('data-theme');
-    try { localStorage.setItem('bspk.theme', mode || 'auto'); } catch (e) {}
-    updateSceneBg();
-    rebuildAll();
-  }
-  try {
-    const stored = localStorage.getItem('bspk.theme');
-    if (stored === 'light' || stored === 'dark') applyTheme(stored);
-  } catch (e) {}
-  $('themeToggle').addEventListener('click', () => {
-    const cur = document.documentElement.getAttribute('data-theme');
-    const next = cur === 'dark' ? 'light' : (cur === 'light' ? null : 'dark');
-    applyTheme(next);
-  });
-  if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (!document.documentElement.getAttribute('data-theme')) { updateSceneBg(); rebuildAll(); }
-    });
-  }
-
-  // =========================================================================
-  // WIRE UP
-  // =========================================================================
-  document.querySelectorAll('#toolbar [data-view]').forEach(btn => {
-    btn.addEventListener('click', () => setView(btn.dataset.view));
-  });
-  $('btn-undo').addEventListener('click', undo);
-  $('btn-redo').addEventListener('click', redo);
-  $('btn-grid').addEventListener('click', (e) => {
-    grid.visible = !grid.visible;
-    e.currentTarget.classList.toggle('active', grid.visible);
-  });
-  $('btn-save').addEventListener('click', saveJson);
-  $('btn-load').addEventListener('click', () => $('file-input').click());
-  $('file-input').addEventListener('change', (e) => {
-    const f = e.target.files[0];
-    if (f) loadJsonFromFile(f);
-    e.target.value = '';
-  });
-
-  document.addEventListener('keydown', (e) => {
-    const mod = e.metaKey || e.ctrlKey;
-    if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-    else if (mod && (e.key === 'Z' || (e.key === 'z' && e.shiftKey)) || (mod && e.key === 'y')) { e.preventDefault(); redo(); }
-    else if (mod && e.key === 's') { e.preventDefault(); saveJson(); }
-  });
-
-  // =========================================================================
-  // RENDER LOOP
-  // =========================================================================
-  function loop() {
-    requestAnimationFrame(loop);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-
-  // =========================================================================
-  // BOOT
-  // =========================================================================
-  resize();
-  syncFromState();
-  camera.position.fromArray(state.view.camera_position);
-  controls.target.fromArray(state.view.camera_target);
+function fit() {
+  const Dm = S.movementD * scale, H = (9.4 + EXPLODE_STEP * LMAX * explode) * scale;
+  const R = 0.5 * Math.hypot(Dm, H);
+  const vHalf = camera.fov * Math.PI / 360;
+  const half = Math.min(vHalf, Math.atan(Math.tan(vHalf) * camera.aspect));
+  const dist = 0.9 * R / Math.sin(half);
+  const dir = camera.position.clone().sub(controls.target);
+  if (dir.lengthSq() < 1e-12) dir.set(...VIEWS.iso);
+  dir.normalize();
+  controls.target.set(0, 0, stackMid());
+  camera.position.copy(controls.target).addScaledVector(dir, dist);
+  camera.near = dist / 300;
+  camera.far = dist * 20;
+  camera.updateProjectionMatrix();
   controls.update();
-  loop();
-})();
+}
+
+function frameAt(x, y, z, r) {
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  controls.target.set(x, y, z);
+  camera.position.copy(controls.target).addScaledVector(dir, r * 3.4);
+  controls.update();
+}
+
+function frame(id) {
+  const p = parts[id];
+  if (!p || p.kind === 'plate') return fit();
+  const c = p.root.getWorldPosition(new THREE.Vector3());
+  const a = ARBOR[id];
+  const r = a ? Math.max(...a.gears.map(g => D.gears[g.id].ra)) : S.hands[id].length;
+  const zMid = a ? D.tops[id] / 2 : S.hands[id].z;
+  frameAt(c.x, c.y, c.z + zMid * scale, r * scale);
+}
+
+function setView(name) {
+  const dist = camera.position.distanceTo(controls.target);
+  camera.position.copy(controls.target).addScaledVector(new THREE.Vector3(...VIEWS[name]).normalize(), dist);
+  controls.update();
+}
+
+function setExplode(v) {
+  explode = Math.max(0, Math.min(1, v));
+  for (const id of partOrder) parts[id].root.position.z = explode * EXPLODE_STEP * parts[id].level;
+  document.getElementById('explode').value = Math.round(explode * 100);
+  document.getElementById('explodeTxt').textContent = `${Math.round(explode * 100)}%`;
+  rebuildGrid();
+  fit();
+  pointerDirty = true;
+}
+
+function setScale(v) {
+  scale = v;
+  world.scale.setScalar(scale);
+  document.getElementById('scale').value = scale;
+  document.getElementById('scaleTxt').textContent = `${scale}× · movement Ø ${f1(S.movementD * scale)} mm`;
+  rebuildGrid();
+  fit();
+  solve();
+  renderSelected();
+}
+
+function setFocus(v) {
+  focus = v;
+  pointerDirty = true;
+  document.getElementById('focus').value = v;
+  if (selectedId && !inFocus(selectedId)) selectedId = null;
+  refreshLook();
+  renderSelected();
+}
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+document.getElementById('play').addEventListener('click', e => { playing = !playing; e.target.textContent = playing ? 'Pause' : 'Play'; });
+document.getElementById('resetTime').addEventListener('click', () => { t = 0; });
+document.getElementById('speed').addEventListener('input', e => setSpeed(+e.target.value));
+document.getElementById('stepped').addEventListener('change', e => { stepped = e.target.checked; });
+document.getElementById('explode').addEventListener('input', e => setExplode(+e.target.value / 100));
+document.getElementById('scale').addEventListener('input', e => setScale(+e.target.value));
+document.getElementById('focus').addEventListener('change', e => setFocus(e.target.value));
+document.getElementById('labelsToggle').addEventListener('change', e => { labelsOn = e.target.checked; });
+document.getElementById('edges').addEventListener('change', e => { edgesOn = e.target.checked; refreshLook(); });
+document.getElementById('fit').addEventListener('click', fit);
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+document.getElementById('undo').addEventListener('click', undo);
+document.getElementById('redo').addEventListener('click', redo);
+document.getElementById('autoAvoid').addEventListener('change', e => { autoAvoid = e.target.checked; });
+document.getElementById('minGap').addEventListener('change', e => {
+  const v = +e.target.value;
+  if (e.target.value === '' || !isFinite(v) || v < 0 || v === S.minGap) { e.target.value = S.minGap; return; }
+  cancelPending();
+  const from = S.minGap;
+  S.minGap = v;
+  commit({ text: `Minimum gap ${from} → ${v} mm` });
+});
+document.getElementById('resetTrain').addEventListener('click', () => {
+  cancelPending();
+  S = clone(DEFAULT_STATE);
+  commit({ text: 'Reset the train to the default layout and locks', adapt: false });
+});
+
+// Small handle for driving and reading the sim from scripts. Lengths are in displayed mm (print scale applied).
+function scripted(mutate, text) { cancelPending(); liveEdit(mutate); commit({ text }); }
+window.studio = {
+  state: () => clone(S),
+  analysis: () => A,
+  periods: () => Object.fromEntries(Object.entries(D.omega).map(([k, w]) => [k, { seconds: 2 * Math.PI / Math.abs(w), dir: dirText(w) }])),
+  positions: () => clonePos(S.pos),
+  log: () => history.slice(1, hIndex + 1).flatMap(h => h.entries),
+  move: (id, x, y) => scripted(EDIT.move(arborOf(id), x / scale, y / scale), `Moved ${parts[id].name} to ${f2(x)}, ${f2(y)} mm`),
+  pitch: (gid, mm) => scripted(EDIT.pitch(gid, mm / scale), `${GEAR_DEFS[gid].label} pitch Ø → ${f2(mm)} mm${withPartner(gid, 'resized')}`),
+  height: (id, mm) => (HAND[id] ? scripted(EDIT.hand(id, 'z', mm / scale), `${HAND[id].name} height → ${f2(mm)} mm`)
+                                : scripted(EDIT.z(id, mm / scale), `${GEAR_DEFS[id].label} height → ${f2(mm)} mm${withPartner(id, 'moved')}`)),
+  thickness: (id, mm) => (HAND[id] ? scripted(EDIT.hand(id, 't', mm / scale), `${HAND[id].name} thickness → ${f2(mm)} mm`)
+                                   : scripted(EDIT.thick(id, mm / scale), `${GEAR_DEFS[id].label} thickness → ${f2(mm)} mm`)),
+  length: (hid, mm) => scripted(EDIT.hand(hid, 'length', mm / scale), `${HAND[hid].name} length → ${f2(mm)} mm`),
+  lock: (id, on = true) => { if (!!S.locks[id] !== on) toggleLock(id, GEAR_DEFS[id] ? GEAR_DEFS[id].label : HAND[id].name); },
+  undo, redo, select, frame, frameAt, setFocus, setExplode, setScale, setSpeed, setView,
+  setTime: v => { t = v; },
+  dial: () => dialText(tEff()),
+  pause: () => { playing = false; },
+  play: () => { playing = true; },
+  pickAt,
+};
+
+solve();
+setSpeed(0);
+setScale(1);
+setView('iso');
+renderSelected();
+renderLog();
+
+let last = performance.now(), lastPick = 0;
+(function tick(now) {
+  const dt = Math.min((now - last) / 1000, 0.1);
+  last = now;
+  if (solveQueued) { solveQueued = false; solve(); }
+  if (playing) t += dt * SPEEDS[speedIdx];
+  const te = tEff();
+  for (const a of ARBOR_DEFS) parts[a.id].spin.rotation.z = D.omega[a.id] * te;
+  for (const h of HAND_DEFS) parts[h.id].spin.rotation.z = D.omega[h.arbor] * te;
+  placeGizmo();
+  controls.update();
+  scene.updateMatrixWorld();
+  // Re-pick while the pointer rests too: parts turn, move and fade under a still cursor.
+  if (pointerXY && !dragging && !gz && (pointerDirty || now - lastPick > 200)) {
+    pointerDirty = false;
+    lastPick = now;
+    if (hoverSource !== 'label' && hoverSource !== 'list') setHover(pickAt(pointerXY.cx, pointerXY.cy), 'view');
+  }
+  renderTip();
+  renderer.render(scene, camera);
+  updateLabels();
+  updateClock(te, now);
+  requestAnimationFrame(tick);
+})(last);
 </script>
+</body>
+</html>

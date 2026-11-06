@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BSPK Studio · Single gear</title>
+<style>
+:root{
+  --bg:#0d1319; --stage-top:#18222d; --panel:#121a22; --line:#243140; --line-2:#2f3e4f;
+  --fg:#dce5ed; --muted:#8798aa; --dim:#5f7183; --accent:#86bddb; --accent-ink:#0d1319;
+  --warn:#e3a95c; --err:#e67b6b; --ok:#7fc29b;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 var(--ui)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 330px;height:100vh}
+.stage{position:relative;min-width:0;background:radial-gradient(ellipse at 50% 40%,var(--stage-top),var(--bg) 75%)}
+#view{display:block;width:100%;height:100%;touch-action:none}
+.overlay{position:absolute;left:14px;font:11px/1.4 var(--mono);color:var(--muted);background:rgba(13,19,25,.72);border:1px solid var(--line);border-radius:6px;padding:6px 9px;pointer-events:none}
+.overlay.top{top:14px}.overlay.bottom{bottom:14px}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:18px 18px 28px;display:flex;flex-direction:column;gap:22px}
+.eyebrow{font:600 10.5px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+h1{margin:6px 0 2px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:4px;margin-top:10px}
+.tabs a{font-size:12px;color:var(--muted);text-decoration:none;padding:5px 9px;border:1px solid var(--line-2);border-radius:6px}
+.tabs a:hover{border-color:var(--accent)}
+.tabs a.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+section{display:flex;flex-direction:column;gap:10px}
+#params{display:flex;flex-direction:column;gap:12px}
+.param{display:grid;grid-template-columns:1fr 78px 22px;align-items:center;column-gap:6px;row-gap:4px}
+.param input[type=number]{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line-2);border-radius:5px;padding:4px 6px;font:12px var(--mono);text-align:right}
+.param input[type=number]:focus{outline:none;border-color:var(--accent)}
+.param .unit{color:var(--muted);font:11px var(--mono)}
+.param input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:0}
+dl{margin:0;display:grid;grid-template-columns:1fr auto;row-gap:5px;column-gap:10px;font:12px var(--mono)}
+dt{color:var(--muted);font-family:var(--ui)}
+dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.checks li{border-left:3px solid var(--line-2);padding:6px 9px;background:rgba(255,255,255,.02);border-radius:0 5px 5px 0;font-size:12px}
+.checks li.ok{border-color:var(--ok)}
+.checks li.warn{border-color:var(--warn)}
+.checks li.err{border-color:var(--err)}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button{background:#1d2935;color:var(--fg);border:1px solid var(--line-2);border-radius:6px;padding:7px 11px;font:12px var(--ui);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.4;cursor:not-allowed}
+.run{font:11px/1.5 var(--mono);color:var(--muted);word-break:break-all}
+.run code{color:var(--fg)}
+details summary{cursor:pointer;color:var(--muted);font-size:12px}
+textarea{width:100%;height:220px;margin-top:8px;background:var(--bg);color:var(--fg);border:1px solid var(--line-2);border-radius:5px;font:11px/1.45 var(--mono);padding:8px;resize:vertical}
+.toggle{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.toggle input{accent-color:var(--accent)}
+@media (max-width:800px){
+  main{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}
+  aside{border-left:0;border-top:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="stage" id="stage">
+    <canvas id="view"></canvas>
+    <div class="overlay top">mm · Z up · <span id="gridLabel"></span></div>
+    <div class="overlay bottom">drag orbit · right-drag pan · scroll zoom</div>
+  </div>
+  <aside>
+    <header>
+      <div class="eyebrow">BSPK Studio</div>
+      <h1>Involute spur gear</h1>
+      <div class="sub">Part 1 · single-part preview</div>
+      <nav class="tabs"><a href="index.html">Watch train</a><a class="on" href="gear.html">Single gear</a></nav>
+    </header>
+
+    <section>
+      <div class="eyebrow">Parameters</div>
+      <div id="params"></div>
+      <div class="row"><button id="reset">Reset to defaults</button></div>
+    </section>
+
+    <section>
+      <div class="eyebrow">Derived</div>
+      <dl id="derived"></dl>
+    </section>
+
+    <section>
+      <div class="eyebrow">Checks</div>
+      <ul class="checks" id="checks"></ul>
+    </section>
+
+    <section>
+      <div class="eyebrow">Export · CadQuery</div>
+      <div class="row">
+        <button class="primary" id="copy">Copy script</button>
+        <button id="download">Download .py</button>
+      </div>
+      <div class="run" id="runHint"></div>
+      <details id="scriptBox"><summary>Show script</summary><textarea id="script" readonly spellcheck="false"></textarea></details>
+    </section>
+
+    <section>
+      <div class="eyebrow">View</div>
+      <div class="row">
+        <button data-view="iso">Iso</button><button data-view="top">Top</button><button data-view="side">Side</button><button id="fit">Fit</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="edges" checked> Edge lines</label>
+    </section>
+  </aside>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="involute.js"></script>
+<script>
+'use strict';
+const { N_FLANK, N_TIP, N_VALLEY, computeGear, outline, polygonArea } = Involute;
+
+const PARAMS = [
+  { key: 'module',         label: 'Module',         unit: 'mm', min: 0.05, max: 3,   hard: 20,   step: 0.01, def: 0.5 },
+  { key: 'teeth',          label: 'Teeth',          unit: '',   min: 6,    max: 120, hard: 200,  step: 1,    def: 24, int: true },
+  { key: 'pressure_angle', label: 'Pressure angle', unit: '°',  min: 14.5, max: 25,  hard: 30,   step: 0.5,  def: 20 },
+  { key: 'bore',           label: 'Bore Ø',         unit: 'mm', min: 0,    max: 20,  hard: 1000, step: 0.05, def: 3 },
+  { key: 'thickness',      label: 'Thickness',      unit: 'mm', min: 0.1,  max: 20,  hard: 1000, step: 0.05, def: 2 },
+];
+const state = Object.fromEntries(PARAMS.map(p => [p.key, p.def]));
+const fmt = v => (+v).toFixed(3);
+const fmtParam = v => String(+(+v).toFixed(4));
+
+function evaluate(s, g) {
+  const errors = [], warnings = [];
+  const rootD = 2 * g.rf;
+  if (g.pointed) errors.push('Teeth come to a point before reaching the outer diameter at this tooth count and pressure angle.');
+  if (g.crowded) errors.push('Neighbouring tooth roots overlap at this tooth count and pressure angle.');
+  if (s.bore >= rootD) errors.push(`Bore Ø ${fmt(s.bore)} mm reaches the root Ø ${fmt(rootD)} mm, so the bore would cut through the tooth roots.`);
+  const zMin = 2 / Math.sin(g.pa) ** 2;
+  if (g.z < zMin) warnings.push(`${g.z} teeth is fewer than ${Math.ceil(zMin)} at ${fmtParam(s.pressure_angle)}°. A cut gear would undercut here. This preview draws the profile without undercut, so a mating gear may clash near the roots.`);
+  return { errors, warnings };
+}
+
+// ---------- three.js scene ----------
+const canvas = document.getElementById('view');
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000);
+camera.up.set(0, 0, 1);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.12;
+
+scene.add(new THREE.HemisphereLight(0xe4edf5, 0x1c2630, 0.85));
+const key = new THREE.DirectionalLight(0xffffff, 0.85);
+key.position.set(1.2, -1.6, 2.2);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fc4dc, 0.35);
+rim.position.set(-1.5, 1.2, -0.6);
+scene.add(rim);
+
+const PART_COLOR = 0xc4ccd4, ERR_COLOR = 0xd98a7c;
+const mat = new THREE.MeshStandardMaterial({
+  color: PART_COLOR, metalness: 0.25, roughness: 0.45,
+  polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
+});
+const edgeMat = new THREE.LineBasicMaterial({ color: 0x0b1117, transparent: true, opacity: 0.8 });
+const edgesToggle = document.getElementById('edges');
+let mesh = null, edges = null, grid = null, fitDiameter = 0;
+let last = null;
+
+function setMesh(geom) {
+  if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); }
+  if (edges) { scene.remove(edges); edges.geometry.dispose(); }
+  mesh = new THREE.Mesh(geom, mat);
+  scene.add(mesh);
+  edges = new THREE.LineSegments(new THREE.EdgesGeometry(geom, 28), edgeMat);
+  edges.visible = edgesToggle.checked;
+  scene.add(edges);
+}
+
+function rebuild() {
+  const g = computeGear(state);
+  const { errors, warnings } = evaluate(state, g);
+  last = { g, errors, warnings, volume: null };
+  if (!g.pointed && !g.crowded) {
+    const pts = outline(g);
+    const shape = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
+    const boreOk = state.bore > 0 && state.bore < 2 * g.rf;
+    if (boreOk) {
+      const hole = new THREE.Path();
+      hole.absarc(0, 0, state.bore / 2, 0, Math.PI * 2, true);
+      shape.holes.push(hole);
+    }
+    setMesh(new THREE.ExtrudeGeometry(shape, { depth: state.thickness, bevelEnabled: false, curveSegments: 48 }));
+    const boreArea = boreOk ? Math.PI * (state.bore / 2) ** 2 : 0;
+    if (!errors.length) last.volume = (polygonArea(pts) - boreArea) * state.thickness;
+  }
+  mat.color.setHex(errors.length ? ERR_COLOR : PART_COLOR);
+}
+
+function rebuildGrid(D) {
+  if (grid) { scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
+  const cell = Math.pow(10, Math.floor(Math.log10(D / 5)));
+  const n = 2 * Math.ceil(D / cell);
+  grid = new THREE.GridHelper(n * cell, n, 0x3a4b5d, 0x223040);
+  grid.rotation.x = Math.PI / 2;
+  grid.position.z = -D * 0.0005;
+  scene.add(grid);
+  document.getElementById('gridLabel').textContent = `grid ${+cell.toPrecision(1)} mm/cell`;
+}
+
+const VIEWS = { iso: [1, -1.15, 0.95], top: [0, -0.001, 1], side: [0, -1, 0] };
+
+function fit(force) {
+  const D = 2 * last.g.ra;
+  if (!force && fitDiameter && Math.max(D / fitDiameter, fitDiameter / D) < 1.35) return;
+  fitDiameter = D;
+  const dir = camera.position.clone().sub(controls.target);
+  if (dir.lengthSq() < 1e-12) dir.set(...VIEWS.iso);
+  dir.normalize();
+  controls.target.set(0, 0, state.thickness / 2);
+  camera.position.copy(controls.target).addScaledVector(dir, D * 2.3);
+  camera.near = D / 200;
+  camera.far = D * 200;
+  camera.updateProjectionMatrix();
+  rebuildGrid(D);
+  controls.update();
+}
+
+function setView(name) {
+  const dist = camera.position.distanceTo(controls.target) || 2.3 * fitDiameter;
+  camera.position.copy(controls.target).addScaledVector(new THREE.Vector3(...VIEWS[name]).normalize(), dist);
+  controls.update();
+}
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+// ---------- panel ----------
+const controlsByKey = {};
+const paramsEl = document.getElementById('params');
+for (const p of PARAMS) {
+  const row = document.createElement('div');
+  row.className = 'param';
+  row.innerHTML =
+    `<label for="n-${p.key}">${p.label}</label>` +
+    `<input type="number" id="n-${p.key}" step="${p.step}" min="${p.min}">` +
+    `<span class="unit">${p.unit}</span>` +
+    `<input type="range" id="r-${p.key}" min="${p.min}" max="${p.max}" step="${p.step}" aria-label="${p.label}">`;
+  paramsEl.appendChild(row);
+  const num = row.querySelector('input[type=number]');
+  const rng = row.querySelector('input[type=range]');
+  controlsByKey[p.key] = { p, num, rng };
+  rng.addEventListener('input', () => setParam(p.key, +rng.value, 'range'));
+  num.addEventListener('input', () => { if (num.value !== '' && isFinite(+num.value)) setParam(p.key, +num.value, 'num'); });
+  num.addEventListener('change', syncInputs);
+}
+
+function setParam(k, v, from) {
+  const { p, num, rng } = controlsByKey[k];
+  if (p.int) v = Math.round(v);
+  v = Math.min(Math.max(v, p.min), p.hard);
+  state[k] = v;
+  if (from !== 'num') num.value = fmtParam(v);
+  if (from !== 'range') rng.value = v;
+  schedule();
+}
+
+function syncInputs() {
+  for (const k in controlsByKey) {
+    const { num, rng } = controlsByKey[k];
+    num.value = fmtParam(state[k]);
+    rng.value = state[k];
+  }
+}
+
+let pending = false;
+function schedule() {
+  if (pending) return;
+  pending = true;
+  requestAnimationFrame(() => { pending = false; update(); });
+}
+
+function update() {
+  rebuild();
+  fit(false);
+  renderPanel();
+}
+
+function renderPanel() {
+  const g = last.g;
+  const rows = [
+    ['Pitch Ø', fmt(2 * g.rp) + ' mm'],
+    ['Outer Ø', fmt(2 * g.ra) + ' mm'],
+    ['Root Ø', fmt(2 * g.rf) + ' mm'],
+    ['Base Ø', fmt(2 * g.rb) + ' mm'],
+    ['Circular pitch', fmt(Math.PI * g.m) + ' mm'],
+    ['Wall, bore → root', state.bore > 0 ? fmt(g.rf - state.bore / 2) + ' mm' : 'no bore'],
+    ['Volume', last.volume == null ? '—' : last.volume.toFixed(2) + ' mm³'],
+  ];
+  document.getElementById('derived').innerHTML = rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
+
+  const items = [
+    ...last.errors.map(t => `<li class="err">${t}</li>`),
+    ...last.warnings.map(t => `<li class="warn">${t}</li>`),
+  ];
+  if (!items.length) items.push('<li class="ok">No conflicts within this part. Meshing and interference with other parts aren\'t checked yet; that arrives with part 2.</li>');
+  document.getElementById('checks').innerHTML = items.join('');
+
+  const blocked = last.errors.length > 0;
+  copyBtn.disabled = dlBtn.disabled = blocked;
+  const name = scriptName();
+  document.getElementById('runHint').innerHTML = blocked
+    ? 'Export is off until the errors above are resolved.'
+    : `Run: <code>~/BSPK/bspk-studio/.venv/bin/python ${name}.py</code><br>Writes ${name}.step and ${name}.stl next to the script.`;
+  scriptTa.value = blocked ? '' : exportScript();
+}
+
+// ---------- export ----------
+function scriptName() {
+  return `gear_m${fmtParam(state.module).replace('.', 'p')}_z${Math.round(state.teeth)}`;
+}
+
+function exportScript() {
+  const name = scriptName(), z = Math.round(state.teeth);
+  return `"""
+Involute spur gear, exported from BSPK Studio.
+
+  module ${fmtParam(state.module)} mm, ${z} teeth, pressure angle ${fmtParam(state.pressure_angle)} deg,
+  bore ${fmtParam(state.bore)} mm, thickness ${fmtParam(state.thickness)} mm
+
+Run with the bspk-studio venv:
+  ~/BSPK/bspk-studio/.venv/bin/python ${name}.py
+Writes ${name}.step and ${name}.stl next to this file.
+"""
+import math
+import os
+
+import cadquery as cq
+from OCP.Bnd import Bnd_Box
+from OCP.BRepBndLib import BRepBndLib
+
+MODULE_MM = ${fmtParam(state.module)}
+TEETH = ${z}
+PRESSURE_ANGLE_DEG = ${fmtParam(state.pressure_angle)}
+BORE_MM = ${fmtParam(state.bore)}
+THICKNESS_MM = ${fmtParam(state.thickness)}
+NAME = "${name}"
+
+N_FLANK, N_TIP, N_VALLEY = ${N_FLANK}, ${N_TIP}, ${N_VALLEY}
+
+
+def outline():
+    pa = math.radians(PRESSURE_ANGLE_DEG)
+    m, z = MODULE_MM, TEETH
+    rp = m * z / 2
+    rb = rp * math.cos(pa)
+    ra = rp + m
+    rf = rp - 1.25 * m
+    half = math.pi / (2 * z) + (math.tan(pa) - pa)
+    t0 = math.sqrt((rf / rb) ** 2 - 1) if rf > rb else 0.0
+    t1 = math.sqrt((ra / rb) ** 2 - 1)
+    flank = []
+    for i in range(N_FLANK + 1):
+        t = t0 + (t1 - t0) * i / N_FLANK
+        flank.append((rb * math.sqrt(1 + t * t), -half + t - math.atan(t)))
+    tip_half = -flank[-1][1]
+    root_half = half if rf < rb else -flank[0][1]
+    step = 2 * math.pi / z
+
+    def P(r, a):
+        return (r * math.cos(a), r * math.sin(a))
+
+    pts = []
+    for i in range(z):
+        a = i * step
+        if rf < rb:
+            pts.append(P(rf, a - half))
+        pts += [P(r, a + ang) for r, ang in flank]
+        pts += [P(ra, a - tip_half + 2 * tip_half * j / N_TIP) for j in range(1, N_TIP)]
+        pts += [P(r, a - ang) for r, ang in reversed(flank)]
+        if rf < rb:
+            pts.append(P(rf, a + half))
+        v0, v1 = a + root_half, a + step - root_half
+        pts += [P(rf, v0 + (v1 - v0) * j / N_VALLEY) for j in range(1, N_VALLEY)]
+    return pts
+
+
+gear = cq.Workplane("XY").polyline(outline()).close().extrude(THICKNESS_MM)
+if BORE_MM > 0:
+    bore = cq.Workplane("XY").workplane(offset=-0.1).circle(BORE_MM / 2).extrude(THICKNESS_MM + 0.2)
+    gear = gear.cut(bore)
+
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)), NAME)
+cq.exporters.export(gear, out + ".step")
+cq.exporters.export(gear, out + ".stl", tolerance=0.01, angularTolerance=0.1)
+
+solid = gear.val()
+box = Bnd_Box()
+BRepBndLib.AddOptimal_s(solid.wrapped, box, False, False)
+x0, y0, z0, x1, y1, z1 = box.Get()
+print(f"{NAME}: {x1 - x0:.4f} x {y1 - y0:.4f} x {z1 - z0:.4f} mm, volume {solid.Volume():.4f} mm^3")
+print("wrote", out + ".step")
+print("wrote", out + ".stl")
+`;
+}
+
+const copyBtn = document.getElementById('copy');
+const dlBtn = document.getElementById('download');
+const scriptTa = document.getElementById('script');
+const scriptBox = document.getElementById('scriptBox');
+
+function flash(btn, text) {
+  const orig = btn.textContent;
+  btn.textContent = text;
+  setTimeout(() => { btn.textContent = orig; }, 1400);
+}
+
+copyBtn.addEventListener('click', async () => {
+  const text = exportScript();
+  try {
+    await navigator.clipboard.writeText(text);
+    flash(copyBtn, 'Copied');
+  } catch {
+    scriptBox.open = true;
+    scriptTa.value = text;
+    scriptTa.select();
+    flash(copyBtn, 'Select + ⌘C');
+  }
+});
+
+dlBtn.addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([exportScript()], { type: 'text/x-python' }));
+  a.download = scriptName() + '.py';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  for (const p of PARAMS) state[p.key] = p.def;
+  syncInputs();
+  update();
+  fit(true);
+});
+document.getElementById('fit').addEventListener('click', () => fit(true));
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+edgesToggle.addEventListener('change', () => { if (edges) edges.visible = edgesToggle.checked; });
+
+// Small handle for driving and reading the sim from scripts.
+window.studio = {
+  getParams: () => ({ ...state }),
+  setParams(obj) {
+    for (const [k, v] of Object.entries(obj)) if (k in controlsByKey) setParam(k, +v, 'api');
+    update();
+  },
+  volume: () => last.volume,
+  checks: () => ({ errors: [...last.errors], warnings: [...last.warnings] }),
+  exportScript,
+};
+
+syncInputs();
+resize();
+update();
+fit(true);
+(function frame() {
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
