@@ -8,7 +8,7 @@
 :root{
   --bg:#0d1319; --stage-top:#18222d; --panel:#121a22; --line:#243140; --line-2:#2f3e4f;
   --fg:#dce5ed; --muted:#8798aa; --dim:#5f7183; --accent:#86bddb; --accent-ink:#0d1319;
-  --warn:#e3a95c; --err:#e67b6b; --ok:#7fc29b;
+  --warn:#e3a95c; --err:#e67b6b; --ok:#7fc29b; --pin:#f0b44c; --sketch:#ff7ad9;
   --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   color-scheme:dark;
@@ -119,6 +119,29 @@ dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 .log .empty{color:var(--muted);background:none;padding:0}
 .note{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
 .note a{color:var(--accent)}
+button.tool.on,.seg button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.mini{padding:2px 8px;font-size:11px}
+.txt{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line-2);border-radius:5px;padding:5px 7px;font:12px var(--ui)}
+.txt:focus{outline:none;border-color:var(--accent)}
+textarea.txt{min-height:56px;resize:vertical;line-height:1.45}
+.field-l{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.pins{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pins li{display:flex;flex-direction:column;gap:5px;padding:7px 8px;border-radius:6px;background:rgba(255,255,255,.025)}
+.pins li.on{box-shadow:inset 0 0 0 1px rgba(240,180,76,.55)}
+.pin-top{display:flex;align-items:center;gap:8px;font-size:12px}
+.pin-top b{font:600 11px var(--mono);color:var(--pin)}
+.pin-top .where{color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbl.pin{border-color:rgba(240,180,76,.7)}
+.lbl.pin i{background:var(--pin)}
+.lbl.pin b{font:600 10.5px var(--mono);color:var(--pin)}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{padding:5px 9px}
+dialog.textdlg{background:var(--panel);color:var(--fg);border:1px solid var(--line-2);border-radius:10px;padding:16px;width:min(680px,92vw)}
+dialog.textdlg::backdrop{background:rgba(0,0,0,.55)}
+dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line-2);border-radius:6px;padding:8px;resize:vertical}
+.dlg-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.dlg-status{color:var(--ok);font-size:12px}
+.dlg-foot{display:flex;justify-content:flex-end;gap:6px;margin-top:10px}
 @media (max-width:800px){
   main{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
   aside{border-left:0;border-top:1px solid var(--line)}
@@ -133,7 +156,7 @@ dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
     <div class="tip" id="tip" hidden></div>
     <div class="overlay top">mm · Z up, dial side on top · <span id="gridLabel"></span></div>
     <div class="clock"><div class="t" id="dial">12:00:00</div><div class="s"><span class="beat" id="beat"></span><span id="beatTxt"></span></div></div>
-    <div class="overlay bottom">hover to identify · click to select · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom</div>
+    <div class="overlay bottom" id="hint">hover to identify · click to select · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom</div>
   </div>
   <aside>
     <header>
@@ -157,8 +180,19 @@ dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
     </section>
 
     <section>
+      <div class="eyebrow">Pins</div>
+      <div class="row"><button class="tool" id="pinTool">Drop pins</button></div>
+      <ul class="pins" id="pins"></ul>
+    </section>
+
+    <section id="sketchSection"></section>
+
+    <section>
       <div class="eyebrow">Changes</div>
       <div class="row"><button id="undo">Undo</button><button id="redo">Redo</button><button id="resetTrain">Reset train</button></div>
+      <div class="row"><button id="saveScene">Save scene</button><button id="loadScene">Load scene</button><button id="reportBtn">Report for Claude</button></div>
+      <input type="file" id="loadFile" accept=".json,application/json" hidden>
+      <p class="note" id="saveNote"></p>
       <label class="toggle"><input type="checkbox" id="autoAvoid" checked> Auto-adjust: when a change makes parts clash, move, swing, raise or lower unlocked parts to clear it. Locked parts are never touched, and the part you just changed stays where you put it.</label>
       <div class="ctl"><div class="ctl-head"><span>Minimum gap between parts (sideways and vertical)</span><span class="ctl-val"><input type="number" id="minGap" min="0" step="0.01" aria-label="Minimum gap between parts"><em>mm</em></span></div></div>
       <ul class="log" id="log"></ul>
@@ -197,6 +231,11 @@ dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
     </section>
   </aside>
 </main>
+<dialog class="textdlg" id="textDlg">
+  <div class="dlg-head"><b id="dlgTitle"></b><span class="dlg-status" id="dlgStatus"></span></div>
+  <textarea id="dlgText" readonly></textarea>
+  <div class="dlg-foot"><button class="primary" id="dlgCopy">Copy</button><button id="dlgClose">Close</button></div>
+</dialog>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
@@ -291,6 +330,7 @@ const normDeg = d => ((((d + 180) % 360) + 360) % 360) - 180;
 const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
 const clonePos = p => Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v.slice()]));
 const listText = (xs, word = 'and') => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ${word} ${xs[xs.length - 1]}`);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 const GEAR_DEFS = {};
 for (const a of ARBOR_DEFS) for (const g of a.gears) GEAR_DEFS[g.id] = { ...g, arbor: a.id };
@@ -339,7 +379,13 @@ const DEFAULT_STATE = {
   hands: { hour_hand: { length: 5, z: 7.6, t: 0.15 }, seconds_hand: { length: 4.5, z: 7.6, t: 0.12 }, minute_hand: { length: 9, z: 8.0, t: 0.15 } },
   locks: { barrel_teeth: true, minute_wheel: true, fourth_wheel: true, escape_wheel: true, hour_wheel: true,
            minute_hand: true, seconds_hand: true, hour_hand: true },
+  // The design record: your names and notes per part, pins dropped on parts, and 2D sketches.
+  info: {},      // partId -> { name, note }
+  pins: [],      // { id: 'P1', part, at: [x, y, z] in the part's own frame, note }
+  sketches: [],  // { id: 'K1', name, plane: { axis: 'x'|'y'|'z', offset }, closed, points: [{ u, v, smooth }] }
+  version: 2,
 };
+const SCHEMA_VERSION = 2;
 
 let S = clone(DEFAULT_STATE);
 let scale = 1;  // print scale: multiplies every dimension; the minimum gap is in real mm
@@ -871,6 +917,8 @@ scene.add(world);
 const parts = {}, partOrder = [];
 let pickables = [];
 let selectedId = null, activeGear = null, hoveredId = null, hoverSource = null;
+let tool = 'select';       // 'select' | 'pin' | 'sketch': what a click in the view does
+let xrayOpacity = null;    // set while sketching so the parts go see-through
 let focus = 'all', edgesOn = true, labelsOn = true, explode = 0;
 
 function makePart({ id, name, group, role, kind, level }) {
@@ -1065,9 +1113,12 @@ function solve() {
   D = derive(S);
   A = analyse(S, D);
   syncScene();
+  syncPins();
   refreshLook();
   renderChecks();
   renderPartsList();
+  renderPins();
+  if (window.Sketcher) window.Sketcher.refresh();
 }
 let solveQueued = false;
 const requestSolve = () => { solveQueued = true; };
@@ -1096,7 +1147,7 @@ function gizmoTarget() {
   return null;
 }
 function placeGizmo() {
-  const t = gizmoTarget();
+  const t = tool === 'select' ? gizmoTarget() : null;
   if (!t) { if (gizmo.object) gizmo.detach(); return; }
   if (!gizmo.object) gizmo.attach(proxy);
   if (!gz) proxy.position.set(S.pos[t.arbor][0], S.pos[t.arbor][1], t.z + t.lift);
@@ -1175,6 +1226,7 @@ function teethLine(id) {
   return `${ARBOR_DEFS.length} jewels`;
 }
 const partLocked = id => (parts[id].kind === 'arbor' ? lockPinned(id) : parts[id].kind === 'hand' ? !!S.locks[id] : false);
+const nameOf = id => (S.info[id] && S.info[id].name) || parts[id].name;
 
 const inFocus = id => !FOCUS[focus] || FOCUS[focus].includes(id);
 
@@ -1208,10 +1260,11 @@ function refreshLook() {
       m.emissive.setHex(isBad ? 0xff4a3a : glow ? 0x6fb6d8 : 0x000000);
       m.emissiveIntensity = glow;
       const base = m.userData.baseOpacity ?? 1;
-      const op = focused ? base : 0.1;
+      let op = focused ? base : 0.1;
+      if (xrayOpacity != null) op = Math.min(op, xrayOpacity);
       if (m.opacity !== op) { m.opacity = op; m.transparent = op < 1; m.depthWrite = op >= 0.5; m.needsUpdate = true; }
     }
-    p.edgeMat.opacity = focused ? 0.6 : 0.04;
+    p.edgeMat.opacity = focused ? (xrayOpacity != null ? Math.max(0.25, xrayOpacity) : 0.6) : 0.04;
     for (const e of p.edges) e.visible = edgesOn;
     p.root.visible = p.visible;
     p.labelEl.classList.toggle('dim', !focused);
@@ -1243,6 +1296,12 @@ let pointerXY = null, pointerDirty = false, dragging = false, downAt = null, giz
 // The arrows measure a drag against a helper plane that only turns to face the grabbed axis on the next frame.
 // A press with no hover first (touch, or a quick click) would measure from a stale plane and make the part jump,
 // so pick the axis and turn the plane before the arrows see the press.
+// Clicking in the view ends any typing in the panel, so a half-typed note or value is saved first.
+// (The orbit control blocks the browser's own blur on canvas presses.)
+canvas.addEventListener('pointerdown', () => {
+  const a = document.activeElement;
+  if (a && a !== document.body && a.closest && a.closest('aside')) a.blur();
+}, { capture: true });
 canvas.addEventListener('pointerdown', e => {
   if (!gizmo.object || e.button !== 0) return;
   const r = canvas.getBoundingClientRect();
@@ -1263,9 +1322,10 @@ canvas.addEventListener('pointermove', e => {
   if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) dragging = true;
 });
 window.addEventListener('pointerup', e => {
-  if (e.target === canvas && downAt && !dragging && !gizmoGrab) {
+  if (e.target === canvas && downAt && !dragging && !gizmoGrab && e.button === 0) {
     const h = hitAt(e.clientX, e.clientY);
-    select(h ? h.part : null, h ? h.gear : null);
+    if (tool === 'select') select(h ? h.part : null, h ? h.gear : null);
+    else if (tool === 'pin' && h) addPin(h.part, h.point);
   }
   downAt = null;
   dragging = false;
@@ -1273,14 +1333,155 @@ window.addEventListener('pointerup', e => {
 });
 canvas.addEventListener('pointerleave', () => { pointerXY = null; if (hoverSource === 'view') setHover(null, 'view'); });
 canvas.addEventListener('dblclick', e => {
-  if (gizmo.axis) return;
+  if (gizmo.axis || tool !== 'select') return;
   const h = hitAt(e.clientX, e.clientY);
   if (h) { select(h.part, h.gear); frame(h.part); } else fit();
 });
 window.addEventListener('keydown', e => {
   const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement && document.activeElement.tagName);
-  if (e.key === 'Escape') select(null);
+  if (e.key === 'Escape' && !typing) { if (tool !== 'select') setTool('select'); else select(null); }
   if (!typing && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+});
+
+// ---------- tools: select, drop pins, sketch ----------
+const HINTS = {
+  select: 'hover to identify · click to select · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom',
+  pin: 'click any part to drop a numbered pin on that spot · type a note for it in the Pins list · drag empty space to orbit · Esc to stop',
+};
+function setTool(t) {
+  if (t === tool) return;
+  const was = tool;
+  tool = t;
+  if (was === 'sketch' && window.Sketcher) window.Sketcher.exit();
+  if (t === 'sketch' && window.Sketcher) window.Sketcher.enter();
+  document.getElementById('pinTool').classList.toggle('on', t === 'pin');
+  document.getElementById('pinTool').textContent = t === 'pin' ? 'Stop dropping pins' : 'Drop pins';
+  canvas.style.cursor = t === 'select' ? '' : 'crosshair';
+  document.getElementById('hint').textContent = (t === 'sketch' && window.Sketcher) ? window.Sketcher.hint : HINTS[t] || HINTS.select;
+  if (t !== 'select') setHover(null, 'view');
+  renderPins();
+  if (window.Sketcher) window.Sketcher.renderPanel();
+}
+document.getElementById('pinTool').addEventListener('click', () => setTool(tool === 'pin' ? 'select' : 'pin'));
+
+// ---------- pins: numbered marks dropped on parts, each with a note ----------
+// A pin lives in its part's own frame, so it moves with the part. Pin markers draw on top of everything.
+const pinTexture = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  g.beginPath(); g.arc(32, 32, 24, 0, Math.PI * 2);
+  g.fillStyle = '#f0b44c'; g.fill();
+  g.lineWidth = 6; g.strokeStyle = '#0d1319'; g.stroke();
+  g.beginPath(); g.arc(32, 32, 8, 0, Math.PI * 2); g.fillStyle = '#0d1319'; g.fill();
+  return new THREE.CanvasTexture(c);
+})();
+const pinMat = new THREE.SpriteMaterial({ map: pinTexture, depthTest: false, depthWrite: false, sizeAttenuation: false });
+const pinObjs = {};
+let activePin = null;
+
+function nextPinId() {
+  const n = S.pins.reduce((mx, p) => Math.max(mx, +p.id.slice(1) || 0), 0);
+  return `P${n + 1}`;
+}
+function addPin(partId, worldPoint) {
+  const at = parts[partId].root.worldToLocal(worldPoint.clone());
+  const id = nextPinId();
+  S.pins.push({ id, part: partId, at: [at.x, at.y, at.z].map(v => +v.toFixed(4)), note: '' });
+  activePin = id;
+  commit({ text: `Pinned ${id} on ${nameOf(partId)}`, adapt: false });
+  const input = document.querySelector(`#pins [data-pin="${id}"] input`);
+  if (input) input.focus();
+}
+function pinWorld(pin) {
+  const p = parts[pin.part];
+  return p.root.localToWorld(new THREE.Vector3(...pin.at));
+}
+function syncPins() {
+  const live = new Set(S.pins.map(p => p.id));
+  for (const id of Object.keys(pinObjs)) if (!live.has(id)) {
+    const o = pinObjs[id];
+    o.sprite.parent.remove(o.sprite);
+    o.label.remove();
+    delete pinObjs[id];
+  }
+  for (const pin of S.pins) {
+    let o = pinObjs[pin.id];
+    if (!o) {
+      const sprite = new THREE.Sprite(pinMat);
+      sprite.scale.set(0.026, 0.026, 1);
+      sprite.renderOrder = 20;
+      const label = document.createElement('div');
+      label.className = 'lbl pin';
+      label.addEventListener('click', () => { activePin = pin.id; renderPins(); const i = document.querySelector(`#pins [data-pin="${pin.id}"] input`); if (i) i.focus(); });
+      labelLayer.appendChild(label);
+      o = pinObjs[pin.id] = { sprite, label, key: '' };
+    }
+    const parent = parts[pin.part].root;
+    if (o.sprite.parent !== parent) { if (o.sprite.parent) o.sprite.parent.remove(o.sprite); parent.add(o.sprite); }
+    o.sprite.position.set(...pin.at);
+    const key = `${pin.id}|${pin.note}`;
+    if (o.key !== key) {
+      o.key = key;
+      const short = pin.note.length > 28 ? pin.note.slice(0, 27) + '…' : pin.note;
+      o.label.innerHTML = `<b>${pin.id}</b>${short ? esc(short) : ''}`;
+      o.label._w = 0;
+    }
+  }
+}
+let pinsKey = '', rebuildingPins = false;
+function renderPins() {
+  const ul = document.getElementById('pins');
+  // Rebuild only when something shown changed, and keep the cursor in a note you're typing.
+  const key = JSON.stringify([S.pins, activePin, tool, S.pins.map(p => nameOf(p.part))]);
+  if (key === pinsKey) return;
+  pinsKey = key;
+  const focused = document.activeElement && ul.contains(document.activeElement) ? document.activeElement.closest('[data-pin]') : null;
+  const keepId = focused && focused.dataset.pin;
+  const typed = keepId ? document.activeElement.value : '', caret = keepId ? document.activeElement.selectionStart : 0;
+  // Removing a focused input fires its change event mid-rebuild; ignore that one, the text is carried over below.
+  rebuildingPins = true;
+  try { renderPinsList(ul); } finally { rebuildingPins = false; }
+  if (keepId) {
+    // Carry over text typed but not yet saved, so a rebuild never eats it.
+    const input = ul.querySelector(`[data-pin="${keepId}"] input`);
+    if (input) { input.value = typed; input.focus(); input.setSelectionRange(caret, caret); }
+  }
+}
+function renderPinsList(ul) {
+  if (!S.pins.length) {
+    ul.innerHTML = `<li class="note" style="background:none;padding:0">${tool === 'pin' ? 'Click any part in the view to drop a pin.' : 'No pins yet. Drop one on a spot you want to talk about; it moves with its part and its note goes in your report.'}</li>`;
+    return;
+  }
+  ul.innerHTML = S.pins.map(p => `<li data-pin="${p.id}" class="${p.id === activePin ? 'on' : ''}">
+      <div class="pin-top"><b>${p.id}</b><span class="where">on ${esc(nameOf(p.part))}</span><button class="mini" data-act="show">Show</button><button class="mini" data-act="del">Remove</button></div>
+      <input class="txt" value="${esc(p.note)}" placeholder="What about this spot?" aria-label="Note for ${p.id}"></li>`).join('');
+}
+document.getElementById('pins').addEventListener('click', e => {
+  const li = e.target.closest('[data-pin]');
+  if (!li) return;
+  const pin = S.pins.find(p => p.id === li.dataset.pin);
+  if (!pin) return;
+  activePin = pin.id;
+  const act = e.target.dataset.act;
+  if (act === 'del') {
+    S.pins = S.pins.filter(p => p.id !== pin.id);
+    commit({ text: `Removed pin ${pin.id}${pin.note ? ` (“${pin.note}”)` : ''}`, adapt: false });
+  } else if (act === 'show') {
+    const w = pinWorld(pin);
+    frameAt(w.x, w.y, w.z, 3 * scale);
+  }
+  document.querySelectorAll('#pins li').forEach(x => x.classList.toggle('on', x.dataset.pin === activePin));
+});
+document.getElementById('pins').addEventListener('change', e => {
+  if (rebuildingPins) return;
+  const li = e.target.closest('[data-pin]');
+  const pin = li && S.pins.find(p => p.id === li.dataset.pin);
+  if (!pin || e.target.tagName !== 'INPUT') return;
+  const from = pin.note, to = e.target.value.trim();
+  if (from === to) return;
+  pin.note = to;
+  commit({ text: `${pin.id} note: “${to}”`, adapt: false });
 });
 
 function renderTip() {
@@ -1291,7 +1492,7 @@ function renderTip() {
       (gz.slid ? '<span class="warn">it meshes directly with a locked part, so it can only swing around it</span>' : '') +
       (n ? `<span class="bad">${n} clash${n > 1 ? 'es' : ''} now · auto-adjust runs when you let go</span>` : '<span>no clashes</span>');
   } else if (hoveredId && hoverSource === 'view' && pointerXY && !dragging) {
-    tipEl.innerHTML = `<b>${parts[hoveredId].name}${partLocked(hoveredId) ? ' · locked' : ''}</b><span>${rateLine(hoveredId)}</span><span>${teethLine(hoveredId)}</span>` +
+    tipEl.innerHTML = `<b>${esc(nameOf(hoveredId))}${partLocked(hoveredId) ? ' · locked' : ''}</b><span>${rateLine(hoveredId)}</span><span>${teethLine(hoveredId)}</span>` +
       (hoveredId === selectedId && parts[hoveredId].kind !== 'plate' ? '<span>drag an arrow to move it</span>' : '');
   } else { tipEl.hidden = true; return; }
   tipEl.hidden = false;
@@ -1324,13 +1525,31 @@ function updateLabels() {
     placed.push({ x: spot[0], y: spot[1], w: lw });
     el.style.transform = `translate(${spot[0]}px, ${spot[1]}px) translateY(-50%)`;
   }
+  // Pin labels sit just above-right of their pin and keep clear of everything placed so far.
+  for (const pin of S.pins) {
+    const o = pinObjs[pin.id];
+    if (!o) continue;
+    const p = parts[pin.part];
+    if (!p.visible || !inFocus(pin.part)) { o.label.hidden = true; continue; }
+    o.sprite.getWorldPosition(tmpV).project(camera);
+    if (tmpV.z > 1 || Math.abs(tmpV.x) > 1.2 || Math.abs(tmpV.y) > 1.2) { o.label.hidden = true; continue; }
+    o.label.hidden = false;
+    const ax = ((tmpV.x + 1) / 2) * w + 10, ay = ((1 - tmpV.y) / 2) * h - 14, lw = o.label._w || (o.label._w = o.label.offsetWidth);
+    let spot = [ax, ay];
+    for (const k of [0, -1, 1, -2, 2]) {
+      const y = ay + k * (LABEL_H + 3);
+      if (!placed.some(q => ax < q.x + q.w + 4 && q.x < ax + lw + 4 && Math.abs(y - q.y) < LABEL_H + 2)) { spot = [ax, y]; break; }
+    }
+    placed.push({ x: spot[0], y: spot[1], w: lw });
+    o.label.style.transform = `translate(${spot[0]}px, ${spot[1]}px) translateY(-50%)`;
+  }
 }
 function renderLabelLocks() {
   for (const id of partOrder) {
-    const p = parts[id], lk = partLocked(id);
-    if (p.labelLock === lk) continue;
-    p.labelLock = lk;
-    p.labelEl.innerHTML = `<i style="background:${hex(p.color)}"></i>${p.name}${lk ? LOCK_SVG : ''}`;
+    const p = parts[id], lk = partLocked(id), key = `${lk}|${nameOf(id)}`;
+    if (p.labelKey === key) continue;
+    p.labelKey = key;
+    p.labelEl.innerHTML = `<i style="background:${hex(p.color)}"></i>${esc(nameOf(id))}${lk ? LOCK_SVG : ''}`;
     p.labelEl._w = 0;
   }
 }
@@ -1385,6 +1604,34 @@ function positionStatus(a) {
   return '<b>Unlocked</b>: auto-adjust may move it to keep the train meshed and clear.';
 }
 
+// Your record for a part: its name, why it is the way it is, and a way to save it on its own.
+function recordBlock(id) {
+  const info = S.info[id] || {}, wrap = document.createElement('div');
+  wrap.className = 'field-l';
+  wrap.innerHTML = `<label class="field-l">Name<input class="txt" data-f="name" value="${esc(info.name || '')}" placeholder="${esc(parts[id].name)}"></label>
+    <label class="field-l">Notes · why it is the way it is<textarea class="txt" data-f="note" placeholder="Design intent, what must not change, questions for the engineer">${esc(info.note || '')}</textarea></label>
+    <div class="row"><button class="mini" data-act="save">Save this part</button><button class="mini" data-act="copy">Show part record</button></div>`;
+  wrap.addEventListener('change', e => {
+    const f = e.target.dataset.f;
+    if (!f) return;
+    const v = e.target.value.trim(), cur = (S.info[id] || {})[f] || '';
+    if (v === cur) return;
+    const next = { ...(S.info[id] || {}), [f]: v };
+    if (!next[f]) delete next[f];
+    if (Object.keys(next).length) S.info[id] = next; else delete S.info[id];
+    commit({ adapt: false, text: f === 'name' ? (v ? `Named ${parts[id].name} “${v}”` : `Cleared the name of ${parts[id].name}`) : `Notes on ${nameOf(id)}: “${v}”` });
+  });
+  wrap.addEventListener('click', e => {
+    const act = e.target.dataset.act;
+    if (!act) return;
+    const data = { format: 'bspk-studio-part', version: SCHEMA_VERSION, savedAt: new Date().toISOString(), part: partRecord(id) };
+    const json = JSON.stringify(data, null, 2);
+    if (act === 'save') downloadText(`bspk-part-${id}-${stamp()}.json`, json);
+    else showText(`Part record · ${nameOf(id)}`, json);
+  });
+  return wrap;
+}
+
 function xyControls(el, arbor, who) {
   const sc = scale, lim = S.movementD / 2 * 1.3 * sc;
   for (const axis of [0, 1]) {
@@ -1404,8 +1651,9 @@ function renderSelected() {
   }
   const p = parts[selectedId], sc = scale;
   const head = document.createElement('div');
-  head.innerHTML = `<div class="sel-head"><span class="sw" style="background:${hex(p.color)}"></span><b>${p.name}</b><span class="chip">${GROUPS[p.group].label}</span></div><p class="role">${p.role}</p>`;
+  head.innerHTML = `<div class="sel-head"><span class="sw" style="background:${hex(p.color)}"></span><b>${esc(nameOf(p.id))}</b><span class="chip">${GROUPS[p.group].label}</span></div><p class="role">${p.role}</p>`;
   el.appendChild(head);
+  el.appendChild(recordBlock(p.id));
 
   if (p.kind === 'arbor') {
     const a = ARBOR[p.id], id = a.id;
@@ -1491,7 +1739,7 @@ const partsEl = document.getElementById('parts');
 for (const id of partOrder) {
   const p = parts[id];
   const li = document.createElement('li');
-  li.innerHTML = `<span class="sw" style="background:${hex(p.color)}"></span><span class="nm"><span>${p.name}<i class="lk" hidden>${LOCK_SVG}</i></span><small></small></span><input type="checkbox" checked aria-label="Show ${p.name}">`;
+  li.innerHTML = `<span class="sw" style="background:${hex(p.color)}"></span><span class="nm"><span><span class="pn">${p.name}</span><i class="lk" hidden>${LOCK_SVG}</i></span><small></small></span><input type="checkbox" checked aria-label="Show ${p.name}">`;
   const cb = li.querySelector('input');
   cb.addEventListener('click', e => e.stopPropagation());
   cb.addEventListener('change', () => { p.visible = cb.checked; if (!p.visible && selectedId === id) selectedId = null; refreshLook(); renderSelected(); });
@@ -1505,6 +1753,7 @@ function renderPartsList() {
   for (const id of partOrder) {
     parts[id].row.querySelector('small').textContent = rateLine(id);
     parts[id].row.querySelector('.lk').hidden = !partLocked(id);
+    parts[id].row.querySelector('.pn').textContent = nameOf(id);
   }
   renderLabelLocks();
 }
@@ -1555,6 +1804,7 @@ function commit(spec) {
   const left = analyse(S, derive(S)).collisions;
   for (const c of left) if (!p.baseKeys.has(c.key)) entries.push({ who: 'auto', stuck: true, text: stuckText(c, held, left) });
   record(spec, entries);
+  saveLocal();
   solve();
   renderSelected();
   renderLog();
@@ -1576,18 +1826,200 @@ function restore(i) {
   pending = null;
   hIndex = i;
   S = clone(history[hIndex].state);
+  saveLocal();
   solve();
   renderSelected();
   renderLog();
 }
+
+// ---------- the data record: autosave, scene files, part files, the report ----------
+const AUTOSAVE_KEY = 'bspk-studio.scene';
+let restoredAt = null, lastSavedAt = null;
+const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-');
+const clockText = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+// Accept a scene from a file or browser storage: start from the defaults and take only what we recognise,
+// so an older or partial file can't leave the sim half-built.
+function normalizeState(st) {
+  const out = clone(DEFAULT_STATE), num = v => typeof v === 'number' && isFinite(v);
+  if (!st || typeof st !== 'object') return out;
+  if (num(st.movementD)) out.movementD = st.movementD;
+  if (num(st.minGap)) out.minGap = st.minGap;
+  for (const sid of STAGE_IDS) {
+    const s = st.stages && st.stages[sid];
+    if (s && num(s.m)) out.stages[sid].m = s.m;
+    if (s && num(s.z)) out.stages[sid].z = s.z;
+  }
+  for (const gid of Object.keys(out.solo)) {
+    const s = st.solo && st.solo[gid];
+    if (s && num(s.m)) out.solo[gid].m = s.m;
+    if (s && num(s.z)) out.solo[gid].z = s.z;
+  }
+  for (const a of ARBOR_IDS) {
+    const p = st.pos && st.pos[a];
+    if (Array.isArray(p) && num(p[0]) && num(p[1])) out.pos[a] = [p[0], p[1]];
+  }
+  for (const gid of Object.keys(out.thick)) if (st.thick && num(st.thick[gid])) out.thick[gid] = st.thick[gid];
+  for (const h of HAND_DEFS) for (const f of ['length', 'z', 't']) {
+    const v = st.hands && st.hands[h.id] && st.hands[h.id][f];
+    if (num(v)) out.hands[h.id][f] = v;
+  }
+  if (st.locks && typeof st.locks === 'object') {
+    out.locks = {};
+    for (const [k, v] of Object.entries(st.locks)) if (v && (GEAR_DEFS[k] || HAND[k])) out.locks[k] = true;
+  }
+  if (st.info && typeof st.info === 'object') {
+    for (const [k, v] of Object.entries(st.info)) if (parts[k] && v && typeof v === 'object') {
+      const rec = {};
+      if (typeof v.name === 'string' && v.name) rec.name = v.name;
+      if (typeof v.note === 'string' && v.note) rec.note = v.note;
+      if (Object.keys(rec).length) out.info[k] = rec;
+    }
+  }
+  if (Array.isArray(st.pins)) out.pins = st.pins.filter(p => p && parts[p.part] && Array.isArray(p.at) && p.at.length === 3 && p.at.every(num))
+    .map(p => ({ id: String(p.id), part: p.part, at: p.at.slice(), note: typeof p.note === 'string' ? p.note : '' }));
+  if (Array.isArray(st.sketches)) out.sketches = st.sketches.filter(k => k && k.plane && 'xyz'.includes(k.plane.axis) && num(k.plane.offset) && Array.isArray(k.points))
+    .map(k => ({ id: String(k.id), name: typeof k.name === 'string' ? k.name : String(k.id), plane: { axis: k.plane.axis, offset: k.plane.offset },
+                 closed: !!k.closed, points: k.points.filter(q => q && num(q.u) && num(q.v)).map(q => ({ u: q.u, v: q.v, smooth: !!q.smooth })) }));
+  return out;
+}
+
+function saveLocal() {
+  try {
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: Date.now(), state: S }));
+    lastSavedAt = Date.now();
+  } catch (e) { lastSavedAt = null; }
+  renderSaveNote();
+}
+function restoreAutosave() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || 'null');
+    if (!saved || saved.version !== SCHEMA_VERSION || !saved.state) return;
+    S = normalizeState(saved.state);
+    history = [{ state: clone(S), entries: [] }];
+    hIndex = 0;
+    restoredAt = lastSavedAt = saved.savedAt;
+  } catch (e) { /* storage unavailable or unreadable: start from the default */ }
+}
+const storageOK = (() => { try { localStorage.setItem('bspk-studio.test', '1'); localStorage.removeItem('bspk-studio.test'); return true; } catch (e) { return false; } })();
+function renderSaveNote() {
+  document.getElementById('saveNote').textContent = !storageOK
+    ? 'This browser isn’t allowing an autosave. Use Save scene to keep your work.'
+    : lastSavedAt ? `Autosaved in this browser at ${clockText(lastSavedAt)}. Save scene writes a file you can keep or send.`
+    : 'Every change autosaves in this browser. Save scene writes a file you can keep or send.';
+}
+
+function partRecord(id) {
+  const p = parts[id], info = S.info[id] || {};
+  const rec = { id, kind: p.kind, name: nameOf(id), standard_name: p.name, notes: info.note || '', group: GROUPS[p.group].label };
+  if (p.kind === 'arbor') {
+    const [x, y] = S.pos[id];
+    Object.assign(rec, {
+      position_mm: [+(x * scale).toFixed(3), +(y * scale).toFixed(3)],
+      turns: rateLine(id),
+      locked_by: lockersOf(id),
+      gears: ARBOR[id].gears.map(g => {
+        const G = D.gears[g.id];
+        return { id: g.id, label: G.label, teeth: G.z, module_mm: +(G.m * scale).toFixed(4), pitch_d_mm: +(G.m * G.z * scale).toFixed(3),
+                 outer_d_mm: +(2 * G.ra * scale).toFixed(3), z_mm: +(G.z0 * scale).toFixed(3), thickness_mm: +(G.t * scale).toFixed(3),
+                 locked: !!S.locks[g.id], meshes_with: G.partner ? GEAR_DEFS[G.partner].label : null };
+      }),
+    });
+  } else if (p.kind === 'hand') {
+    const h = HAND[id], hs = S.hands[id];
+    Object.assign(rec, { on_arbor: ARBOR[h.arbor].name, turns: rateLine(id), locked: !!S.locks[id],
+      length_mm: +(hs.length * scale).toFixed(3), z_mm: +(hs.z * scale).toFixed(3), thickness_mm: +(hs.t * scale).toFixed(3) });
+  } else {
+    rec.movement_d_mm = +(S.movementD * scale).toFixed(3);
+  }
+  rec.pins = S.pins.filter(q => q.part === id).map(q => ({ id: q.id, note: q.note, at_mm: q.at.map(v => +(v * scale).toFixed(3)) }));
+  return rec;
+}
+const sceneFile = () => ({ format: 'bspk-studio-scene', version: SCHEMA_VERSION, savedAt: new Date().toISOString(), print_scale: scale,
+  state: S, parts: partOrder.map(partRecord), log: history.slice(1, hIndex + 1).flatMap(h => h.entries) });
+
+// The report is what you hand to Claude: what's locked, what clashes, your pins and notes, sketches, recent changes.
+function reportText() {
+  const s = scale, L = [];
+  L.push(`BSPK Studio report · ${new Date().toLocaleString()}`);
+  L.push(`Scene: watch train, movement Ø ${f1(S.movementD * s)} mm, minimum gap ${S.minGap} mm, print scale ${s}×`);
+  L.push('');
+  L.push('Rates: ' + A.rates.map(r => `${r.label.toLowerCase()} 1 rev / ${periodText(r.w)} ${dirText(r.w)}${r.ok ? '' : ' (WRONG)'}`).join('; '));
+  const locked = partOrder.filter(id => partLocked(id)).map(id => {
+    const what = parts[id].kind === 'arbor' ? ` (${lockersOf(id).join(', ')})` : '';
+    return `${nameOf(id)}${what}`;
+  });
+  L.push(`Locked: ${locked.length ? locked.join('; ') : 'nothing'}`);
+  L.push('');
+  L.push(A.collisions.length ? `Clashes (${A.collisions.length}):` : 'Clashes: none');
+  for (const c of A.collisions) L.push(`  - ${c.text}: ${clashAmount(c)}`);
+  L.push('');
+  L.push(S.pins.length ? `Pins (${S.pins.length}):` : 'Pins: none');
+  for (const q of S.pins) L.push(`  - ${q.id} on ${nameOf(q.part)} at (${q.at.map(v => f2(v * s)).join(', ')}) mm in that part's frame: ${q.note || '(no note)'}`);
+  const named = partOrder.filter(id => S.info[id]);
+  L.push('');
+  L.push(named.length ? 'Your names and notes:' : 'Your names and notes: none');
+  for (const id of named) L.push(`  - ${parts[id].name}${S.info[id].name ? ` → “${S.info[id].name}”` : ''}${S.info[id].note ? `: ${S.info[id].note}` : ''}`);
+  L.push('');
+  L.push(S.sketches.length ? `Sketches (${S.sketches.length}):` : 'Sketches: none');
+  for (const k of S.sketches) L.push(`  - ${k.name}: ${k.points.length} points (${k.points.filter(q => q.smooth).length} smooth), ${k.closed ? 'closed' : 'open'}, on the ${'xyz'.includes(k.plane.axis) ? { x: 'YZ', y: 'XZ', z: 'XY' }[k.plane.axis] : '?'} plane at ${k.plane.axis} = ${f2(k.plane.offset * s)} mm`);
+  L.push('');
+  const recent = history.slice(1, hIndex + 1).flatMap(h => h.entries).slice(-15);
+  L.push(recent.length ? `Recent changes (last ${recent.length}, oldest first):` : 'Recent changes: none');
+  for (const en of recent) L.push(`  - ${en.who === 'you' ? 'You' : 'Auto'}: ${en.text}`);
+  if (selectedId) { L.push(''); L.push(`Selected now: ${nameOf(selectedId)}`); }
+  return L.join('\n');
+}
+
+function downloadText(name, text) {
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) { showText(name, text); }
+}
+const dlg = document.getElementById('textDlg');
+function showText(title, text) {
+  document.getElementById('dlgTitle').textContent = title;
+  document.getElementById('dlgStatus').textContent = '';
+  document.getElementById('dlgText').value = text;
+  if (!dlg.open) dlg.showModal();
+}
+document.getElementById('dlgClose').addEventListener('click', () => dlg.close());
+document.getElementById('dlgCopy').addEventListener('click', () => {
+  const ta = document.getElementById('dlgText'), status = document.getElementById('dlgStatus');
+  const fallback = () => { ta.focus(); ta.select(); status.textContent = 'Selected: press Cmd-C (Ctrl-C) to copy'; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(() => { status.textContent = 'Copied'; }, fallback);
+  else fallback();
+});
+document.getElementById('reportBtn').addEventListener('click', () => showText('Report for Claude: paste it into the chat', reportText()));
+document.getElementById('saveScene').addEventListener('click', () => downloadText(`bspk-scene-${stamp()}.json`, JSON.stringify(sceneFile(), null, 2)));
+document.getElementById('loadScene').addEventListener('click', () => document.getElementById('loadFile').click());
+document.getElementById('loadFile').addEventListener('change', async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || data.format !== 'bspk-studio-scene' || !data.state) throw new Error('not a BSPK Studio scene file');
+    cancelPending();
+    S = normalizeState(data.state);
+    commit({ text: `Loaded scene “${file.name}”${data.savedAt ? ` (saved ${new Date(data.savedAt).toLocaleString()})` : ''}`, adapt: false });
+  } catch (err) {
+    showText('Couldn’t load that file', `${file.name}: ${err.message}\n\nLoad scene takes a file written by Save scene.`);
+  }
+});
 const undo = () => { if (hIndex > 0) restore(hIndex - 1); };
 const redo = () => { if (hIndex < history.length - 1) restore(hIndex + 1); };
 
 function renderLog() {
   const items = [];
   for (let i = hIndex; i >= 1; i--) for (const en of history[i].entries) {
-    items.push(`<li class="${en.who}${en.stuck ? ' stuck' : ''}"><b>${en.who === 'you' ? 'You' : 'Auto'}</b>${en.text}</li>`);
+    items.push(`<li class="${en.who}${en.stuck ? ' stuck' : ''}"><b>${en.who === 'you' ? 'You' : 'Auto'}</b>${esc(en.text)}</li>`);
   }
+  if (restoredAt) items.push(`<li class="empty">Picked up where you left off: your last session, autosaved ${new Date(restoredAt).toLocaleString()}. Reset train starts over.</li>`);
   document.getElementById('log').innerHTML = items.length ? items.join('') : '<li class="empty">No changes yet. Select a part and drag its arrows, or type values.</li>';
   document.getElementById('minGap').value = S.minGap;
   document.getElementById('undo').disabled = hIndex === 0;
@@ -1746,8 +2178,10 @@ document.getElementById('minGap').addEventListener('change', e => {
 });
 document.getElementById('resetTrain').addEventListener('click', () => {
   cancelPending();
-  S = clone(DEFAULT_STATE);
-  commit({ text: 'Reset the train to the default layout and locks', adapt: false });
+  const keep = { info: S.info, pins: S.pins, sketches: S.sketches };
+  S = { ...clone(DEFAULT_STATE), ...clone(keep) };
+  restoredAt = null;
+  commit({ text: 'Reset the train to the default layout and locks (your pins, notes and sketches are kept)', adapt: false });
 });
 
 // Small handle for driving and reading the sim from scripts. Lengths are in displayed mm (print scale applied).
@@ -1772,9 +2206,20 @@ window.studio = {
   pause: () => { playing = false; },
   play: () => { playing = true; },
   pickAt,
+  // The record: what Claude reads when you ask for help.
+  report: reportText,
+  partRecord,
+  sceneFile,
+  pins: () => clone(S.pins),
+  info: () => clone(S.info),
+  sketches: () => clone(S.sketches),
+  setTool,
+  tool: () => tool,
 };
 
+restoreAutosave();
 solve();
+renderSaveNote();
 setSpeed(0);
 setScale(1);
 setView('iso');
@@ -1792,9 +2237,10 @@ let last = performance.now(), lastPick = 0;
   for (const h of HAND_DEFS) parts[h.id].spin.rotation.z = D.omega[h.arbor] * te;
   placeGizmo();
   controls.update();
+  if (window.Sketcher) window.Sketcher.tick();
   scene.updateMatrixWorld();
   // Re-pick while the pointer rests too: parts turn, move and fade under a still cursor.
-  if (pointerXY && !dragging && !gz && (pointerDirty || now - lastPick > 200)) {
+  if (pointerXY && !dragging && !gz && tool !== 'sketch' && (pointerDirty || now - lastPick > 200)) {
     pointerDirty = false;
     lastPick = now;
     if (hoverSource !== 'label' && hoverSource !== 'list') setHover(pickAt(pointerXY.cx, pointerXY.cy), 'view');
@@ -1806,5 +2252,9 @@ let last = performance.now(), lastPick = 0;
   requestAnimationFrame(tick);
 })(last);
 </script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineSegmentsGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineMaterial.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineSegments2.js"></script>
+<script src="sketch.js"></script>
 </body>
 </html>

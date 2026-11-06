@@ -152,7 +152,8 @@ The chat that followed produced the model in §6: a lock-driven workflow, parts-
 
 ### Files
 
-- `sim/index.html` — the editable watch train (the clock beta). ~1,800 lines.
+- `sim/index.html` — the editable watch train (the clock beta), plus pins, part records, autosave, scene files and the report. ~2,200 lines.
+- `sim/sketch.js` — the 2D sketcher (loaded by `index.html`).
 - `sim/gear.html` — single involute gear page with a CadQuery export script.
 - `sim/involute.js` — shared involute outline math; `gear.html`'s Python template mirrors it.
 - `.github/workflows/deploy-sim.yml` — deploys `/sim` to Pages on push to `main`.
@@ -162,7 +163,7 @@ The chat that followed produced the model in §6: a lock-driven workflow, parts-
 ### Running it
 
 - Locally: `python3 -m http.server 8765 --bind 127.0.0.1 --directory sim`, then http://localhost:8765/. (The Claude Code browser pane uses `.claude/launch.json` in the AXIS worktree, config name `bspk-studio-sim`.)
-- Public: https://adamontherocks.github.io/bspk-studio/ shows whatever is on `main`. As of this writing `main` still has the old v0.1 cushion case; nothing since commit `fe11c83` is committed.
+- Public: https://adamontherocks.github.io/bspk-studio/ shows whatever is on `main` (the watch train since commit `cc6b5bd`, 2026-11-06).
 
 ### What the watch train does (as of 2026-11-05/06)
 
@@ -176,13 +177,31 @@ The chat that followed produced the model in §6: a lock-driven workflow, parts-
 - **Log and undo:** every change and automatic fix logged; clashes that already existed aren't repeated; quick repeats of the same edit merge into one undo step; tiny side effects counted, not listed.
 - **Also:** motion with speed and beat stepping, labels, hover, explode, focus by transmission, dial-side/back/side views, print scale, minimum gap in real mm, movement Ø.
 
+### The record (added 2026-11-06)
+
+- **Pins:** "Drop pins", then click any part to drop a numbered pin (P1, P2…) on that spot, each with a note. Pins live in their part's own frame, so they move with it; labels in the view, a list in the panel.
+- **Names and notes per part:** a Name field and a "Notes · why it is the way it is" field in the Selected panel (design intent). Names show on labels, the parts list and the panel.
+- **Save this part / Show part record:** one part as a JSON record (teeth, module, sizes, heights, locks, what it meshes with, its pins and notes).
+- **Autosave:** every change saves in the browser; a reload picks up where you left off. **Save scene / Load scene** write and read a file (state, every part's record, the change log). Loading accepts only what it recognises, so an older or partial file can't half-build the sim.
+- **Report for Claude:** a text summary (rates, locks, clashes, pins, names and notes, sketches, recent changes) to paste into a chat. Claude can also read it from the sim directly.
+- **Reset train** resets the mechanism but keeps pins, notes and sketches.
+- Clicking the 3D view ends typing in the panel, so a half-typed note or value is saved first.
+
+### The 2D sketcher (added 2026-11-06, first feel version)
+
+- **Start sketching** (Sketch section). Parts go x-ray (adjustable), a see-through drawing plane appears: Top (XY), Front (XZ) or Side (YZ), or "Match my view", at any position. "Look straight at the plane" squares the camera to it and orbits around it.
+- **What the plane cuts is shown on it:** parts shaded red with crisp outlines, hand sweeps amber dashed, shafts blue (dots snap to shaft centres on the top plane), plate and movement edge grey. Optional cut-away hides everything between you and the plane.
+- **Dots:** click the plane to add; filled = sharp corner, double-click = hollow/smooth (curve through it). Drag a dot to move it; click a line to insert a dot; drag a line to move the whole drawing; click the first dot (or Enter) to close; Delete removes the selected dot; type exact coordinates for the selected dot. Snap to a 0.05/0.1/0.5/1 mm grid or off. A dashed rubber band shows the next segment while drawing.
+- Sketches are part of the scene: they autosave, save to files, undo, and go in the report. Quick edits to one sketch merge into one log line listing every action.
+- Not yet: extruding to a part, more than one plane per sketch, moving the plane by dragging (use the position slider).
+
 ### Known bugs and limits
 
 - **Thickness revert (unreproduced):** in Adam's 2026-11-06 session some thickness changes were logged but reverted (center pinion, intermediate wheel, third pinion). Not reproduced on a clean layout; Adam's layout was lost when the page was reloaded to test.
 - **Pinion below the plate:** a thick pinion on a thin mating wheel is centred on the wheel and sinks below z=0 with no warning (2 mm center pinion → z −0.5).
 - **False conflicts by design (the §6.3 problem):** full-height shafts from the mainplate, one plate, shaft top tied to gear thickness, pinion height tied to its mate.
 - **Edge case behaviour:** some layouts are genuinely infeasible with a given lock set (e.g. an 18 mm center wheel with the hour wheel locked). The sim says so; unlocking the right part fixes it.
-- No add/remove parts, no rate targets, no train export, no marking, no sketcher.
+- No add/remove parts, no rate targets, no train export, no extruding sketches into parts yet.
 
 ---
 
@@ -297,7 +316,7 @@ Planned, from Adam's step-1 request:
 
 ### 6.10 Marking and pointing
 
-Adam asked for a way to mark areas on the model with the mouse, "so you can 'see' where i am talking about", and to indicate areas he wants or doesn't want. Proposed shape: click a face, edge or point and name it; marks persist in the scene so both sides can say "move P1 up 2 mm". (PROPOSED, not built)
+Adam asked for a way to mark areas on the model with the mouse, "so you can 'see' where i am talking about", and to indicate areas he wants or doesn't want. Proposed shape: click a face, edge or point and name it; marks persist in the scene so both sides can say "move P1 up 2 mm". (BUILT 2026-11-06 as numbered pins with notes, §5. Marking faces or edges, and "want / don't want" areas, are not built.)
 
 ### 6.11 Reference images
 
@@ -305,7 +324,7 @@ Pin an image to a plane as a backdrop to trace and check proportions against (in
 
 ### 6.12 State and history
 
-- Scene state in plain JSON, file-based, versioned in the repo; save/load; named snapshots; full undo/redo (AGREED 2026-11-03; undo/redo built, the rest not yet).
+- Scene state in plain JSON, file-based, versioned in the repo; save/load; named snapshots; full undo/redo (AGREED 2026-11-03; undo/redo, autosave and save/load scene files built 2026-11-06; named snapshots not yet).
 - Change log of every user and automatic change (built).
 
 ### 6.13 Backlog from the 2026-11-03 capability list (still wanted)
@@ -318,20 +337,24 @@ Section views, measurement, dimension overlays, groups, colour by function, mate
 
 Small steps, each usable on its own, each discussed before it's built. The clock stays the test bed.
 
+On 2026-11-06 Adam chose to do the record and the 2D sketcher first, to get the sim usable and to feel the sketcher before the rest: "start with just the 2d sketcher so i can get the feel for it on the orbit, how the dots work, moving lines around, the xray parts... then we add all the fancy 3d parts." He also declined a print-calibration step for now: parts will go through Plasticity or Fusion before any production testing.
+
 | # | Step | Status |
 |---|---|---|
+| A | **The record:** pins with notes, part names and intent notes, save a part, autosave, scene files, report for Claude | BUILT 2026-11-06 |
+| B | **2D sketcher, feel version:** x-ray plane on any axis, cut outlines, sharp/smooth dots, move/insert/close, orbit around it | BUILT 2026-11-06 |
 | 0 | Fix the thickness bugs (revert, pinion below plate) | PROPOSED |
-| 1 | **Lock-driven workflow:** "unlocked parts follow live" toggle, clickable clash list + next-interference, Report/Evaluate, auto-correct with ghosted preview, "Claude, intervene" (= chat for now) | PROPOSED, first in line |
+| 1 | **Lock-driven workflow:** "unlocked parts follow live" toggle, clickable clash list + next-interference, Report/Evaluate, auto-correct with ghosted preview, "Claude, intervene" (= chat for now) | PROPOSED |
 | 2 | **Shafts as parts:** diameter, real ends, turning/fixed; wheel + pinion as one compound part; conflicts only where shafts really are | PROPOSED |
 | 3 | **Plates and bridges as parts:** any height, editable outline, pillars; shaft ends must land in one; unsupported/cantilevered shafts flagged | PROPOSED |
 | 4 | **Engineer proposes supports:** shaft lengths, which plate/bridge holds each end, bridge outlines that avoid moving parts; designer edits or locks them | PROPOSED |
-| 5 | **X-ray sketch plane, view only:** see-through plane at any height and orientation, snap points, keep-out zones | PROPOSED |
-| 6 | **Sketch → part:** outline with sharp/smooth balls, extrude by depth or to next contact, "make it a part", stays editable; holes snap to shafts | PROPOSED |
+| 5 | **X-ray sketch plane** | done as part of B |
+| 6 | **Sketch → part:** extrude a sketch by depth or to next contact, "make it a part", stays editable; holes snap to shafts | PROPOSED, the natural next sketcher step |
 | 7 | **Shape editing:** front and back outlines independently (tapers/lofts); then balls on the long edges (curved faces); validity check | PROPOSED |
 | 8 | **Parts library:** add/remove/duplicate parts; the clock becomes a preset (absorbs "add gears") | PROPOSED |
 | 9 | **Rate targets:** "this turns at 1 rph" → teeth and stages chosen by the engineer | PROPOSED (from 2026-11-04) |
 | 10 | **Export:** each part to STEP/STL with print clearances; preview/export volume check | PROPOSED |
-| later | Intent notes in Evaluate; "Evaluate with Claude" API button; mesh collision for 3D parts; machinability checks; marking; reference images; materials/methods; articulation; sections; measurement; tooth form | backlog |
+| later | Intent notes in Evaluate; "Evaluate with Claude" API button; mesh collision for 3D parts; machinability checks; reference images; materials/methods; articulation; sections; measurement; tooth form | backlog |
 
 ---
 
