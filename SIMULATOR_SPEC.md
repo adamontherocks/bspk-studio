@@ -1,5 +1,7 @@
 # BSPK Studio — Simulator Specification
 
+> **Superseded (2026-11-06) by [`VISION.md`](VISION.md).** Kept for history: this was the 2026-11-03 plan (Fusion-centred, watch-specific), abandoned on 2026-11-04.
+
 **Version:** 0.1-spec (scaffold spec; v1 capability list)
 **Date:** 2026-11-03
 **Owner:** Adam Williams
