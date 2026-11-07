@@ -31,6 +31,11 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:100vh}
 .lbl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;font:11px/1 var(--ui);color:var(--fg);background:rgba(13,19,25,.82);border:1px solid var(--line-2);border-radius:999px;padding:4px 9px 4px 6px;white-space:nowrap;pointer-events:auto;cursor:pointer;will-change:transform}
 .lbl i{width:8px;height:8px;border-radius:50%;flex:none}
 .lbl svg{width:9px;height:9px;color:var(--warn)}
+.lbl .lk-btn{all:unset;display:inline-grid;place-items:center;width:17px;height:17px;margin:-3px -6px -3px -1px;border-radius:50%;cursor:pointer;color:var(--muted)}
+.lbl .lk-btn svg{width:10px;height:10px;color:currentColor}
+.lbl .lk-btn.on{color:var(--warn)}
+.lbl .lk-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+.lbl .lk-btn:focus-visible{outline:1px solid var(--accent)}
 .lbl.dim{opacity:.2}
 .lbl.hot{border-color:var(--accent);color:#fff}
 .lbl.bad{border-color:var(--err);color:#fff}
@@ -134,6 +139,17 @@ textarea.txt{min-height:56px;resize:vertical;line-height:1.45}
 .lbl.pin{border-color:rgba(240,180,76,.7)}
 .lbl.pin i{background:var(--pin)}
 .lbl.pin b{font:600 10.5px var(--mono);color:var(--pin)}
+.quick{position:absolute;left:0;top:0;width:256px;z-index:4;display:flex;flex-direction:column;gap:9px;padding:10px 12px 12px;background:rgba(15,22,29,.96);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.45);will-change:transform}
+.qk-head{display:flex;align-items:center;gap:7px;font-size:13px}
+.qk-head b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.qk-x{all:unset;display:grid;place-items:center;width:22px;height:22px;border-radius:6px;color:var(--muted);font-size:17px;line-height:1;cursor:pointer}
+.qk-x:hover{background:rgba(255,255,255,.1);color:#fff}
+.qk-x:focus-visible{outline:1px solid var(--accent)}
+.qk-note{margin:0;font-size:11px;line-height:1.4;color:var(--muted)}
+.qk-gears{display:flex;flex-wrap:wrap;gap:4px}
+.qk-gears button{padding:3px 7px;font-size:11px}
+.qk-gears button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.quick .ctl-val input{width:68px}
 .seg{display:flex;flex-wrap:wrap;gap:4px}
 .seg button{padding:5px 9px}
 dialog.textdlg{background:var(--panel);color:var(--fg);border:1px solid var(--line-2);border-radius:10px;padding:16px;width:min(680px,92vw)}
@@ -154,9 +170,10 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
     <canvas id="view"></canvas>
     <div class="labels" id="labels"></div>
     <div class="tip" id="tip" hidden></div>
+    <div class="quick" id="quick" hidden></div>
     <div class="overlay top">mm · Z up, dial side on top · <span id="gridLabel"></span></div>
     <div class="clock"><div class="t" id="dial">12:00:00</div><div class="s"><span class="beat" id="beat"></span><span id="beatTxt"></span></div></div>
-    <div class="overlay bottom" id="hint">hover to identify · click to select · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom</div>
+    <div class="overlay bottom" id="hint">hover to identify · click to select · click a label’s padlock to lock or unlock · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom</div>
   </div>
   <aside>
     <header>
@@ -1095,11 +1112,16 @@ function syncScene() {
     const big = a.gears.map(g => D.gears[g.id]).sort((u, v) => v.ra - u.ra)[0];
     const out = Math.hypot(x, y) < 0.5 ? -2.25 : Math.atan2(y, x);
     p.anchorLocal.set(Math.cos(out) * big.ra * 0.9, Math.sin(out) * big.ra * 0.9, D.drum[a.id] ? D.drum[a.id].z1 : big.z1);
+    // Its outline for the quick-edit box: the widest gear (or the drum) around the arbor.
+    p.footR = Math.max(big.ra, D.drum[a.id] ? D.drum[a.id].rOut : 0);
+    p.footZ = D.drum[a.id] ? D.drum[a.id].z1 : big.z1;
   }
   for (const h of HAND_DEFS) {
     const p = parts[h.id], hs = S.hands[h.id];
     p.root.position.x = D.pos[h.arbor][0];
     p.root.position.y = D.pos[h.arbor][1];
+    p.footR = hs.length;
+    p.footZ = hs.z + hs.t;
     const k = JSON.stringify([hs.length, hs.z, hs.t]);
     if (p.key !== k) { buildHand(p, h, hs); p.key = k; rebuilt = true; }
   }
@@ -1164,6 +1186,13 @@ gizmo.addEventListener('dragging-changed', e => {
   if (!gz) return;
   const g = gz;
   gz = null;
+  // Anything under 0.005 mm shows as no change, so it isn't a move: drop it rather than log "from 0.00 to 0.00".
+  if (g.xy) g.xy = Math.hypot(S.pos[g.arbor][0] - g.x0, S.pos[g.arbor][1] - g.y0) * scale >= 0.005;
+  if (g.zMoved) {
+    const zFrom = g.z0 - (g.hand ? S.hands[g.hand].t : S.thick[g.gear]) / 2;
+    const zTo = g.hand ? S.hands[g.hand].z : derive(S, true).gears[g.gear].z0;
+    g.zMoved = Math.abs(zTo - zFrom) * scale >= 0.005;
+  }
   if (!g.xy && !g.zMoved) { cancelPending(); return; }
   const name = parts[g.id].name, bits = [];
   if (g.xy) bits.push(`Moved ${name} from ${f2(g.x0 * scale)}, ${f2(g.y0 * scale)} to ${f2(S.pos[g.arbor][0] * scale)}, ${f2(S.pos[g.arbor][1] * scale)} mm`);
@@ -1175,6 +1204,14 @@ gizmo.addEventListener('dragging-changed', e => {
 });
 gizmo.addEventListener('objectChange', () => {
   if (!gz) return;
+  // A click on an arrow isn't a move: hold the part still until the pointer has travelled 4 px from the press.
+  if (!gz.live) {
+    if (pressAt && Math.hypot(lastPointer[0] - pressAt[0], lastPointer[1] - pressAt[1]) < 4) {
+      proxy.position.set(gz.x0, gz.y0, gz.z0 + gz.lift);
+      return;
+    }
+    gz.live = true;
+  }
   const p = proxy.position, ax = gizmo.axis || '';
   liveEdit(held => {
     if (/[XY]/.test(ax) && (Math.abs(p.x - S.pos[gz.arbor][0]) > 1e-9 || Math.abs(p.y - S.pos[gz.arbor][1]) > 1e-9)) {
@@ -1198,7 +1235,11 @@ for (const id of partOrder) {
   const el = document.createElement('div');
   el.className = 'lbl';
   el.innerHTML = `<i style="background:${hex(p.color)}"></i>${p.name}`;
-  el.addEventListener('click', () => select(id));
+  // The padlock on a label locks or unlocks the part right there; anywhere else on the label selects it.
+  el.addEventListener('click', e => {
+    if (e.target.closest('.lk-btn')) { e.stopPropagation(); setPartLock(id, !ownLocked(id)); return; }
+    select(id);
+  });
   el.addEventListener('mouseenter', () => setHover(id, 'label'));
   el.addEventListener('mouseleave', () => setHover(null, 'label'));
   labelLayer.appendChild(el);
@@ -1226,6 +1267,9 @@ function teethLine(id) {
   return `${ARBOR_DEFS.length} jewels`;
 }
 const partLocked = id => (parts[id].kind === 'arbor' ? lockPinned(id) : parts[id].kind === 'hand' ? !!S.locks[id] : false);
+// What a part's own padlock covers: a wheel's gears, or the hand itself. The plate has none.
+const partLockIds = id => (parts[id].kind === 'arbor' ? ARBOR[id].gears.map(g => g.id) : parts[id].kind === 'hand' ? [id] : []);
+const ownLocked = id => partLockIds(id).some(k => S.locks[k]);
 const nameOf = id => (S.info[id] && S.info[id].name) || parts[id].name;
 
 const inFocus = id => !FOCUS[focus] || FOCUS[focus].includes(id);
@@ -1239,6 +1283,7 @@ function setHover(id, source) {
 
 function select(id, gear = null) {
   cancelPending();
+  quickDismissed = null;   // clicking a part again reopens its quick-edit box
   selectedId = id;
   activeGear = id && ARBOR[id] ? (gear && ARBOR[id].gears.some(g => g.id === gear) ? gear : mainGear(id)) : null;
   refreshLook();
@@ -1292,6 +1337,11 @@ function hitAt(cx, cy) {
 const pickAt = (cx, cy) => { const h = hitAt(cx, cy); return h ? h.part : null; };
 
 let pointerXY = null, pointerDirty = false, dragging = false, downAt = null, gizmoGrab = false;
+// Where the last press landed and where the pointer is now (window-wide, read first), for the arrows' dead zone.
+let pressAt = null, lastPointer = [0, 0];
+window.addEventListener('pointermove', e => { lastPointer = [e.clientX, e.clientY]; }, { capture: true });
+// The quick-edit box: which part it is open for, whether you closed it, and whether you're holding it still.
+let quickId = null, quickDismissed = null, quickHold = false;
 
 // The arrows measure a drag against a helper plane that only turns to face the grabbed axis on the next frame.
 // A press with no hover first (touch, or a quick click) would measure from a stale plane and make the part jump,
@@ -1300,9 +1350,11 @@ let pointerXY = null, pointerDirty = false, dragging = false, downAt = null, giz
 // (The orbit control blocks the browser's own blur on canvas presses.)
 canvas.addEventListener('pointerdown', () => {
   const a = document.activeElement;
-  if (a && a !== document.body && a.closest && a.closest('aside')) a.blur();
+  if (a && a !== document.body && a.closest && a.closest('aside, .quick')) a.blur();
 }, { capture: true });
 canvas.addEventListener('pointerdown', e => {
+  pressAt = [e.clientX, e.clientY];
+  lastPointer = [e.clientX, e.clientY];
   if (!gizmo.object || e.button !== 0) return;
   const r = canvas.getBoundingClientRect();
   gizmo.pointerHover({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1, button: -1 });
@@ -1345,7 +1397,7 @@ window.addEventListener('keydown', e => {
 
 // ---------- tools: select, drop pins, sketch ----------
 const HINTS = {
-  select: 'hover to identify · click to select · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom',
+  select: 'hover to identify · click to select · click a label’s padlock to lock or unlock · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom',
   pin: 'click any part to drop a numbered pin on that spot · type a note for it in the Pins list · drag empty space to orbit · Esc to stop',
 };
 function setTool(t) {
@@ -1359,6 +1411,7 @@ function setTool(t) {
   canvas.style.cursor = t === 'select' ? '' : 'crosshair';
   document.getElementById('hint').textContent = (t === 'sketch' && window.Sketcher) ? window.Sketcher.hint : HINTS[t] || HINTS.select;
   if (t !== 'select') setHover(null, 'view');
+  renderQuick();
   renderPins();
   if (window.Sketcher) window.Sketcher.renderPanel();
 }
@@ -1546,10 +1599,16 @@ function updateLabels() {
 }
 function renderLabelLocks() {
   for (const id of partOrder) {
-    const p = parts[id], lk = partLocked(id), key = `${lk}|${nameOf(id)}`;
+    const p = parts[id], can = partLockIds(id).length > 0, lk = can && ownLocked(id);
+    const held = can && !lk && p.kind === 'arbor' ? lockersOf(id) : [];
+    const key = `${can}|${lk}|${held.join()}|${nameOf(id)}`;
     if (p.labelKey === key) continue;
     p.labelKey = key;
-    p.labelEl.innerHTML = `<i style="background:${hex(p.color)}"></i>${esc(nameOf(id))}${lk ? LOCK_SVG : ''}`;
+    const title = lk ? 'Locked: click to unlock it and edit it here'
+      : held.length ? `Unlocked, but held in place by the locked ${listText(held)}. Click to lock it`
+      : 'Unlocked: click to lock it';
+    p.labelEl.innerHTML = `<i style="background:${hex(p.color)}"></i>${esc(nameOf(id))}` +
+      (can ? `<button class="lk-btn${lk ? ' on' : ''}" title="${esc(title)}" aria-label="${lk ? 'Unlock' : 'Lock'} ${esc(nameOf(id))}" aria-pressed="${lk}">${lk ? LOCK_SVG : UNLOCK_SVG}</button>` : '');
     p.labelEl._w = 0;
   }
 }
@@ -1592,7 +1651,42 @@ function toggleLock(id, label) {
   cancelPending();
   const on = !S.locks[id];
   if (on) S.locks[id] = true; else delete S.locks[id];
+  if (!on) quickDismissed = null;
   commit({ text: on ? `Locked ${label}: only you change it now` : `Unlocked ${label}: auto-adjust may now move, resize and re-height it`, adapt: false });
+}
+
+// Whole-part lock, used by the padlock on a label and by the quick-edit box.
+// A wheel's padlock covers its own gears; a hand on its arbor has its own padlock.
+// Unlocking remembers which gears were locked, so locking again puts back exactly those.
+// A part that was never locked locks all its gears.
+const lockMemory = {};
+function setPartLock(id, on) {
+  const ids = partLockIds(id);
+  if (!ids.length || ownLocked(id) === on) return;
+  cancelPending();
+  let changed;
+  if (on) {
+    const mem = (lockMemory[id] || []).filter(k => ids.includes(k));
+    changed = mem.length ? mem : ids;
+    for (const k of changed) S.locks[k] = true;
+  } else {
+    changed = ids.filter(k => S.locks[k]);
+    lockMemory[id] = changed;
+    for (const k of changed) delete S.locks[k];
+    quickDismissed = null;
+    if (selectedId !== id) {
+      selectedId = id;
+      activeGear = parts[id].kind === 'arbor' ? (changed.find(k => GEAR_DEFS[k]) || mainGear(id)) : null;
+      refreshLook();
+    }
+  }
+  const p = parts[id];
+  const which = p.kind === 'arbor' && !(changed.length === 1 && GEAR_DEFS[changed[0]].label === p.name)
+    ? ` (${changed.map(k => GEAR_DEFS[k].label).join(', ')})` : '';
+  const still = !on && p.kind === 'arbor' ? lockersOf(id) : [];
+  commit({ adapt: false, text: on
+    ? `Locked ${nameOf(id)}${which}: only you change it now`
+    : `Unlocked ${nameOf(id)}${which}: auto-adjust may now move, resize and re-height it${still.length ? `. Its position is still held by the locked ${listText(still)}` : ''}` });
 }
 
 function positionStatus(a) {
@@ -1642,11 +1736,139 @@ function xyControls(el, arbor, who) {
   }
 }
 
+// A gear's size, height and thickness. Used by the panel and the quick-edit box.
+function gearControls(gid) {
+  const G = D.gears[gid], sc = scale;
+  const defM = G.stage ? DEFAULT_STAGES[G.stage].m : DEFAULT_STATE.solo[gid].m;
+  return [
+    control({ label: 'Scale · pitch Ø', unit: 'mm', min: defM * G.z * 0.3 * sc, max: defM * G.z * 3 * sc, step: 0.01, value: G.m * G.z * sc,
+      onInput: v => liveEdit(EDIT.pitch(gid, v / sc)),
+      onCommit: (v0, v1) => commit({ key: `pitch:${gid}`, from: v0, to: v1, make: (x, y) => `${G.label} pitch Ø ${f2(x)} → ${f2(y)} mm${withPartner(gid, 'resized')}` }) }),
+    control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: G.z0 * sc,
+      onInput: v => liveEdit(EDIT.z(gid, v / sc)),
+      onCommit: (v0, v1) => commit({ key: `z:${gid}`, from: v0, to: v1, make: (x, y) => `${G.label} height ${f2(x)} → ${f2(y)} mm${withPartner(gid, 'moved')}` }) }),
+    control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: 3 * sc, step: 0.01, value: G.t * sc,
+      onInput: v => liveEdit(EDIT.thick(gid, v / sc)),
+      onCommit: (v0, v1) => commit({ key: `t:${gid}`, from: v0, to: v1, make: (x, y) => `${G.label} thickness ${f2(x)} → ${f2(y)} mm` }) }),
+  ];
+}
+// A hand's length, height and thickness.
+function handControls(hid) {
+  const h = HAND[hid], hs = S.hands[hid], sc = scale;
+  return [
+    control({ label: 'Scale · length', unit: 'mm', min: 1 * sc, max: S.movementD / 2 * sc, step: 0.05, value: hs.length * sc,
+      onInput: v => liveEdit(EDIT.hand(hid, 'length', Math.max(0.5, v / sc))),
+      onCommit: (v0, v1) => commit({ key: `len:${hid}`, from: v0, to: v1, make: (x, y) => `${h.name} length ${f2(x)} → ${f2(y)} mm` }) }),
+    control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: hs.z * sc,
+      onInput: v => liveEdit(EDIT.hand(hid, 'z', Math.max(0, v / sc))),
+      onCommit: (v0, v1) => commit({ key: `hz:${hid}`, from: v0, to: v1, make: (x, y) => `${h.name} height ${f2(x)} → ${f2(y)} mm` }) }),
+    control({ label: 'Thickness', unit: 'mm', min: 0.03 * sc, max: 1 * sc, step: 0.01, value: hs.t * sc,
+      onInput: v => liveEdit(EDIT.hand(hid, 't', Math.max(0.02, v / sc))),
+      onCommit: (v0, v1) => commit({ key: `ht:${hid}`, from: v0, to: v1, make: (x, y) => `${h.name} thickness ${f2(x)} → ${f2(y)} mm` }) }),
+  ];
+}
+
+// ---------- quick-edit box: the selected part's numbers, right beside it in the view ----------
+// Open while the selected part is unlocked. Locking it closes the box; × closes it and leaves the part unlocked;
+// clicking the part again reopens it. It follows the part as you orbit, but holds still while you
+// drag its arrows or work a control in it, so it never runs from your cursor.
+const quickEl = document.getElementById('quick');
+quickEl.addEventListener('pointerdown', () => { quickHold = true; });
+window.addEventListener('pointerup', () => { quickHold = false; });
+
+function quickTarget() {
+  const id = selectedId;
+  if (!id || tool !== 'select' || quickDismissed === id) return null;
+  if (!partLockIds(id).length || ownLocked(id) || !parts[id].visible || !inFocus(id)) return null;
+  return id;
+}
+function quickNote(id) {
+  if (parts[id].kind !== 'arbor') return '';
+  const held = lockersOf(id);
+  if (held.length) return `Held in place by the locked ${listText(held)}. You can still move it.`;
+  const anchors = fixedEdges(id, stageLocked).map(([, o]) => ARBOR[o].name);
+  if (anchors.length === 1) return `Meshes with the locked ${anchors[0]}, so it can only swing around it.`;
+  if (anchors.length > 1) return `Meshes with the locked ${listText(anchors)}, which set where it sits.`;
+  return '';
+}
+function renderQuick() {
+  const id = quickTarget();
+  quickId = id;
+  quickEl.innerHTML = '';
+  if (!id) { quickEl.hidden = true; return; }
+  const p = parts[id];
+  const head = document.createElement('div');
+  head.className = 'qk-head';
+  head.innerHTML = `<span class="sw" style="background:${hex(p.color)}"></span><b title="${esc(nameOf(id))}">${esc(nameOf(id))}</b>`;
+  const lock = document.createElement('button');
+  lock.className = 'lockbtn';
+  lock.title = 'Unlocked: auto-adjust may change it. Lock it to keep it as it is; this box closes.';
+  lock.innerHTML = `${UNLOCK_SVG}Lock`;
+  lock.addEventListener('click', () => setPartLock(id, true));
+  const close = document.createElement('button');
+  close.className = 'qk-x';
+  close.title = 'Close (it stays unlocked)';
+  close.setAttribute('aria-label', 'Close quick edit');
+  close.textContent = '×';
+  close.addEventListener('click', () => { quickDismissed = id; renderQuick(); });
+  head.append(lock, close);
+  quickEl.appendChild(head);
+  if (p.kind === 'arbor') {
+    const note = quickNote(id);
+    if (note) quickEl.appendChild(para('qk-note', esc(note)));
+    const a = ARBOR[id];
+    if (a.gears.length > 1) {
+      const seg = document.createElement('div');
+      seg.className = 'qk-gears';
+      for (const g of a.gears) {
+        const b = document.createElement('button');
+        b.textContent = GEAR_DEFS[g.id].label;
+        b.className = g.id === activeGear ? 'on' : '';
+        b.addEventListener('click', () => { setActiveGear(g.id); renderQuick(); });
+        seg.appendChild(b);
+      }
+      quickEl.appendChild(seg);
+    }
+    xyControls(quickEl, id, a.name);
+    for (const c of gearControls(activeGear)) quickEl.appendChild(c);
+  } else {
+    for (const c of handControls(id)) quickEl.appendChild(c);
+  }
+  quickEl.hidden = false;
+  quickEl._w = quickEl.offsetWidth;
+  quickEl._h = quickEl.offsetHeight;
+  placeQuick(true);
+}
+// Beside the part: just right of its outline on screen, else just left, kept inside the view.
+const quickV = new THREE.Vector3();
+function placeQuick(force = false) {
+  if (!quickId || quickEl.hidden) return;
+  if (!force && (quickHold || gz)) return;
+  const p = parts[quickId], w = stage.clientWidth, h = stage.clientHeight;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, seen = false;
+  for (let k = 0; k < 16; k++) {
+    const a = k / 16 * Math.PI * 2;
+    p.root.localToWorld(quickV.set(Math.cos(a) * p.footR, Math.sin(a) * p.footR, p.footZ)).project(camera);
+    if (quickV.z > 1) continue;
+    seen = true;
+    const sx = (quickV.x + 1) / 2 * w, sy = (1 - quickV.y) / 2 * h;
+    x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy);
+  }
+  if (!seen) return;
+  const bw = quickEl._w, bh = quickEl._h, gap = 16, m = 8;
+  let x = x1 + gap;
+  if (x + bw > w - m) x = x0 - gap - bw >= m ? x0 - gap - bw : w - bw - m;
+  x = Math.min(Math.max(m, x), w - bw - m);
+  const y = Math.min(Math.max(m, (y0 + y1) / 2 - bh / 2), h - bh - m);
+  quickEl.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+}
+
 function renderSelected() {
   const el = document.getElementById('selected');
   el.innerHTML = '';
+  renderQuick();
   if (!selectedId) {
-    el.innerHTML = '<div class="sel-empty">Click a part in the view, its label, or the list. Arrows appear on it: drag one to move the part along that axis, or type values here. Lock the parts you’ve placed. Esc clears.</div>';
+    el.innerHTML = '<div class="sel-empty">Click a part in the view, its label, or the list. Arrows appear on it: drag one to move the part along that axis, or type values here. Unlocked parts also get a quick-edit box beside them in the view. Lock the parts you’ve placed (the padlock on a label does it in one click). Esc clears.</div>';
     return;
   }
   const p = parts[selectedId], sc = scale;
@@ -1679,16 +1901,7 @@ function renderSelected() {
       card.appendChild(para('gl', partner
         ? `Meshes with ${partner.label}${S.locks[partner.id] ? ' (locked)' : ''} on <button class="link" data-go="${partner.arbor}">${ARBOR[partner.arbor].name}</button>. Resize or raise one and the other follows; speeds stay the same.`
         : 'Nothing meshes with its teeth, so it sizes on its own.'));
-      const defM = G.stage ? DEFAULT_STAGES[G.stage].m : DEFAULT_STATE.solo[g.id].m;
-      card.appendChild(control({ label: 'Scale · pitch Ø', unit: 'mm', min: defM * G.z * 0.3 * sc, max: defM * G.z * 3 * sc, step: 0.01, value: G.m * G.z * sc,
-        onInput: v => liveEdit(EDIT.pitch(g.id, v / sc)),
-        onCommit: (v0, v1) => commit({ key: `pitch:${g.id}`, from: v0, to: v1, make: (x, y) => `${G.label} pitch Ø ${f2(x)} → ${f2(y)} mm${withPartner(g.id, 'resized')}` }) }));
-      card.appendChild(control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: G.z0 * sc,
-        onInput: v => liveEdit(EDIT.z(g.id, v / sc)),
-        onCommit: (v0, v1) => commit({ key: `z:${g.id}`, from: v0, to: v1, make: (x, y) => `${G.label} height ${f2(x)} → ${f2(y)} mm${withPartner(g.id, 'moved')}` }) }));
-      card.appendChild(control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: 3 * sc, step: 0.01, value: G.t * sc,
-        onInput: v => liveEdit(EDIT.thick(g.id, v / sc)),
-        onCommit: (v0, v1) => commit({ key: `t:${g.id}`, from: v0, to: v1, make: (x, y) => `${G.label} thickness ${f2(x)} → ${f2(y)} mm` }) }));
+      for (const c of gearControls(g.id)) card.appendChild(c);
       card.addEventListener('click', e => { if (!e.target.closest('input,button')) setActiveGear(g.id); });
       el.appendChild(card);
     }
@@ -1705,15 +1918,7 @@ function renderSelected() {
     el.appendChild(subHead(`Position · moves the ${ARBOR[h.arbor].name.toLowerCase()} arbor it sits on`));
     xyControls(el, h.arbor, `${h.name} (${ARBOR[h.arbor].name} arbor)`);
     el.appendChild(subHead('Size'));
-    el.appendChild(control({ label: 'Scale · length', unit: 'mm', min: 1 * sc, max: S.movementD / 2 * sc, step: 0.05, value: hs.length * sc,
-      onInput: v => liveEdit(EDIT.hand(p.id, 'length', Math.max(0.5, v / sc))),
-      onCommit: (v0, v1) => commit({ key: `len:${p.id}`, from: v0, to: v1, make: (x, y) => `${h.name} length ${f2(x)} → ${f2(y)} mm` }) }));
-    el.appendChild(control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: hs.z * sc,
-      onInput: v => liveEdit(EDIT.hand(p.id, 'z', Math.max(0, v / sc))),
-      onCommit: (v0, v1) => commit({ key: `hz:${p.id}`, from: v0, to: v1, make: (x, y) => `${h.name} height ${f2(x)} → ${f2(y)} mm` }) }));
-    el.appendChild(control({ label: 'Thickness', unit: 'mm', min: 0.03 * sc, max: 1 * sc, step: 0.01, value: hs.t * sc,
-      onInput: v => liveEdit(EDIT.hand(p.id, 't', Math.max(0.02, v / sc))),
-      onCommit: (v0, v1) => commit({ key: `ht:${p.id}`, from: v0, to: v1, make: (x, y) => `${h.name} thickness ${f2(x)} → ${f2(y)} mm` }) }));
+    for (const c of handControls(p.id)) el.appendChild(c);
   } else {
     el.appendChild(control({ label: 'Movement Ø', unit: 'mm', min: 15 * sc, max: 120 * sc, step: 0.5, value: S.movementD * sc,
       onInput: v => { beginEdit(); S.movementD = Math.max(5, v / sc); requestSolve(); },
@@ -2215,6 +2420,9 @@ window.studio = {
   sketches: () => clone(S.sketches),
   setTool,
   tool: () => tool,
+  partLock: (id, on = true) => setPartLock(id, on),
+  ownLocked: id => ownLocked(id),
+  quick: () => (quickId ? { id: quickId, rect: quickEl.getBoundingClientRect().toJSON() } : null),
 };
 
 restoreAutosave();
@@ -2248,6 +2456,7 @@ let last = performance.now(), lastPick = 0;
   renderTip();
   renderer.render(scene, camera);
   updateLabels();
+  placeQuick();
   updateClock(te, now);
   requestAnimationFrame(tick);
 })(last);

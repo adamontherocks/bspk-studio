@@ -146,13 +146,26 @@ Adam: thickness changes were buggy on gears with reductions. More importantly, m
 
 The chat that followed produced the model in §6: a lock-driven workflow, parts-first modelling, the x-ray sketcher and cage modeller, editable sketched parts, STEP export to Fusion/Plasticity, intent notes, and a small-steps build order.
 
+### 2026-11-06/07 — First use of the record and sketcher; quick edit
+
+Adam tried the record and the 2D sketcher on a Hemistitch-style layout: hour and minute wheels enlarged to 18 mm and lifted to 13 mm, off the plate, to isolate them. He liked grid snap and inserting dots anywhere on the polyspline ("epic"). His log showed every remaining clash came from arbors modelled down to the mainplate (the §6.3 problem, now with a real example), and that his 21.46 mm center wheel had been shrunk back to 12.05 mm by later edits because it was unlocked.
+
+He asked for two speed-ups, both built 2026-11-07 (§5):
+
+> "on the label displayed in the orbit viewer, we need to have the ability to lock and unlock there … to move around and then lock again."
+>
+> "when you select the part to edit, maybe have the adjustments pop up beside it in a small window … a quick edit box when you unlock it and a manual close if you wanna leave it unlocked. or it closes when you lock it. beats having to go over to the right toolbar and scroll."
+
+That evening the Mac's battery ran out mid-session (it hibernated, nothing on disk lost). The sim's autosave restored the layout exactly; only the in-page log and undo history were gone. The full log was recovered from the chat transcript into `scenes/bspk-scene-2026-11-06_1604-recovered.json`.
+
 ---
 
 ## 5. What exists today
 
 ### Files
 
-- `sim/index.html` — the editable watch train (the clock beta), plus pins, part records, autosave, scene files and the report. ~2,200 lines.
+- `sim/index.html` — the editable watch train (the clock beta), plus pins, part records, autosave, scene files, the report, label padlocks and the quick-edit box. ~2,400 lines.
+- `scenes/` — saved scene files (currently one recovered from the 2026-11-06 session; not committed).
 - `sim/sketch.js` — the 2D sketcher (loaded by `index.html`).
 - `sim/gear.html` — single involute gear page with a CadQuery export script.
 - `sim/involute.js` — shared involute outline math; `gear.html`'s Python template mirrors it.
@@ -168,9 +181,9 @@ The chat that followed produced the model in §6: a lock-driven workflow, parts-
 ### What the watch train does (as of 2026-11-05/06)
 
 - **Train:** barrel (motor) → center (1 rev/h) → third → fourth (seconds, 1 rev/min) → faux escape wheel (18,000 vph, steps per beat). Minutes on their own **minute wheel** driven from the center arbor through a **minute intermediate** (40→20, then 40→80 = 1:1, clockwise). Hours from the center arbor through the hour intermediate (12→48, 14→42 = 12:1). No cannon pinion.
-- **Locks:** a lock button on every gear and hand. Default locked: barrel teeth, minute wheel, fourth wheel, escape wheel, hour wheel, all three hands. Every reduction gear starts unlocked. Lock icons on labels and in the parts list.
+- **Locks:** a lock button on every gear and hand. Default locked: barrel teeth, minute wheel, fourth wheel, escape wheel, hour wheel, all three hands. Every reduction gear starts unlocked. Clickable padlocks on the labels in the view (§ Quick edit below); lock icons in the parts list.
 - **Controls per part:** X, Y (arbor), Z (height), scale (pitch Ø; length for hands), thickness. The Z arrow moves the gear you clicked; click a gear card to switch.
-- **Move arrows:** red X, green Y, blue Z on the selected part; dragging moves along that axis only. (A library bug that made parts jump when an arrow was pressed without hovering first is fixed.)
+- **Move arrows:** red X, green Y, blue Z on the selected part; dragging moves along that axis only. (A library bug that made parts jump when an arrow was pressed without hovering first is fixed.) A click on an arrow isn't a move: the part holds still until the pointer travels 4 px, and a drag that ends where it started (under 0.005 mm) isn't logged.
 - **Keeping it meshed:** a mesh's size is fixed if either gear is locked or you're resizing it; then its two shafts sit exactly one centre distance apart. Unlocked meshes take their size from the spacing. Tooth counts never change, so every speed stays exact.
 - **Auto-adjust (toggle):** on release, searches unlocked parts (swing around a locked partner, slide, raise/lower a mesh) in rounds for the smallest change that clears clashes, touching as few parts as possible. It only keeps a result that fully clears at least one clash and starts none.
 - **Conflict reports:** when it can't clear something, the log says what's blocking and gives concrete options, e.g. "raise Minute hand to 10.65 mm, shorten it to 8.75 mm or unlock it."
@@ -195,11 +208,21 @@ The chat that followed produced the model in §6: a lock-driven workflow, parts-
 - Sketches are part of the scene: they autosave, save to files, undo, and go in the report. Quick edits to one sketch merge into one log line listing every action.
 - Not yet: extruding to a part, more than one plane per sketch, moving the plane by dragging (use the position slider).
 
+### Quick edit (added 2026-11-07)
+
+- **Padlock on every label** in the view (not the mainplate): amber closed = locked, open = unlocked. One click locks or unlocks the whole part; clicking the rest of the label still selects it.
+- **What a padlock covers:** a wheel's own gears (a hand on its arbor has its own padlock). Unlocking remembers which gears were locked, so locking again restores exactly that set (e.g. only the Center pinion). A part that was never locked locks all its gears. If a locked hand still holds the arbor, the label, the box and the log say so.
+- **Quick-edit box** beside the selected part, while it's unlocked: X and Y of the arbor, then pitch Ø, height and thickness of the active gear (a switch picks the gear on multi-gear arbors; it's the same gear the Z arrow moves), or length, height and thickness for a hand. A short note says when locked neighbours limit where it can go.
+- **Opens** when you unlock a part (label padlock or panel lock button) or click a part that's already unlocked. **Closes** when you lock it (the box's own Lock button or the label), on its ×, which leaves the part unlocked (clicking the part again reopens it), on Esc or clicking empty space, and while sketching or dropping pins.
+- **Placement:** just right of the part's outline on screen, else just left, kept inside the view. It follows the part as you orbit and holds still while you drag the part's arrows or work a control in it, then moves beside the new outline when you let go. The right panel is unchanged and still holds names, notes and the part record.
+- Known: the box can cover other parts' labels, so close it or orbit to reach a padlock underneath.
+
 ### Known bugs and limits
 
 - **Thickness revert (unreproduced):** in Adam's 2026-11-06 session some thickness changes were logged but reverted (center pinion, intermediate wheel, third pinion). Not reproduced on a clean layout; Adam's layout was lost when the page was reloaded to test.
 - **Pinion below the plate:** a thick pinion on a thin mating wheel is centred on the wheel and sinks below z=0 with no warning (2 mm center pinion → z −0.5).
-- **False conflicts by design (the §6.3 problem):** full-height shafts from the mainplate, one plate, shaft top tied to gear thickness, pinion height tied to its mate.
+- **False conflicts by design (the §6.3 problem):** full-height shafts from the mainplate, one plate, shaft top tied to gear thickness, pinion height tied to its mate. Real example from Adam's 2026-11-06 layout: with the minute and hour wheels lifted to 13 mm, all four remaining clashes were their arbors running down through the fourth wheel, the seconds hand sweep and the barrel.
+- **Hands don't ride with their wheel:** raising a wheel leaves its hand at the old height (Adam's hands ended up ~5 mm below their own wheels). Whether they should follow is OPEN (§8).
 - **Edge case behaviour:** some layouts are genuinely infeasible with a given lock set (e.g. an 18 mm center wheel with the hour wheel locked). The sim says so; unlocking the right part fixes it.
 - No add/remove parts, no rate targets, no train export, no extruding sketches into parts yet.
 
@@ -343,6 +366,7 @@ On 2026-11-06 Adam chose to do the record and the 2D sketcher first, to get the 
 |---|---|---|
 | A | **The record:** pins with notes, part names and intent notes, save a part, autosave, scene files, report for Claude | BUILT 2026-11-06 |
 | B | **2D sketcher, feel version:** x-ray plane on any axis, cut outlines, sharp/smooth dots, move/insert/close, orbit around it | BUILT 2026-11-06 |
+| C | **Quick edit:** padlocks on the view labels, quick-edit box beside an unlocked part, arrow clicks and no-op moves no longer logged | BUILT 2026-11-07 |
 | 0 | Fix the thickness bugs (revert, pinion below plate) | PROPOSED |
 | 1 | **Lock-driven workflow:** "unlocked parts follow live" toggle, clickable clash list + next-interference, Report/Evaluate, auto-correct with ghosted preview, "Claude, intervene" (= chat for now) | PROPOSED |
 | 2 | **Shafts as parts:** diameter, real ends, turning/fixed; wheel + pinion as one compound part; conflicts only where shafts really are | PROPOSED |
@@ -370,6 +394,8 @@ On 2026-11-06 Adam chose to do the record and the 2D sketcher first, to get the 
 8. **Reference images:** the Hemistitch photos/renders shared in chat live only in a session scratchpad. Copy into the repo (it's public) or keep elsewhere?
 9. **Hemistitch demonstrator anchors** (on hold while the tool is built): case envelope at desktop scale, disc diameter, lug articulation mechanism (single pin, paired shoulder screws, pin + bushing + detent, or Adam's sketch), battery form factor (18650, LiPo pouch, coin cell), motor coupling (D-bore press fit vs round bore + setscrew), crown function.
 10. **Default minute wheel position** in the clock preset (currently right of centre with a 9 mm hand; Adam will place it).
+11. **Hands and their wheels:** when a wheel is raised or lowered, should its hand ride with it (keeping its offset), or stay put as now?
+12. **Scene files in the repo:** commit `scenes/` (the repo is public) or keep scene files local only?
 
 ---
 
@@ -385,6 +411,7 @@ On 2026-11-06 Adam chose to do the record and the 2D sketcher first, to get the 
 - **Real-mouse testing finds real bugs:** the move-arrow jump only showed up with a real mouse press.
 - **Save the user's state before reloading:** reloading the sim to reproduce a bug wiped Adam's layout (2026-11-06).
 - **Log flooding:** 1,153 of 1,328 log lines once were the same repeated warnings. → report standing clashes once.
+- **Battery died mid-session** (2026-11-06): autosave kept the layout, but the log and undo history live only in the page and were lost on reload. A Save scene file is the durable copy. Test new code on a separate port (its own browser storage) so the designer's autosave is never touched.
 
 ---
 
