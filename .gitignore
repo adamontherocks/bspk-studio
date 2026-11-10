@@ -10,3 +10,7 @@ node_modules/
 *.f3d
 __pycache__/
 *.pyc
+
+# Scene autosaves from serve.py stay on this machine (the repo is public)
+scenes/autosave.json
+scenes/autosave-backups/

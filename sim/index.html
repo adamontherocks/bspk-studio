@@ -8,7 +8,7 @@
 :root{
   --bg:#0d1319; --stage-top:#18222d; --panel:#121a22; --line:#243140; --line-2:#2f3e4f;
   --fg:#dce5ed; --muted:#8798aa; --dim:#5f7183; --accent:#86bddb; --accent-ink:#0d1319;
-  --warn:#e3a95c; --err:#e67b6b; --ok:#7fc29b; --pin:#f0b44c; --sketch:#ff7ad9;
+  --warn:#e3a95c; --err:#ff5a48; --ok:#7fb2e6; --pin:#f0b44c; --sketch:#ffd23f;
   --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   color-scheme:dark;
@@ -28,6 +28,10 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:100vh}
 .beat{width:7px;height:7px;border-radius:50%;background:var(--dim)}
 .beat.on{background:var(--ok);box-shadow:0 0 6px var(--ok)}
 .labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+/* Live numbers and snap tags beside a selected dot: muted when just measuring, solid white when something snapped. */
+.snap-tags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.snap-tag{position:absolute;left:0;top:0;font:600 10.5px/1 var(--mono);padding:3px 6px;border-radius:999px;background:rgba(13,19,25,.82);color:var(--fg);border:1px solid var(--line-2);white-space:nowrap;will-change:transform}
+.snap-tag.hit{background:#f4f7fa;color:#0d1319;border-color:#f4f7fa}
 .lbl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;font:11px/1 var(--ui);color:var(--fg);background:rgba(13,19,25,.82);border:1px solid var(--line-2);border-radius:999px;padding:4px 9px 4px 6px;white-space:nowrap;pointer-events:auto;cursor:pointer;will-change:transform}
 .lbl i{width:8px;height:8px;border-radius:50%;flex:none}
 .lbl svg{width:9px;height:9px;color:var(--warn)}
@@ -37,8 +41,14 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:100vh}
 .lbl .lk-btn:hover{background:rgba(255,255,255,.14);color:#fff}
 .lbl .lk-btn:focus-visible{outline:1px solid var(--accent)}
 .lbl.dim{opacity:.2}
+.lbl .nc{color:var(--muted);font-size:10px}
+/* While a drawn part's dots are being edited its label lets clicks through, so it never covers a dot. */
+.lbl.editing{pointer-events:none;opacity:.55}
 .lbl.hot{border-color:var(--accent);color:#fff}
 .lbl.bad{border-color:var(--err);color:#fff}
+/* A clashing part's dot becomes a warning triangle, so a clash reads by shape as well as colour. */
+.lbl.bad i,.parts li.bad .sw{width:12px;height:11px;border-radius:0;background:var(--err)!important;clip-path:polygon(50% 0,100% 100%,0 100%);display:grid;place-items:end center}
+.lbl.bad i::after,.parts li.bad .sw::after{content:'!';font:800 8px/1 var(--ui);font-style:normal;color:#0d1319;padding-bottom:1px}
 .tip{position:absolute;left:0;top:0;pointer-events:none;background:rgba(9,14,19,.95);border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;font-size:12px;max-width:290px;z-index:3}
 .tip b{display:block;font-weight:600;margin-bottom:3px}
 .tip span{display:block;color:var(--muted);font:11px/1.45 var(--mono)}
@@ -76,7 +86,6 @@ dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 .parts li:hover,.parts li.hot{background:rgba(255,255,255,.045)}
 .parts li.on{background:rgba(134,189,219,.13);box-shadow:inset 0 0 0 1px rgba(134,189,219,.35)}
 .parts li.off .nm{opacity:.45}
-.parts li.bad .sw{box-shadow:0 0 0 2px var(--err)}
 .sw{width:10px;height:10px;border-radius:3px;flex:none}
 .parts .nm{display:flex;flex-direction:column;min-width:0}
 .parts .nm span{display:flex;align-items:center;gap:5px}
@@ -114,6 +123,12 @@ dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 .checks li.info{border-color:var(--accent)}
 .checks li.warn{border-color:var(--warn)}
 .checks li.err{border-color:var(--err)}
+/* Each check carries a symbol, so ok / note / warning / error never depend on colour alone. */
+.checks li::before{display:inline-block;min-width:1.15em;font:700 12px var(--ui)}
+.checks li.ok::before{content:'\2713';color:var(--ok)}
+.checks li.info::before{content:'i';color:var(--accent);font-style:italic;font-family:Georgia,serif}
+.checks li.warn::before{content:'!';color:var(--warn)}
+.checks li.err::before{content:'\2715';color:var(--err)}
 .checks .mono{font:11px/1.6 var(--mono);color:var(--muted)}
 .log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;max-height:300px;overflow:auto}
 .log li{font-size:12px;padding:6px 8px;border-radius:5px;background:rgba(255,255,255,.025)}
@@ -179,7 +194,7 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
     <header>
       <div class="eyebrow">BSPK Studio</div>
       <h1>Watch train · regulator layout</h1>
-      <div class="sub">Barrel-driven going train. Minutes, seconds and hours each turn their own wheel on their own arbor; no cannon pinion. A faux escape wheel stands in for the escapement. Lock the parts you place. Unlocked parts move, resize and re-height so the train keeps meshing.</div>
+      <div class="sub">Barrel-driven going train. Minutes, seconds and hours each turn their own wheel on their own axis; no cannon pinion. A faux escape wheel stands in for the escapement. Lock the parts you place. Unlocked parts move, resize and re-height so the train keeps meshing.</div>
       <nav class="tabs"><a class="on" href="index.html">Watch train</a><a href="gear.html">Single gear</a></nav>
     </header>
 
@@ -270,14 +285,19 @@ const LOCK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.3
 const UNLOCK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.6" y="5.9" width="7" height="5" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 5.9V3.9a2.1 2.1 0 0 1 4.1-.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
 
 const GROUPS = {
-  power:   { label: 'Power',           color: 0xc9a46a },
-  minutes: { label: 'Minutes',         color: 0x4fcdbf },
-  going:   { label: 'Going train',     color: 0x8fa6bd },
-  seconds: { label: 'Seconds',         color: 0xb29cf2 },
-  escape:  { label: 'Faux escapement', color: 0x7fb0e0 },
-  hours:   { label: 'Hours',           color: 0xee8f9b },
-  plate:   { label: 'Plate',           color: 0x3a4757 },
+  power:   { label: 'Power' },
+  minutes: { label: 'Minutes' },
+  going:   { label: 'Going train' },
+  seconds: { label: 'Seconds' },
+  escape:  { label: 'Faux escapement' },
+  hours:   { label: 'Hours' },
+  plate:   { label: 'Plate' },
+  drawn:   { label: 'Drawn part' },
 };
+// The colour code, chosen for red-green colour blindness: parts are white, the selected part is blue,
+// a part that collides is red. Nothing else uses red, and a clash also shows a warning triangle on its label.
+// The plate is grey so the white parts read against it.
+const LOOK = { part: 0xe3e8ec, plate: 0x5d6976, hover: 0xa9d2f2, selected: 0x2f86ec, clash: 0xff3b2a };
 const FOCUS = {
   all: null,
   power: ['barrel', 'center'],
@@ -289,7 +309,7 @@ const FOCUS = {
 // What each part is. Tooth counts are fixed for now, so every speed stays locked.
 const ARBOR_DEFS = [
   { id: 'barrel', name: 'Barrel', group: 'power', level: 0, staticArbor: true, drumH: 2.4,
-    role: 'The motor. The mainspring inside the drum drives the whole train. The arbor holds still while the drum turns. Lid left off so the spring shows.',
+    role: 'The motor. The mainspring inside the drum drives the whole train. Its centre holds still while the drum turns. Lid left off so the spring shows.',
     gears: [{ id: 'barrel_teeth', label: 'Barrel teeth', z: 90, t: 0.4 }] },
   { id: 'center', name: 'Center wheel', group: 'going', level: 1,
     role: 'Turns once an hour, driven by the barrel. Drives the third wheel, the minute wheel (through the minute intermediate) and the hour train. It no longer carries the minute hand.',
@@ -304,7 +324,7 @@ const ARBOR_DEFS = [
       { id: 'third_pinion', label: 'Third pinion', z: 10, t: 0.6 },
       { id: 'third_wheel', label: 'Third wheel', z: 75, t: 0.3 }] },
   { id: 'fourth', name: 'Fourth wheel', group: 'seconds', level: 3,
-    role: 'Turns once a minute. Its arbor carries the seconds hand.',
+    role: 'Turns once a minute. The seconds hand turns on its axis.',
     gears: [
       { id: 'fourth_pinion', label: 'Fourth pinion', z: 10, t: 0.6 },
       { id: 'fourth_wheel', label: 'Fourth wheel', z: 75, t: 0.3 }] },
@@ -314,29 +334,29 @@ const ARBOR_DEFS = [
       { id: 'escape_pinion', label: 'Escape pinion', z: 8, t: 0.6 },
       { id: 'escape_wheel', label: 'Escape wheel (faux)', z: 16, t: 0.3 }] },
   { id: 'minter', name: 'Minute intermediate', group: 'minutes', level: 5,
-    role: 'Carries the drive from the center arbor out to the minute wheel: 40 into 20, then 40 into 80, so 1:1 overall. Two meshes keep the minute wheel turning the same way as the center wheel.',
+    role: 'Carries the drive from the center axis out to the minute wheel: 40 into 20, then 40 into 80, so 1:1 overall. Two meshes keep the minute wheel turning the same way as the center wheel.',
     gears: [
       { id: 'minter_pinion', label: 'Minute intermediate pinion', z: 20, t: 0.6 },
       { id: 'minter_wheel', label: 'Minute intermediate wheel', z: 40, t: 0.3 }] },
   { id: 'minute', name: 'Minute wheel', group: 'minutes', level: 6,
-    role: 'Its own wheel on its own arbor, carrying the minute hand. Driven from the center arbor through the minute intermediate, so it turns clockwise once an hour.',
+    role: 'Its own wheel on its own axis, carrying the minute hand. Driven from the center axis through the minute intermediate, so it turns clockwise once an hour.',
     gears: [{ id: 'minute_wheel', label: 'Minute wheel', z: 80, t: 0.3 }] },
   { id: 'inter', name: 'Hour intermediate', group: 'hours', level: 7,
-    role: 'First hour reduction (4:1), driven by the hour-drive pinion on the center arbor.',
+    role: 'First hour reduction (4:1), driven by the hour-drive pinion on the center axis.',
     gears: [
       { id: 'inter_wheel', label: 'Intermediate wheel', z: 48, t: 0.3 },
       { id: 'inter_pinion', label: 'Intermediate pinion', z: 14, t: 0.6 }] },
   { id: 'hour', name: 'Hour wheel', group: 'hours', level: 8,
-    role: 'Second hour reduction (3:1). Turns once in 12 hours on its own arbor and carries the hour hand.',
+    role: 'Second hour reduction (3:1). Turns once in 12 hours on its own axis and carries the hour hand.',
     gears: [{ id: 'hour_wheel', label: 'Hour wheel', z: 42, t: 0.3 }] },
 ];
 const HAND_DEFS = [
   { id: 'hour_hand', name: 'Hour hand', arbor: 'hour', group: 'hours', level: 9, w0: 0.95, w1: 0.45,
-    role: 'On the hour wheel arbor. One turn in 12 hours.' },
+    role: 'On the hour wheel axis. One turn in 12 hours.' },
   { id: 'seconds_hand', name: 'Seconds hand', arbor: 'fourth', group: 'seconds', level: 9, w0: 0.3, w1: 0.14, tail: 1.3,
-    role: 'On the fourth wheel arbor. One turn a minute.' },
+    role: 'On the fourth wheel axis. One turn a minute.' },
   { id: 'minute_hand', name: 'Minute hand', arbor: 'minute', group: 'minutes', level: 10, w0: 0.75, w1: 0.3,
-    role: 'On the minute wheel arbor. One turn an hour.' },
+    role: 'On the minute wheel axis. One turn an hour.' },
 ];
 
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -400,6 +420,10 @@ const DEFAULT_STATE = {
   info: {},      // partId -> { name, note }
   pins: [],      // { id: 'P1', part, at: [x, y, z] in the part's own frame, note }
   sketches: [],  // { id: 'K1', name, plane: { axis: 'x'|'y'|'z', offset }, closed, points: [{ u, v, smooth }] }
+  drawn: [],     // parts you drew: { id: 'D1', name, sketch: 'K1', thickness, grow: 'plus'|'minus'|'both', back: null | [{ u, v, smooth, w? }] }
+                 // w (optional, on front and back dots): the dot's own depth in or out of its face, positive toward the back
+                 // edges: null | per dot, the dots on the joining edge from front dot i to back dot i: [{ t, d: [x, y, z], smooth }]
+                 // the sketch's dots are the front outline; back (same dot count) is the far face's own outline, null = a copy of the front
   version: 2,
 };
 const SCHEMA_VERSION = 2;
@@ -489,11 +513,11 @@ function derive(st, lite = false) {
 
 // ---------- checks: speeds, meshes, collisions, envelope, tooth interference ----------
 // Every element is a disc or cylinder about Z, so a clash = plan overlap + height overlap.
+// Only parts that exist are here. An axis is just the centre line its parts turn on: no shaft, no size, nothing to hit.
 function elements(st, D) {
   const els = [];
   for (const a of ARBOR_DEFS) {
     const [x, y] = D.pos[a.id];
-    els.push({ part: a.id, arbor: a.id, name: `${a.name} arbor`, x, y, r: a.staticArbor ? BARREL_ARBOR_R : ARBOR_R, z0: 0, z1: D.tops[a.id] });
     for (const g of a.gears) {
       const G = D.gears[g.id];
       els.push({ part: a.id, arbor: a.id, gear: g.id, partner: G.partner, name: G.label, x, y, r: G.ra, z0: G.z0, z1: G.z1 });
@@ -514,7 +538,7 @@ const meshError = (st, D, sid) => {
 
 // Sum of how far every pair is inside the minimum gap. Zero means nothing clashes.
 function clashCost(st, D) {
-  const els = elements(st, D), GAP = st.minGap / scale - 1e-9, R = st.movementD / 2 - st.minGap / scale + 1e-9;
+  const els = elements(st, D), GAP = st.minGap / scale - 1e-9;
   let c = 0;
   for (let i = 0; i < els.length; i++) {
     const e1 = els[i];
@@ -526,8 +550,6 @@ function clashCost(st, D) {
       const clear = Math.max(Math.hypot(e1.x - e2.x, e1.y - e2.y) - e1.r - e2.r, up);
       if (clear < GAP) c += GAP - clear;
     }
-    const r = Math.hypot(e1.x, e1.y) + e1.r;
-    if (r > R) c += r - R;
   }
   for (const sid of STAGE_IDS) { const e = Math.abs(meshError(st, D, sid)); if (e > 1e-6) c += 10 * e; }
   return c;
@@ -535,9 +557,9 @@ function clashCost(st, D) {
 
 function analyse(st, D) {
   const rates = [
-    { label: 'Minute arbor', arbor: 'minute', target: 3600 },
-    { label: 'Seconds arbor', arbor: 'fourth', target: 60 },
-    { label: 'Hour arbor', arbor: 'hour', target: 43200 },
+    { label: 'Minute axis', arbor: 'minute', target: 3600 },
+    { label: 'Seconds axis', arbor: 'fourth', target: 60 },
+    { label: 'Hour axis', arbor: 'hour', target: 43200 },
   ].map(r => {
     const w = D.omega[r.arbor], T = 2 * Math.PI / Math.abs(w);
     return { ...r, w, ok: Math.abs(T - r.target) < 1e-6 * r.target && w < 0 };
@@ -559,12 +581,12 @@ function analyse(st, D) {
     const c = { key: names.join(' × '), text: `${e1.name} × ${e2.name}`, a: e1.name, b: e2.name, clear, parts: [e1.part, e2.part], els: [e1, e2] };
     (clear < GAP - 1e-9 ? collisions : near).push(c);
   }
-  const R = st.movementD / 2;
+  // How far out the parts reach, as a number to check by eye. Hanging past the plate isn't a clash:
+  // the plate isn't a boundary unless you make it one (VISION §6.0).
   let envelope = { name: '', r: 0 };
   for (const e of els) {
     const r = Math.hypot(e.x, e.y) + e.r;
     if (r > envelope.r) envelope = { name: e.name, r };
-    if (r > R - GAP + 1e-9) collisions.push({ key: `${e.name} × edge`, text: `${e.name} ${r > R ? 'past' : 'too close to'} the movement edge`, a: e.name, b: 'movement edge', clear: R - r, parts: [e.part], els: [e], edge: true });
   }
   for (const sid of STAGE_IDS) {
     const err = meshError(st, D, sid);
@@ -819,7 +841,7 @@ function elFixed(e, held) {
   if (k) return posFixed && (stageLocked(k) || held.z.has(k));
   return posFixed;
 }
-const elName = e => (e.hand ? HAND[e.hand].name : e.gear ? GEAR_DEFS[e.gear].label : e.drum ? 'Barrel' : `${ARBOR[e.arbor].name} arbor`);
+const elName = e => (e.hand ? HAND[e.hand].name : e.gear ? GEAR_DEFS[e.gear].label : e.drum ? 'Barrel' : `${ARBOR[e.arbor].name} axis`);
 const elLocked = e => (e.hand ? !!S.locks[e.hand] : e.gear ? !!S.locks[e.gear] : e.drum ? !!S.locks[e.drum] : lockPinned(e.arbor));
 const elHeld = (e, held) => held.pos.has(e.arbor) || held.z.has(e.hand || gearStage[e.gear || e.drum] || e.gear || '');
 
@@ -827,7 +849,7 @@ const elHeld = (e, held) => held.pos.has(e.arbor) || held.z.has(e.hand || gearSt
 // everything Y is clashing with right now, not just this one pair.
 function fixHint(Y, all) {
   if (!Y.hand && !Y.gear) return '';
-  const Os = all.filter(k => !k.edge && !k.mesh && k.els.some(e => e.name === Y.name)).map(k => k.els.find(e => e.name !== Y.name));
+  const Os = all.filter(k => !k.mesh && k.els.some(e => e.name === Y.name)).map(k => k.els.find(e => e.name !== Y.name));
   if (!Os.length) return '';
   const GAP = S.minGap / scale, t = Y.z1 - Y.z0, n = elName(Y);
   const opts = [`raise ${n} to ${f2((Math.max(...Os.map(O => O.z1)) + GAP) * scale)} mm`];
@@ -851,7 +873,6 @@ function tiedTo(e, held) {
 function stuckText(c, held, all) {
   const amt = clashAmount(c);
   if (c.mesh) return `${c.text}: ${amt}. A locked size or position stops it reaching. Move or unlock one of them.`;
-  if (c.edge) return `${c.text} (${amt}). ${elFixed(c.els[0], held) ? 'It’s locked or just placed by you.' : 'Nothing unlocked could pull it back in.'}`;
   const [e1, e2] = c.els, f1 = elFixed(e1, held), f2v = elFixed(e2, held);
   if (f1 && f2v) {
     const Y = elHeld(e1, held) ? e1 : elHeld(e2, held) ? e2 : e1.hand ? e1 : e2.hand ? e2 : e1;
@@ -939,7 +960,7 @@ let xrayOpacity = null;    // set while sketching so the parts go see-through
 let focus = 'all', edgesOn = true, labelsOn = true, explode = 0;
 
 function makePart({ id, name, group, role, kind, level }) {
-  const color = GROUPS[group].color;
+  const color = group === 'plate' ? LOOK.plate : LOOK.part;
   const mat = new THREE.MeshStandardMaterial({
     color, metalness: 0.3, roughness: 0.45, side: THREE.DoubleSide,
     polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
@@ -1031,12 +1052,300 @@ function zCylinder(r, z0, z1, segs = 20) {
   return g;
 }
 
+// ---------- drawn parts: a closed sketch pushed out to a thickness ----------
+// A sketch plane holds (u, v) in two model axes; the third is its normal. Same convention as the sketcher.
+const PLANE_IDX = { z: [0, 1, 2], y: [0, 2, 1], x: [1, 2, 0] };   // model axis of u, of v, of the normal
+const PLANE_N = { x: 'X', y: 'Y', z: 'Z' };
+function planeToModel(axis, c, u, v) { const o = [0, 0, 0], [iu, iv, ic] = PLANE_IDX[axis]; o[iu] = u; o[iv] = v; o[ic] = c; return o; }
+function modelToPlane(axis, m) { const [iu, iv, ic] = PLANE_IDX[axis]; return [m[iu], m[iv], m[ic]]; }
+
+// The polyspline: straight between sharp dots, smooth (Catmull-Rom as Béziers) through hollow ones.
+// The point a fraction t along segment s (dot s to dot s + 1).
+function outlinePointAt(P, closed, s, t) {
+  const n = P.length, at = i => P[((i % n) + n) % n];
+  const tan = i => {
+    const p = at(i);
+    if (!p.smooth) return [0, 0];
+    const prev = closed ? at(i - 1) : P[Math.max(0, i - 1)], next = closed ? at(i + 1) : P[Math.min(n - 1, i + 1)];
+    return [(next.u - prev.u) / 6, (next.v - prev.v) / 6];
+  };
+  const a = at(s), b = at(s + 1), ta = tan(s), tb = tan(s + 1), m = 1 - t;
+  const c1 = [a.u + ta[0], a.v + ta[1]], c2 = [b.u - tb[0], b.v - tb[1]];
+  return [m * m * m * a.u + 3 * m * m * t * c1[0] + 3 * m * t * t * c2[0] + t * t * t * b.u,
+          m * m * m * a.v + 3 * m * m * t * c1[1] + 3 * m * t * t * c2[1] + t * t * t * b.v];
+}
+// Samples [u, v, segment, fraction]; a closed outline ends back on its first dot.
+// segN(s) can force how many steps segment s gets (a loft needs both its outlines sampled alike).
+function outlinePoints(k, segN = null) {
+  const P = k.points, n = P.length, out = [];
+  if (n < 2) return n ? [[P[0].u, P[0].v, 0, 0]] : [];
+  const segs = k.closed ? n : n - 1;
+  for (let s = 0; s < segs; s++) {
+    const a = P[s], b = P[(s + 1) % n];
+    const N = segN ? segN(s) : (!a.smooth && !b.smooth ? 1 : 24);
+    for (let j = s === 0 ? 0 : 1; j <= N; j++) out.push([...outlinePointAt(P, k.closed, s, j / N), s, j / N]);
+  }
+  return out;
+}
+
+// Where a drawn part's two faces sit along the plane normal: its sketch outline is the front face, the back face is a thickness away.
+// (Grown both ways, the sketch plane runs through the middle, so the front face is half a thickness back from it.)
+function faceOffsets(d, k) {
+  const c = k.plane.offset, t = d.thickness;
+  if (d.grow === 'minus') return [c, c - t];
+  if (d.grow === 'both') return [c - t / 2, c + t / 2];
+  return [c, c + t];
+}
+// Each outline dot can also sit in or out of its face: its own depth w, in mm, positive = deeper (from the front toward the back).
+// Depth is measured that way whichever side the part grows, so flipping the grow side mirrors the part instead of turning it inside out.
+const depthSign = d => (d.grow === 'minus' ? -1 : 1);
+const MIN_WALL = 0.05;   // mm: the closest a front dot may come to its back partner, so the faces never cross
+const wAt = (P, s, t) => { const n = P.length, a = (P[s] && P[s].w) || 0, b = (P[(s + 1) % n] && P[(s + 1) % n].w) || 0; return a + (b - a) * t; };
+// The thinnest the part can be without a front dot reaching its back partner.
+function minThickness(d, k) {
+  const B = backOf(d, k);
+  return k.points.reduce((m, q, i) => Math.max(m, MIN_WALL + (q.w || 0) - ((B[i] && B[i].w) || 0)), MIN_WALL);
+}
+const backOf = (d, k) => (d.back && k && d.back.length === k.points.length ? d.back : k ? k.points : []);
+const drawnOf = id => S.drawn.find(d => d.id === id) || null;
+const sketchOf = d => (d ? S.sketches.find(k => k.id === d.sketch) || null : null);
+const growText = (d, k) => { const n = k ? PLANE_N[k.plane.axis] : ''; return d.grow === 'both' ? 'both ways' : `toward ${d.grow === 'minus' ? '−' : '+'}${n}`; };
+
+// ---------- the joining edges: front dot i to back dot i, each can carry its own dots ----------
+// d.edges[i] lists the dots on joining edge i, front to back: { t, d: [x, y, z], smooth }. A dot sits at the point a
+// fraction t along the straight line from front dot to back dot, plus its offset d, so it travels with both ends.
+// null (or an empty list) is a straight edge.
+function faceDots(d, k) {   // every outline dot's real position, depth included
+  const ax = k.plane.axis, [f0, f1] = faceOffsets(d, k), sg = depthSign(d);
+  return { F: k.points.map(q => planeToModel(ax, f0 + sg * (q.w || 0), q.u, q.v)), B: backOf(d, k).map(q => planeToModel(ax, f1 + sg * (q.w || 0), q.u, q.v)) };
+}
+const sub3v = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const edgeDotsOf = (d, i) => (d.edges && d.edges[i]) || [];
+function edgeDotPos(F, B, q) { const base = lerp3(F, B, q.t); return [base[0] + q.d[0], base[1] + q.d[1], base[2] + q.d[2]]; }
+// Joining edge i as a chain of points: front dot, its own dots, back dot. Its end dots are corners (sharp).
+// Each point's t here is its real depth: how far it sits along the straight line from front dot to back dot (never less than
+// the point before it; see below). The walls are stitched on these depths, so dragging a dot along its edge keeps the stitching true.
+function edgeChain(d, k, i, fd = faceDots(d, k)) {
+  const F = fd.F[i], B = fd.B[i], FB = sub3v(B, F), L2 = FB[0] * FB[0] + FB[1] * FB[1] + FB[2] * FB[2];
+  let last = 0;
+  const mid = edgeDotsOf(d, i).map(q => {
+    const p = edgeDotPos(F, B, q), rel = sub3v(p, F);
+    // Always a hair deeper than the point before: two dots at exactly the same depth (a square jog straight out from the edge)
+    // still get their own row in the walls, so the jog's face stays square instead of becoming a ramp.
+    const t = Math.min(1 - 1e-5, Math.max(last + 1e-5, L2 > 1e-12 ? (rel[0] * FB[0] + rel[1] * FB[1] + rel[2] * FB[2]) / L2 : q.t));
+    last = t;
+    return { p, smooth: !!q.smooth, t };
+  });
+  return [{ p: F, smooth: false, t: 0 }, ...mid, { p: B, smooth: false, t: 1 }];
+}
+// The point a fraction t along link q of a chain: straight between sharp points, smooth through hollow ones (as on an outline).
+function chainPointAt(C, q, t) {
+  if (!C[q].smooth && !C[q + 1].smooth) return lerp3(C[q].p, C[q + 1].p, t);   // a straight link, walked at even speed
+  const n = C.length;
+  const tan = i => { if (i <= 0 || i >= n - 1 || !C[i].smooth) return [0, 0, 0]; const a = C[i - 1].p, b = C[i + 1].p; return [(b[0] - a[0]) / 6, (b[1] - a[1]) / 6, (b[2] - a[2]) / 6]; };
+  const a = C[q].p, b = C[q + 1].p, ta = tan(q), tb = tan(q + 1), m = 1 - t;
+  return [0, 1, 2].map(c => m * m * m * a[c] + 3 * m * m * t * (a[c] + ta[c]) + 3 * m * t * t * (b[c] - tb[c]) + t * t * t * b[c]);
+}
+// For drawing and picking: [x, y, z, link, fraction] along a chain.
+function chainSamples(C) {
+  const out = [[...C[0].p, 0, 0]];
+  for (let q = 0; q < C.length - 1; q++) {
+    const N = C[q].smooth || C[q + 1].smooth ? 16 : 1;
+    for (let j = 1; j <= N; j++) out.push([...chainPointAt(C, q, j / N), q, j / N]);
+  }
+  return out;
+}
+// Where the walls are cut along the thickness, as depths from 0 (front) to 1 (back), shared by every wall so they meet cleanly.
+// Every joining-edge dot's depth is a cut, so each wall joins its two edges at the same depth: a point 70% along one edge meets
+// the point 70% along the other. (Joining them by dot count instead skewed and folded walls: a stray dot near one end took half the wall.)
+function throughDepths(chains, twisted) {
+  const dots = [];
+  let smooth = false;
+  for (const C of chains) for (const c of C.slice(1, -1)) { dots.push(c.t); if (c.smooth) smooth = true; }
+  if (!dots.length && !twisted) return [0, 1];
+  const steps = smooth ? 24 : 10, all = [...dots];
+  for (let m = 0; m <= steps; m++) all.push(m / steps);
+  all.sort((a, b) => a - b);
+  return all.filter((t, i) => i === 0 || t - all[i - 1] > 1e-6);
+}
+// The point on a joining edge at a given depth: within the link whose ends straddle that depth.
+function edgeAtDepth(C, tau) {
+  let j = 0;
+  while (j < C.length - 2 && C[j + 1].t < tau) j++;
+  const t0 = C[j].t, t1 = C[j + 1].t;
+  return chainPointAt(C, j, t1 - t0 > 1e-9 ? Math.min(1, Math.max(0, (tau - t0) / (t1 - t0))) : 0);
+}
+
+// A drawn part: its front outline (the sketch) and back outline joined dot for dot by the joining edges.
+// Each wall is a surface stretched between its four edges (a Coons patch): flat for a straight push, curved when an edge bends,
+// and a smooth saddle (not a crease) when the wall twists. Until the back gets its own dots it's a copy of the front.
+function buildDrawn(part, d, k) {
+  clearPart(part);
+  part.bbox = null;
+  if (!k || !k.closed || k.points.length < 3) return;   // an open outline has no body until it's closed again
+  const F = k.points, B = backOf(d, k), n = F.length, ax = k.plane.axis;
+  const [f0, f1] = faceOffsets(d, k), sg = depthSign(d), fd = faceDots(d, k);
+  // A wall whose four corners aren't in one plane twists; it's cut finely so it reads as a smooth saddle, not a crease.
+  const twisted = s => {
+    const a = fd.F[s], b = fd.F[(s + 1) % n], c = fd.B[(s + 1) % n], e = fd.B[s];
+    const u1 = sub3v(b, a), u2 = sub3v(c, a), nv = [u1[1] * u2[2] - u1[2] * u2[1], u1[2] * u2[0] - u1[0] * u2[2], u1[0] * u2[1] - u1[1] * u2[0]];
+    const L0 = Math.hypot(...nv);
+    return L0 > 1e-9 && Math.abs((e[0] - a[0]) * nv[0] + (e[1] - a[1]) * nv[1] + (e[2] - a[2]) * nv[2]) / L0 > 1e-3;
+  };
+  const tw = Array.from({ length: n }, (_, s) => twisted(s));
+  const segN = s => Math.max(F[s].smooth || F[(s + 1) % n].smooth || B[s].smooth || B[(s + 1) % n].smooth ? 24 : 1, tw[s] ? 10 : 1);
+  const at = (P, c, s, t) => { const [u, v] = outlinePointAt(P, true, s, t); return planeToModel(ax, c + sg * wAt(P, s, t), u, v); };
+  const chains = Array.from({ length: n }, (_, i) => edgeChain(d, k, i, fd));
+  const taus = throughDepths(chains, tw.some(Boolean)), M = taus.length - 1;
+  const E = chains.map(C => taus.map(tau => edgeAtDepth(C, tau)));
+  // The front and back rings, segment by segment (shared by the walls and the caps).
+  const fr = [], br = [], ring2 = [];
+  for (let s = 0; s < n; s++) {
+    const N = segN(s), fs = [], bs = [];
+    for (let j = 0; j <= N; j++) { fs.push(at(F, f0, s, j / N)); bs.push(at(B, f1, s, j / N)); if (j < N) ring2.push(outlinePointAt(F, true, s, j / N)); }
+    fr.push(fs); br.push(bs);
+  }
+  const area = ring2.reduce((a, p, i) => { const q = ring2[(i + 1) % ring2.length]; return a + p[0] * q[1] - q[0] * p[1]; }, 0);
+  // Outward winding: a counter-clockwise outline seen from +(u × v), with the back further along +(u × v), winds front → next → back.
+  const eu = new THREE.Vector3(...planeToModel(ax, 0, 1, 0)), ev = new THREE.Vector3(...planeToModel(ax, 0, 0, 1));
+  const nrm = new THREE.Vector3(...planeToModel(ax, 1, 0, 0)), depth = nrm.clone().multiplyScalar(Math.sign(f1 - f0) || 1);
+  const std = (area >= 0) === (eu.clone().cross(ev).dot(depth) > 0);
+  const pos = [], tri = (a, b, c) => pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+  for (let s = 0; s < n; s++) {
+    const N = fr[s].length - 1, front = fr[s], back = br[s], L = E[s], R = E[(s + 1) % n], grid = [];
+    for (let m = 0; m <= M; m++) {
+      const t = taus[m], row = [];
+      for (let j = 0; j <= N; j++) {
+        const u = j / N;
+        if (m === 0) row.push(front[j]);
+        else if (m === M) row.push(back[j]);
+        else if (j === 0) row.push(L[m]);
+        else if (j === N) row.push(R[m]);
+        else row.push([0, 1, 2].map(c => (1 - t) * front[j][c] + t * back[j][c] + (1 - u) * L[m][c] + u * R[m][c]
+          - ((1 - u) * (1 - t) * front[0][c] + u * (1 - t) * front[N][c] + (1 - u) * t * back[0][c] + u * t * back[N][c])));
+      }
+      grid.push(row);
+    }
+    for (let m = 0; m < M; m++) for (let j = 0; j < N; j++) {
+      const a = grid[m][j], b = grid[m][j + 1], c = grid[m + 1][j + 1], e = grid[m + 1][j];
+      if (std) { tri(a, b, c); tri(a, c, e); } else { tri(a, c, b); tri(a, e, c); }
+    }
+  }
+  // Caps: the front faces away from the back, the back faces away from the front.
+  const V3 = p => new THREE.Vector3(...p);
+  const cap = (rings, out) => {
+    const ring = rings.flatMap(r => r.slice(0, -1)), uv = ring.map(p => { const [u, v] = modelToPlane(ax, p); return new THREE.Vector2(u, v); });
+    for (const [i, j, l] of THREE.ShapeUtils.triangulateShape(uv, [])) {
+      const a = ring[i], b = ring[j], c = ring[l];
+      if (V3(b).sub(V3(a)).cross(V3(c).sub(V3(a))).dot(out) >= 0) tri(a, b, c); else tri(a, c, b);
+    }
+  };
+  cap(fr, depth.clone().negate());
+  cap(br, depth);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  addMesh(part, geo, part.statics, { edges: false });
+  // Its edge lines are the real ones: both outlines, and each joining edge at a sharp dot or that has dots of its own.
+  // (Angle-based edges would draw a line on every facet of a twisted wall.)
+  const ep = [], seg = (a, b) => ep.push(a[0], a[1], a[2], b[0], b[1], b[2]);
+  for (let s = 0; s < n; s++) for (let j = 0; j < fr[s].length - 1; j++) { seg(fr[s][j], fr[s][j + 1]); seg(br[s][j], br[s][j + 1]); }
+  for (let i = 0; i < n; i++) {
+    if (F[i].smooth && B[i].smooth && !edgeDotsOf(d, i).length) continue;
+    const C = chainSamples(edgeChain(d, k, i, fd));
+    for (let j = 0; j < C.length - 1; j++) seg(C[j], C[j + 1]);
+  }
+  const eg = new THREE.BufferGeometry();
+  eg.setAttribute('position', new THREE.Float32BufferAttribute(ep, 3));
+  const lines = new THREE.LineSegments(eg, part.edgeMat);
+  lines.visible = edgesOn;
+  part.statics.add(lines);
+  part.edges.push(lines);
+  geo.computeBoundingBox();
+  part.bbox = geo.boundingBox.clone();
+  const b = part.bbox;
+  part.anchorLocal.set(b.max.x, (b.min.y + b.max.y) / 2, b.max.z);
+}
+
+function addLabel(id) {
+  const p = parts[id];
+  const el = document.createElement('div');
+  el.className = 'lbl';
+  el.innerHTML = `<i style="background:${hex(p.color)}"></i>${p.name}`;
+  // The padlock on a label locks or unlocks the part right there; anywhere else on the label selects it.
+  el.addEventListener('click', e => {
+    if (e.target.closest('.lk-btn')) { e.stopPropagation(); setPartLock(id, !ownLocked(id)); return; }
+    select(id);
+  });
+  el.addEventListener('mouseenter', () => setHover(id, 'label'));
+  el.addEventListener('mouseleave', () => setHover(null, 'label'));
+  labelLayer.appendChild(el);
+  p.labelEl = el;
+}
+function addRow(id) {
+  const p = parts[id];
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="sw" style="background:${hex(p.color)}"></span><span class="nm"><span><span class="pn">${esc(p.name)}</span><i class="lk" hidden>${LOCK_SVG}</i></span><small></small></span><input type="checkbox" checked aria-label="Show ${esc(p.name)}">`;
+  const cb = li.querySelector('input');
+  cb.addEventListener('click', e => e.stopPropagation());
+  cb.addEventListener('change', () => { p.visible = cb.checked; if (!p.visible && selectedId === id) selectedId = null; refreshLook(); renderSelected(); if (window.Sketcher) window.Sketcher.refresh(); });
+  li.addEventListener('click', () => select(id));
+  li.addEventListener('mouseenter', () => setHover(id, 'list'));
+  li.addEventListener('mouseleave', () => setHover(null, 'list'));
+  partsEl.appendChild(li);
+  p.row = li;
+}
+function removePart(id) {
+  const p = parts[id];
+  clearPart(p);
+  world.remove(p.root);
+  for (const m of p.mats) m.dispose();
+  p.edgeMat.dispose();
+  if (p.labelEl) p.labelEl.remove();
+  if (p.row) p.row.remove();
+  partOrder.splice(partOrder.indexOf(id), 1);
+  delete parts[id];
+  if (selectedId === id) { selectedId = null; activeGear = null; }
+  if (hoveredId === id) { hoveredId = null; hoverSource = null; }
+}
+// Make the scene's drawn parts match S.drawn: add new ones, drop removed ones, rebuild any whose outline or thickness changed.
+function syncDrawn() {
+  let rebuilt = false;
+  const want = new Set(S.drawn.map(d => d.id));
+  for (const id of [...partOrder]) if (parts[id].kind === 'drawn' && !want.has(id)) { removePart(id); rebuilt = true; }
+  for (const d of S.drawn) {
+    if (!parts[d.id]) {
+      makePart({ id: d.id, name: d.name, group: 'drawn', kind: 'drawn', level: 0,
+        role: 'A part you drew: its outline is a sketch, pushed out to a thickness. Select it and its dots appear: drag them to reshape it. Not checked for clashes yet.' });
+      addLabel(d.id);
+      addRow(d.id);
+      rebuilt = true;
+    }
+    const p = parts[d.id], k = sketchOf(d);
+    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges]);
+    if (p.key !== key) { buildDrawn(p, d, k); p.key = key; rebuilt = true; }
+  }
+  return rebuilt;
+}
+
 const springMat = new THREE.MeshStandardMaterial({ color: 0x8c96a3, metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide });
-const jewelMat = new THREE.MeshStandardMaterial({ color: 0xb3264b, metalness: 0.1, roughness: 0.25 });
+
+// How far an axis's centre line runs: from the lowest part on it to just past the highest (hands included).
+function axisSpan(a) {
+  const zs = [...a.gears.map(g => D.gears[g.id].z0), ...HAND_DEFS.filter(h => h.arbor === a.id).map(h => S.hands[h.id].z)];
+  if (D.drum[a.id]) zs.push(D.drum[a.id].z0);
+  return [Math.min(...zs) - 0.6, D.tops[a.id] + 0.3];
+}
 
 function buildArbor(part, a) {
   clearPart(part);
-  addMesh(part, zCylinder(a.staticArbor ? BARREL_ARBOR_R : ARBOR_R, 0, D.tops[a.id]), a.staticArbor ? part.statics : part.spin, { edges: false });
+  // The axis: a dashed centre line, not a shaft. It is never picked and never collides.
+  const [z0, z1] = axisSpan(a);
+  part.axisMat = part.axisMat || new THREE.LineDashedMaterial({ color: part.color, dashSize: 0.45, gapSize: 0.3, transparent: true, opacity: 0.75 });
+  const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, z0), new THREE.Vector3(0, 0, z1)]), part.axisMat);
+  axis.computeLineDistances();
+  part.statics.add(axis);
   for (const g of a.gears) {
     const G = D.gears[g.id];
     const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { crossings: G.z >= 16 });
@@ -1079,11 +1388,10 @@ function buildHand(part, h, hs) {
 }
 
 const plate = makePart({ id: 'plate', name: 'Mainplate', group: 'plate', kind: 'plate', level: -1,
-  role: 'Base plate and movement envelope. Red dots mark the jewel under each arbor. Resize it to change the package you’re designing into.' });
+  role: 'Base plate. A plain plate: no holes, jewels or bearings until you add them. Parts can hang past its edge without a flag; Checks shows how far out they reach.' });
 plate.mat.transparent = true;
 plate.mat.opacity = 0.55;
 plate.mat.userData.baseOpacity = 0.55;
-plate.mats.push(jewelMat);
 for (const a of ARBOR_DEFS) makePart({ id: a.id, name: a.name, group: a.group, role: a.role, kind: 'arbor', level: a.level });
 for (const h of HAND_DEFS) makePart({ id: h.id, name: h.name, group: h.group, role: h.role, kind: 'hand', level: h.level });
 parts.barrel.mats.push(springMat);
@@ -1094,19 +1402,16 @@ function syncScene() {
   if (plate.key !== pk) {
     clearPart(plate);
     addMesh(plate, zCylinder(S.movementD / 2, -1, 0, 160), plate.statics);
-    plate.jewels = {};
-    for (const a of ARBOR_DEFS) plate.jewels[a.id] = addMesh(plate, zCylinder((a.staticArbor ? BARREL_ARBOR_R : ARBOR_R) + 0.3, 0, 0.06, 24), plate.statics, { edges: false, mat: jewelMat });
     plate.anchorLocal.set(S.movementD / 2 * Math.cos(-2.4), S.movementD / 2 * Math.sin(-2.4), 0);
     plate.key = pk;
     rebuilt = true;
   }
-  for (const a of ARBOR_DEFS) plate.jewels[a.id].position.set(D.pos[a.id][0], D.pos[a.id][1], 0);
 
   for (const a of ARBOR_DEFS) {
     const p = parts[a.id], [x, y] = D.pos[a.id];
     p.root.position.x = x;
     p.root.position.y = y;
-    const k = JSON.stringify([a.gears.map(g => [D.gears[g.id].m, D.gears[g.id].z0, D.gears[g.id].t]), D.tops[a.id]]);
+    const k = JSON.stringify([a.gears.map(g => [D.gears[g.id].m, D.gears[g.id].z0, D.gears[g.id].t]), axisSpan(a)]);
     if (p.key !== k) { buildArbor(p, a); p.key = k; rebuilt = true; }
     for (const g of a.gears) p.gearMeshes[g.id].rotation.z = D.psi[g.id];
     const big = a.gears.map(g => D.gears[g.id]).sort((u, v) => v.ra - u.ra)[0];
@@ -1125,6 +1430,7 @@ function syncScene() {
     const k = JSON.stringify([hs.length, hs.z, hs.t]);
     if (p.key !== k) { buildHand(p, h, hs); p.key = k; rebuilt = true; }
   }
+  if (syncDrawn()) rebuilt = true;
   if (rebuilt) {
     pickables = [];
     world.traverse(o => { if (o.isMesh && o.userData.part) pickables.push(o); });
@@ -1150,6 +1456,38 @@ const gizmo = new THREE.TransformControls(camera, canvas);
 gizmo.setSpace('world');
 gizmo.setSize(1.15);
 scene.add(gizmo);
+// The library draws X red and Y green, the pair red-green colour blindness can't tell apart.
+// Here X is orange, Y light cyan (lighter than the selected part's blue, so it shows on top of it) and Z white, each arrow carries its letter, and the plane squares between arrows are plain.
+// Used for the part arrows here and for a selected dot's arrows (sketch.js).
+function styleArrows(gizmo) {
+  const AXIS_LOOK = { X: { color: 0xff9a2e, css: '#ff9a2e' }, Y: { color: 0x5fdcff, css: '#5fdcff' }, Z: { color: 0xf2f4f6, css: '#f2f4f6' } };
+  const letter = (ch, css) => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    g.font = '800 46px system-ui, -apple-system, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineJoin = 'round'; g.lineWidth = 10; g.strokeStyle = '#0d1319';
+    g.strokeText(ch, 32, 35);
+    g.fillStyle = css; g.fillText(ch, 32, 35);
+    return new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, depthWrite: false, transparent: true });
+  };
+  const handles = gizmo.children.find(c => c.gizmo).gizmo.translate.children;
+  for (const h of handles) {
+    const look = AXIS_LOOK[h.name];
+    const col = look ? look.color : h.name.length === 2 ? 0xdfe6ec : null;   // XY, YZ, XZ plane squares
+    if (col != null) { h.material.color.setHex(col); if (h.material._color) h.material._color.setHex(col); }
+    // The letter rides on the axis line, so it follows the arrow when the library flips it to face you.
+    if (look && h.type === 'Line') {
+      const sp = new THREE.Sprite(letter(h.name, look.css));
+      sp.position.set(h.name === 'X' ? 1.34 : 0, h.name === 'Y' ? 1.34 : 0, h.name === 'Z' ? 1.34 : 0);
+      sp.scale.set(0.24, 0.24, 1);
+      sp.renderOrder = Infinity;
+      h.add(sp);
+    }
+  }
+}
+styleArrows(gizmo);
 const proxy = new THREE.Object3D();
 world.add(proxy);
 let gz = null;
@@ -1166,26 +1504,44 @@ function gizmoTarget() {
     const hs = S.hands[selectedId];
     return { id: selectedId, arbor: HAND[selectedId].arbor, hand: selectedId, z: hs.z + hs.t / 2, lift: lift(selectedId) };
   }
+  if (p.kind === 'drawn' && p.bbox) {
+    const c = p.bbox.getCenter(new THREE.Vector3());
+    return { id: selectedId, drawn: selectedId, at: [c.x, c.y, c.z], lift: 0 };
+  }
   return null;
 }
 function placeGizmo() {
-  const t = tool === 'select' ? gizmoTarget() : null;
-  if (!t) { if (gizmo.object) gizmo.detach(); return; }
+  const dotBusy = window.Sketcher && window.Sketcher.dotSelected();
+  const t = tool === 'select' && !dotBusy ? gizmoTarget() : null;
+  if (!t) { if (gizmo.object && !gz) gizmo.detach(); return; }
   if (!gizmo.object) gizmo.attach(proxy);
-  if (!gz) proxy.position.set(S.pos[t.arbor][0], S.pos[t.arbor][1], t.z + t.lift);
+  if (gz) return;
+  if (t.drawn) proxy.position.set(...t.at);
+  else proxy.position.set(S.pos[t.arbor][0], S.pos[t.arbor][1], t.z + t.lift);
 }
 gizmo.addEventListener('dragging-changed', e => {
   controls.enabled = !e.value;
   if (e.value) {
     const t = gizmoTarget();
     if (!t) return;
-    gz = { ...t, x0: S.pos[t.arbor][0], y0: S.pos[t.arbor][1], z0: t.z, xy: false, zMoved: false, slid: false };
+    if (t.drawn) {
+      // A drawn part moves as its outline: along the plane the dots shift, across it the plane itself moves.
+      const k = sketchOf(drawnOf(t.drawn));
+      const d = drawnOf(t.drawn);
+      gz = { ...t, start: proxy.position.clone(), orig: { points: k.points.map(q => ({ ...q })), back: d.back ? d.back.map(q => ({ ...q })) : null, offset: k.plane.offset }, moved: false };
+    } else gz = { ...t, x0: S.pos[t.arbor][0], y0: S.pos[t.arbor][1], z0: t.z, xy: false, zMoved: false, slid: false };
     beginEdit();
     return;
   }
   if (!gz) return;
   const g = gz;
   gz = null;
+  if (g.drawn) {
+    const dv = proxy.position.clone().sub(g.start);
+    if (!g.moved || dv.length() * scale < 0.005) { cancelPending(); return; }
+    commit({ text: `Moved ${nameOf(g.drawn)} by X ${f2(dv.x * scale)}, Y ${f2(dv.y * scale)}, Z ${f2(dv.z * scale)} mm`, adapt: false });
+    return;
+  }
   // Anything under 0.005 mm shows as no change, so it isn't a move: drop it rather than log "from 0.00 to 0.00".
   if (g.xy) g.xy = Math.hypot(S.pos[g.arbor][0] - g.x0, S.pos[g.arbor][1] - g.y0) * scale >= 0.005;
   if (g.zMoved) {
@@ -1207,10 +1563,21 @@ gizmo.addEventListener('objectChange', () => {
   // A click on an arrow isn't a move: hold the part still until the pointer has travelled 4 px from the press.
   if (!gz.live) {
     if (pressAt && Math.hypot(lastPointer[0] - pressAt[0], lastPointer[1] - pressAt[1]) < 4) {
-      proxy.position.set(gz.x0, gz.y0, gz.z0 + gz.lift);
+      if (gz.drawn) proxy.position.copy(gz.start); else proxy.position.set(gz.x0, gz.y0, gz.z0 + gz.lift);
       return;
     }
     gz.live = true;
+  }
+  if (gz.drawn) {
+    const k = sketchOf(drawnOf(gz.drawn)), dv = proxy.position.clone().sub(gz.start);
+    const [du, dvv, dn] = modelToPlane(k.plane.axis, [dv.x, dv.y, dv.z]);
+    k.points.forEach((q, i) => { q.u = +(gz.orig.points[i].u + du).toFixed(4); q.v = +(gz.orig.points[i].v + dvv).toFixed(4); });
+    const d = drawnOf(gz.drawn);
+    if (d.back && gz.orig.back) d.back.forEach((q, i) => { q.u = +(gz.orig.back[i].u + du).toFixed(4); q.v = +(gz.orig.back[i].v + dvv).toFixed(4); });
+    k.plane.offset = +(gz.orig.offset + dn).toFixed(4);
+    gz.moved = true;
+    requestSolve();
+    return;
   }
   const p = proxy.position, ax = gizmo.axis || '';
   liveEdit(held => {
@@ -1230,21 +1597,7 @@ gizmo.addEventListener('objectChange', () => {
 // ---------- labels, hover, selection ----------
 const labelLayer = document.getElementById('labels');
 const tipEl = document.getElementById('tip');
-for (const id of partOrder) {
-  const p = parts[id];
-  const el = document.createElement('div');
-  el.className = 'lbl';
-  el.innerHTML = `<i style="background:${hex(p.color)}"></i>${p.name}`;
-  // The padlock on a label locks or unlocks the part right there; anywhere else on the label selects it.
-  el.addEventListener('click', e => {
-    if (e.target.closest('.lk-btn')) { e.stopPropagation(); setPartLock(id, !ownLocked(id)); return; }
-    select(id);
-  });
-  el.addEventListener('mouseenter', () => setHover(id, 'label'));
-  el.addEventListener('mouseleave', () => setHover(null, 'label'));
-  labelLayer.appendChild(el);
-  p.labelEl = el;
-}
+for (const id of partOrder) addLabel(id);
 
 function periodText(w) {
   const T = 2 * Math.PI / Math.abs(w);
@@ -1256,6 +1609,7 @@ const dirText = w => (w < 0 ? 'clockwise' : 'counter-clockwise');
 
 function rateLine(id) {
   if (parts[id].kind === 'plate') return `Ø ${f1(S.movementD * scale)} mm · fixed`;
+  if (parts[id].kind === 'drawn') { const d = drawnOf(id); return `${f2(d.thickness * scale)} mm thick · not checked for clashes`; }
   const w = D.omega[arborOf(id)];
   return `1 rev / ${periodText(w)} · ${dirText(w)}`;
 }
@@ -1263,8 +1617,9 @@ function rateLine(id) {
 function teethLine(id) {
   const p = parts[id];
   if (p.kind === 'arbor') return ARBOR[id].gears.map(g => `${GEAR_DEFS[g.id].label.toLowerCase()} ${g.z}`).join(' · ');
-  if (p.kind === 'hand') return `on ${ARBOR[HAND[id].arbor].name.toLowerCase()} arbor · ${f2(S.hands[id].length * scale)} mm`;
-  return `${ARBOR_DEFS.length} jewels`;
+  if (p.kind === 'hand') return `on ${ARBOR[HAND[id].arbor].name.toLowerCase()} axis · ${f2(S.hands[id].length * scale)} mm`;
+  if (p.kind === 'drawn') { const k = sketchOf(drawnOf(id)); return k ? `outline: ${k.name} · ${k.points.length} dots${k.closed ? '' : ' · open, so no body'}` : 'its sketch is gone'; }
+  return 'plain plate';
 }
 const partLocked = id => (parts[id].kind === 'arbor' ? lockPinned(id) : parts[id].kind === 'hand' ? !!S.locks[id] : false);
 // What a part's own padlock covers: a wheel's gears, or the hand itself. The plate has none.
@@ -1287,6 +1642,7 @@ function select(id, gear = null) {
   selectedId = id;
   activeGear = id && ARBOR[id] ? (gear && ARBOR[id].gears.some(g => g.id === gear) ? gear : mainGear(id)) : null;
   refreshLook();
+  if (window.Sketcher) window.Sketcher.refresh();   // a selected drawn part shows its outline dots (front first)
   renderSelected();
 }
 function setActiveGear(gid) {
@@ -1300,14 +1656,21 @@ function refreshLook() {
   const bad = new Set(A.collisions.flatMap(c => c.parts));
   for (const id of partOrder) {
     const p = parts[id], focused = inFocus(id), isBad = bad.has(id);
-    const glow = isBad ? 0.6 : id === selectedId ? 0.55 : id === hoveredId ? 0.3 : 0;
+    // A clash wins over selection: the selected part still shows its move arrows and its label ring.
+    const state = isBad ? 'clash' : id === selectedId ? 'selected' : id === hoveredId ? 'hover' : null;
     for (const m of p.mats) {
-      m.emissive.setHex(isBad ? 0xff4a3a : glow ? 0x6fb6d8 : 0x000000);
-      m.emissiveIntensity = glow;
+      if (m.userData.baseColor == null) m.userData.baseColor = m.color.getHex();
+      m.color.setHex(state ? LOOK[state] : m.userData.baseColor);
+      m.emissive.setHex(state ? LOOK[state] : 0x000000);
+      m.emissiveIntensity = state === 'hover' ? 0.12 : state ? 0.28 : 0;
       const base = m.userData.baseOpacity ?? 1;
       let op = focused ? base : 0.1;
       if (xrayOpacity != null) op = Math.min(op, xrayOpacity);
       if (m.opacity !== op) { m.opacity = op; m.transparent = op < 1; m.depthWrite = op >= 0.5; m.needsUpdate = true; }
+    }
+    if (p.axisMat) {
+      p.axisMat.color.setHex(state ? LOOK[state] : p.color);
+      p.axisMat.opacity = !focused ? 0.08 : id === selectedId || id === hoveredId ? 1 : 0.75;
     }
     p.edgeMat.opacity = focused ? (xrayOpacity != null ? Math.max(0.25, xrayOpacity) : 0.6) : 0.04;
     for (const e of p.edges) e.visible = edgesOn;
@@ -1315,6 +1678,7 @@ function refreshLook() {
     p.labelEl.classList.toggle('dim', !focused);
     p.labelEl.classList.toggle('hot', id === hoveredId || id === selectedId);
     p.labelEl.classList.toggle('bad', isBad);
+    p.labelEl.classList.toggle('editing', p.kind === 'drawn' && id === selectedId && tool === 'select');
     if (p.row) {
       p.row.classList.toggle('on', id === selectedId);
       p.row.classList.toggle('hot', id === hoveredId);
@@ -1373,8 +1737,11 @@ canvas.addEventListener('pointermove', e => {
   pointerDirty = true;
   if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) dragging = true;
 });
+let keepSelection = false;   // set by the sketcher when a click lands on a selected part's outline (it adds a dot instead)
 window.addEventListener('pointerup', e => {
-  if (e.target === canvas && downAt && !dragging && !gizmoGrab && e.button === 0) {
+  const keep = keepSelection;
+  keepSelection = false;
+  if (!keep && e.target === canvas && downAt && !dragging && !gizmoGrab && e.button === 0) {
     const h = hitAt(e.clientX, e.clientY);
     if (tool === 'select') select(h ? h.part : null, h ? h.gear : null);
     else if (tool === 'pin' && h) addPin(h.part, h.point);
@@ -1411,6 +1778,7 @@ function setTool(t) {
   canvas.style.cursor = t === 'select' ? '' : 'crosshair';
   document.getElementById('hint').textContent = (t === 'sketch' && window.Sketcher) ? window.Sketcher.hint : HINTS[t] || HINTS.select;
   if (t !== 'select') setHover(null, 'view');
+  if (selectedId && parts[selectedId] && parts[selectedId].kind === 'drawn') { refreshLook(); renderSelected(); }   // its dot numbers and label follow the tool
   renderQuick();
   renderPins();
   if (window.Sketcher) window.Sketcher.renderPanel();
@@ -1538,15 +1906,19 @@ document.getElementById('pins').addEventListener('change', e => {
 });
 
 function renderTip() {
-  if (gz && (gz.xy || gz.zMoved) && pointerXY) {
+  if (gz && gz.drawn && gz.moved && pointerXY) {
+    const dv = proxy.position.clone().sub(gz.start);
+    tipEl.innerHTML = `<b>${esc(nameOf(gz.drawn))}</b><span>moved X ${f2(dv.x * scale)} · Y ${f2(dv.y * scale)} · Z ${f2(dv.z * scale)} mm</span><span>not checked for clashes yet</span>`;
+  } else if (gz && !gz.drawn && (gz.xy || gz.zMoved) && pointerXY) {
     const n = A.collisions.length, [x, y] = S.pos[gz.arbor];
     const z = gz.hand ? S.hands[gz.hand].z : D.gears[gz.gear] ? D.gears[gz.gear].z0 : 0;
     tipEl.innerHTML = `<b>${parts[gz.id].name}</b><span>X ${f2(x * scale)} · Y ${f2(y * scale)} · Z ${f2(z * scale)} mm</span>` +
       (gz.slid ? '<span class="warn">it meshes directly with a locked part, so it can only swing around it</span>' : '') +
       (n ? `<span class="bad">${n} clash${n > 1 ? 'es' : ''} now · auto-adjust runs when you let go</span>` : '<span>no clashes</span>');
-  } else if (hoveredId && hoverSource === 'view' && pointerXY && !dragging) {
+  } else if (hoveredId && hoverSource === 'view' && pointerXY && !dragging && !(window.Sketcher && window.Sketcher.busy())) {   // no part tip over a dot you're dragging
     tipEl.innerHTML = `<b>${esc(nameOf(hoveredId))}${partLocked(hoveredId) ? ' · locked' : ''}</b><span>${rateLine(hoveredId)}</span><span>${teethLine(hoveredId)}</span>` +
-      (hoveredId === selectedId && parts[hoveredId].kind !== 'plate' ? '<span>drag an arrow to move it</span>' : '');
+      (hoveredId === selectedId && parts[hoveredId].kind === 'drawn' ? '<span>drag a dot to reshape it, an arrow to move it</span>'
+        : hoveredId === selectedId && parts[hoveredId].kind !== 'plate' ? '<span>drag an arrow to move it</span>' : '');
   } else { tipEl.hidden = true; return; }
   tipEl.hidden = false;
   const w = stage.clientWidth, tw = tipEl.offsetWidth;
@@ -1560,7 +1932,7 @@ function updateLabels() {
   const w = stage.clientWidth, h = stage.clientHeight, placed = [];
   for (const id of partOrder) {
     const p = parts[id], el = p.labelEl;
-    if (!labelsOn || !p.visible) { el.hidden = true; continue; }
+    if (!labelsOn || !p.visible || (p.kind === 'drawn' && !p.bbox)) { el.hidden = true; continue; }
     if (p.kind === 'hand') p.spin.localToWorld(tmpV.copy(p.anchorSpin));
     else p.root.localToWorld(tmpV.copy(p.anchorLocal));
     tmpV.project(camera);
@@ -1608,6 +1980,7 @@ function renderLabelLocks() {
       : held.length ? `Unlocked, but held in place by the locked ${listText(held)}. Click to lock it`
       : 'Unlocked: click to lock it';
     p.labelEl.innerHTML = `<i style="background:${hex(p.color)}"></i>${esc(nameOf(id))}` +
+      (p.kind === 'drawn' ? '<span class="nc">not checked</span>' : '') +
       (can ? `<button class="lk-btn${lk ? ' on' : ''}" title="${esc(title)}" aria-label="${lk ? 'Unlock' : 'Lock'} ${esc(nameOf(id))}" aria-pressed="${lk}">${lk ? LOCK_SVG : UNLOCK_SVG}</button>` : '');
     p.labelEl._w = 0;
   }
@@ -1691,7 +2064,7 @@ function setPartLock(id, on) {
 
 function positionStatus(a) {
   const lk = lockersOf(a);
-  if (lk.length) return `<b>Held in place</b>: ${listText(lk)} ${lk.length > 1 ? 'are' : 'is'} locked, so auto-adjust won’t move this arbor. You still can.`;
+  if (lk.length) return `<b>Held in place</b>: ${listText(lk)} ${lk.length > 1 ? 'are' : 'is'} locked, so auto-adjust won’t move this axis. You still can.`;
   const anchors = fixedEdges(a, stageLocked).map(([, o]) => ARBOR[o].name);
   if (anchors.length === 1) return `<b>Unlocked</b>, but it meshes directly with the locked ${anchors[0]}, so it can only swing around it.`;
   if (anchors.length > 1) return `<b>Unlocked</b>, but it meshes directly with the locked ${listText(anchors)}, which set where it sits.`;
@@ -1880,9 +2253,9 @@ function renderSelected() {
   if (p.kind === 'arbor') {
     const a = ARBOR[p.id], id = a.id;
     const info = document.createElement('dl');
-    info.innerHTML = row('Turns', rateLine(id).replace(' · ', ', ')) + (a.staticArbor ? row('Arbor', 'held still; the drum turns') : '');
+    info.innerHTML = row('Turns', rateLine(id).replace(' · ', ', ')) + (a.staticArbor ? row('Centre', 'held still; the drum turns') : '');
     el.appendChild(info);
-    el.appendChild(subHead('Position · X and Y of the arbor'));
+    el.appendChild(subHead('Position · X and Y of the axis'));
     el.appendChild(para('pin', positionStatus(id)));
     xyControls(el, id, a.name);
     el.appendChild(para('pin', `The Z arrow moves <b id="zHint">${GEAR_DEFS[activeGear].label}</b>. Click a gear below to switch.`));
@@ -1908,17 +2281,83 @@ function renderSelected() {
   } else if (p.kind === 'hand') {
     const h = HAND[p.id], hs = S.hands[p.id];
     const info = document.createElement('dl');
-    info.innerHTML = row('On arbor', ARBOR[h.arbor].name) + row('Turns', rateLine(p.id).replace(' · ', ', '));
+    info.innerHTML = row('On axis', ARBOR[h.arbor].name) + row('Turns', rateLine(p.id).replace(' · ', ', '));
     el.appendChild(info);
     const lr = document.createElement('div');
     lr.className = 'lockrow';
     lr.appendChild(para('pin', S.locks[p.id] ? 'Locked: auto-adjust won’t move, lengthen or re-height it.' : 'Unlocked: auto-adjust may raise or lower it.'));
     lr.appendChild(lockButton(p.id, h.name));
     el.appendChild(lr);
-    el.appendChild(subHead(`Position · moves the ${ARBOR[h.arbor].name.toLowerCase()} arbor it sits on`));
-    xyControls(el, h.arbor, `${h.name} (${ARBOR[h.arbor].name} arbor)`);
+    el.appendChild(subHead(`Position · moves the ${ARBOR[h.arbor].name.toLowerCase()} axis it sits on`));
+    xyControls(el, h.arbor, `${h.name} (${ARBOR[h.arbor].name} axis)`);
     el.appendChild(subHead('Size'));
     for (const c of handControls(p.id)) el.appendChild(c);
+  } else if (p.kind === 'drawn') {
+    const d = drawnOf(p.id), k = sketchOf(d), ax = k ? k.plane.axis : 'z', n = PLANE_N[ax];
+    const info = document.createElement('dl');
+    info.innerHTML = row('Outline', k ? `${esc(k.name)} · ${k.points.length} dots (${k.points.filter(q => q.smooth).length} smooth)${k.closed ? '' : ', open'}` : 'missing')
+      + row('Plane', k ? `${{ x: 'Side · YZ', y: 'Front · XZ', z: 'Top · XY' }[ax]} at ${n} ${f2(k.plane.offset * sc)} mm` : '—')
+      + row('Back outline', d.back ? 'its own shape (a loft)' : 'same as the front')
+      + row('Clashes', 'not checked yet');
+    el.appendChild(info);
+    if (k && !k.closed) el.appendChild(para('pin', 'Its outline is open, so it has no body. Close the sketch again to bring it back.'));
+    el.appendChild(subHead('Shape'));
+    el.appendChild(control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: 20 * sc, step: 0.05, value: d.thickness * sc,
+      onInput: v => { beginEdit(); d.thickness = Math.max(minThickness(d, k), v / sc); requestSolve(); },   // never so thin a front dot passes its back partner
+      onCommit: (v0, v1) => {
+        const now = d.thickness * sc, held = now > v1 + 1e-6;   // the log says what happened, not what was typed
+        if (Math.abs(now - v0) < 1e-6) { cancelPending(); renderSelected(); return; }
+        commit({ key: `dt:${p.id}`, from: v0, to: now, adapt: false,
+          make: (x, y) => `${nameOf(p.id)} thickness ${f2(x)} → ${f2(y)} mm${held ? ' (as thin as it goes: a dot reaches that deep)' : ''}` });
+      } }));
+    const grow = document.createElement('div');
+    grow.className = 'field-l';
+    grow.innerHTML = `<span class="pin">Grows from its sketch plane</span><div class="seg">${[['plus', `toward +${n}`], ['minus', `toward −${n}`], ['both', 'both ways']]
+      .map(([g, t]) => `<button data-grow="${g}" class="${d.grow === g ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+    grow.addEventListener('click', e => {
+      const g = e.target.dataset.grow;
+      if (!g || g === d.grow) return;
+      cancelPending();
+      d.grow = g;
+      commit({ text: `${nameOf(p.id)} now grows ${growText(d, k)} from its plane`, adapt: false });
+    });
+    el.appendChild(grow);
+    if (k) el.appendChild(control({ label: `Plane position · ${n}`, unit: 'mm', min: -60 * sc, max: 60 * sc, step: 0.05, value: k.plane.offset * sc,
+      onInput: v => { beginEdit(); k.plane.offset = +(v / sc).toFixed(4); requestSolve(); },
+      onCommit: (v0, v1) => commit({ key: `dp:${p.id}`, from: v0, to: v1, adapt: false, make: (x, y) => `${nameOf(p.id)} plane ${n} ${f2(x)} → ${f2(y)} mm` }) }));
+    el.appendChild(subHead('Outlines · the dots you see belong to one of them'));
+    const face = window.Sketcher ? window.Sketcher.face() : 'front', liveEdge = window.Sketcher ? window.Sketcher.edge() : null;
+    const faces = document.createElement('div');
+    faces.className = 'field-l';
+    faces.innerHTML = `<div class="seg"><button data-face="front" class="${face === 'front' ? 'on' : ''}">Front outline</button><button data-face="back" class="${face === 'back' ? 'on' : ''}">Back outline</button></div>` +
+      (face === 'edge' ? `<p class="pin">Editing joining edge ${liveEdge + 1} (from front dot ${liveEdge + 1} to back dot ${liveEdge + 1}): click it to add a dot, drag a dot anywhere in 3D.</p>` : '') +
+      (d.back ? '<div class="row"><button class="mini" data-a="backreset">Make the back match the front</button></div>' : '');
+    faces.addEventListener('click', e => {
+      if (e.target.dataset.face && window.Sketcher) window.Sketcher.setFace(e.target.dataset.face);
+      if (e.target.dataset.a === 'backreset') { cancelPending(); d.back = null; commit({ text: `${nameOf(p.id)}: back outline matches the front again`, adapt: false }); }
+    });
+    el.appendChild(faces);
+    const dot = window.Sketcher && window.Sketcher.dot();
+    if (dot) {
+      const [a1, a2] = { x: ['Y', 'Z'], y: ['X', 'Z'], z: ['X', 'Y'] }[dot.axis], a3 = PLANE_N[dot.axis];
+      el.appendChild(subHead(dot.face === 'edge' ? `Dot ${dot.i + 1} of ${dot.count} on joining edge ${dot.edge + 1} · ${dot.smooth ? 'smooth' : 'sharp'}`
+        : `Dot ${dot.i + 1} of ${dot.count} · ${dot.face} outline · ${dot.smooth ? 'smooth' : 'sharp'}`));
+      const box = document.createElement('div');
+      box.className = 'field-l';
+      box.innerHTML = `<div class="row"><label class="field-l" style="flex:1">${a1} mm<input class="txt" type="number" step="0.01" data-dotf="u"></label><label class="field-l" style="flex:1">${a2} mm<input class="txt" type="number" step="0.01" data-dotf="v"></label><label class="field-l" style="flex:1">${a3} mm<input class="txt" type="number" step="0.01" data-dotf="n"></label></div>
+        <div class="row"><button class="mini" data-dota="smooth">${dot.smooth ? 'Make it sharp' : 'Make it smooth'}</button><button class="mini" data-dota="del">Delete dot</button></div>`;
+      box.querySelectorAll('[data-dotf]').forEach(inp => { inp.value = +(dot[inp.dataset.dotf] * sc).toFixed(3); });
+      box.addEventListener('change', e => { const f = e.target.dataset.dotf; if (f && e.target.value !== '' && isFinite(+e.target.value)) window.Sketcher.setDot(f, +e.target.value / sc); });
+      box.addEventListener('click', e => { const a = e.target.dataset.dota; if (a === 'smooth') window.Sketcher.toggleSmooth(); else if (a === 'del') window.Sketcher.deleteDot(); });
+      el.appendChild(box);
+    }
+    el.appendChild(para('pin', 'Reshape it right here: drag a yellow dot (it slides along its face) · double-click a dot for sharp ↔ smooth · click the bright outline to add a dot · Delete removes the selected dot. Click the faint outline on the other face to edit that one instead: give the back its own dots for a taper or twist. Click one of the faint joining edges (front dot to back dot) to edit it: click it to add dots, drag them anywhere to bend the edge, and the walls either side curve with it. Both outlines always keep the same number of dots. A selected dot shows the true length of each edge touching it and its corner angle; dragging it snaps to 90° and 45° corners, edges along X, Y or Z, the length of another edge (which lights up too), other dots’ X, Y or Z (dashed guide) and a flat wall. Hold Option to drag without snapping. A selected dot gets its own small arrows: drag one to move the dot along that axis only, including in and out of its face (a front dot can’t be pushed through to the back). With no dot selected, the arrows move the whole part (click the part away from its dots to deselect a dot).'));
+    const rm = document.createElement('div');
+    rm.className = 'row';
+    rm.innerHTML = '<button data-a="rmdrawn">Remove this part</button>';
+    rm.addEventListener('click', e => { if (e.target.dataset.a === 'rmdrawn') removeDrawn(p.id); });
+    el.appendChild(rm);
+    el.appendChild(para('note', `Removing it keeps ${k ? esc(k.name) : 'its sketch'}, so you can make it again.`));
   } else {
     el.appendChild(control({ label: 'Movement Ø', unit: 'mm', min: 15 * sc, max: 120 * sc, step: 0.5, value: S.movementD * sc,
       onInput: v => { beginEdit(); S.movementD = Math.max(5, v / sc); requestSolve(); },
@@ -1940,20 +2379,32 @@ document.getElementById('selected').addEventListener('click', e => {
   if (go) select(go.dataset.go);
 });
 
-const partsEl = document.getElementById('parts');
-for (const id of partOrder) {
-  const p = parts[id];
-  const li = document.createElement('li');
-  li.innerHTML = `<span class="sw" style="background:${hex(p.color)}"></span><span class="nm"><span><span class="pn">${p.name}</span><i class="lk" hidden>${LOCK_SVG}</i></span><small></small></span><input type="checkbox" checked aria-label="Show ${p.name}">`;
-  const cb = li.querySelector('input');
-  cb.addEventListener('click', e => e.stopPropagation());
-  cb.addEventListener('change', () => { p.visible = cb.checked; if (!p.visible && selectedId === id) selectedId = null; refreshLook(); renderSelected(); });
-  li.addEventListener('click', () => select(id));
-  li.addEventListener('mouseenter', () => setHover(id, 'list'));
-  li.addEventListener('mouseleave', () => setHover(null, 'list'));
-  partsEl.appendChild(li);
-  p.row = li;
+// "Make it a part": a closed sketch becomes a solid. The sketch stays the part's outline, so its dots reshape it.
+function makeDrawnFrom(sketchId, thickness = 1) {
+  const k = S.sketches.find(x => x.id === sketchId);
+  if (!k || !k.closed || k.points.length < 3 || S.drawn.some(d => d.sketch === sketchId)) return null;
+  cancelPending();
+  const n = S.drawn.reduce((mx, d) => Math.max(mx, +String(d.id).slice(1) || 0), 0) + 1;
+  const d = { id: `D${n}`, name: `Part ${n}`, sketch: k.id, thickness: thickness / scale, grow: 'plus', back: null };
+  S.drawn.push(d);
+  commit({ text: `Made ${d.name} from ${k.name}: ${f2(thickness)} mm thick, growing ${growText(d, k)} from its plane`, adapt: false });
+  setTool('select');
+  select(d.id);
+  return d.id;
 }
+function removeDrawn(id) {
+  const d = drawnOf(id), k = sketchOf(d);
+  if (!d) return;
+  cancelPending();
+  const name = nameOf(id);
+  S.drawn = S.drawn.filter(x => x.id !== id);
+  S.pins = S.pins.filter(q => q.part !== id);
+  delete S.info[id];
+  commit({ text: `Removed ${name} (${k ? `${k.name} stays` : 'its sketch was already gone'})`, adapt: false });
+}
+
+const partsEl = document.getElementById('parts');
+for (const id of partOrder) addRow(id);
 function renderPartsList() {
   for (const id of partOrder) {
     parts[id].row.querySelector('small').textContent = rateLine(id);
@@ -1968,9 +2419,12 @@ function renderChecks() {
   for (const r of A.rates) items.push([r.ok ? 'ok' : 'err', `<b>${r.label}</b>: 1 rev / ${periodText(r.w)}, ${dirText(r.w)}`]);
   items.push(['info', `<b>Beat</b>: ${Math.round(VPH).toLocaleString()} vph (${f1(BEAT_HZ)} beats/s). Barrel: 1 rev / ${periodText(D.omega.barrel)}.`]);
   items.push(A.collisions.length
-    ? ['err', `<b>${A.collisions.length} clash${A.collisions.length > 1 ? 'es' : ''}</b> (parts shown red)<div class="mono">${A.collisions.map(c => `${c.text}: ${clashAmount(c)}`).join('<br>')}</div>`]
-    : ['ok', `<b>Collisions</b>: none. Every non-meshing pair (arbors, wheels, pinions, drum, hand sweeps) is at least ${S.minGap} mm apart and inside the movement`]);
-  items.push(['info', `<b>Furthest reach</b>: ${A.envelope.name} at r ${f2(A.envelope.r * s)} of ${f2(S.movementD / 2 * s)} mm`]);
+    ? ['err', `<b>${A.collisions.length} clash${A.collisions.length > 1 ? 'es' : ''}</b> (parts shown red, with a warning triangle on their labels)<div class="mono">${A.collisions.map(c => `${c.text}: ${clashAmount(c)}`).join('<br>')}</div>`]
+    : ['ok', `<b>Collisions</b>: none. Every non-meshing pair (wheels, pinions, drum, hand sweeps) is at least ${S.minGap} mm apart`]);
+  const over = A.envelope.r - S.movementD / 2;
+  items.push(['info', `<b>Furthest reach</b>: ${A.envelope.name} at r ${f2(A.envelope.r * s)} mm; the plate edge is at r ${f2(S.movementD / 2 * s)} mm` +
+    (over > 0 ? `, so it hangs ${f2(over * s)} mm past the plate (not flagged: the plate isn’t a boundary)` : '')]);
+  if (S.drawn.length) items.push(['info', `<b>Drawn parts not checked for clashes yet</b>: ${S.drawn.map(d => esc(nameOf(d.id))).join(', ')}`]);
   items.push(['info', `<b>Tightest clearances</b><div class="mono">${A.near.slice(0, 3).map(n => `${n.text}: ${f3(n.clear * s)} mm`).join('<br>')}</div>`]);
   if (A.interference.length) {
     const meshes = new Set(A.interference.map(i => i.pair)).size;
@@ -2073,19 +2527,31 @@ function normalizeState(st) {
     out.locks = {};
     for (const [k, v] of Object.entries(st.locks)) if (v && (GEAR_DEFS[k] || HAND[k])) out.locks[k] = true;
   }
+  if (Array.isArray(st.sketches)) out.sketches = st.sketches.filter(k => k && k.plane && 'xyz'.includes(k.plane.axis) && num(k.plane.offset) && Array.isArray(k.points))
+    .map(k => ({ id: String(k.id), name: typeof k.name === 'string' ? k.name : String(k.id), plane: { axis: k.plane.axis, offset: k.plane.offset },
+                 closed: !!k.closed, points: k.points.filter(q => q && num(q.u) && num(q.v)).map(q => ({ u: q.u, v: q.v, smooth: !!q.smooth, ...(num(q.w) && q.w ? { w: q.w } : {}) })) }));
+  if (Array.isArray(st.drawn)) out.drawn = st.drawn.filter(d => d && /^D\d+$/.test(String(d.id)) && out.sketches.some(k => k.id === String(d.sketch)) && num(d.thickness) && d.thickness > 0)
+    .map(d => {
+      const k = out.sketches.find(x => x.id === String(d.sketch));
+      const back = Array.isArray(d.back) && d.back.length === k.points.length && d.back.every(q => q && num(q.u) && num(q.v))
+        ? d.back.map(q => ({ u: q.u, v: q.v, smooth: !!q.smooth, ...(num(q.w) && q.w ? { w: q.w } : {}) })) : null;
+      const okDot = q => q && num(q.t) && q.t > 0 && q.t < 1 && Array.isArray(q.d) && q.d.length === 3 && q.d.every(num);
+      const edges = Array.isArray(d.edges) && d.edges.length === k.points.length
+        ? d.edges.map(e => (Array.isArray(e) ? e.filter(okDot).map(q => ({ t: q.t, d: q.d.slice(), smooth: !!q.smooth })).sort((a, b) => a.t - b.t) : [])) : null;
+      return { id: String(d.id), name: typeof d.name === 'string' && d.name ? d.name : String(d.id), sketch: String(d.sketch), thickness: d.thickness,
+               grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges };
+    });
+  const known = k => !!parts[k] || out.drawn.some(d => d.id === k);
   if (st.info && typeof st.info === 'object') {
-    for (const [k, v] of Object.entries(st.info)) if (parts[k] && v && typeof v === 'object') {
+    for (const [k, v] of Object.entries(st.info)) if (known(k) && v && typeof v === 'object') {
       const rec = {};
       if (typeof v.name === 'string' && v.name) rec.name = v.name;
       if (typeof v.note === 'string' && v.note) rec.note = v.note;
       if (Object.keys(rec).length) out.info[k] = rec;
     }
   }
-  if (Array.isArray(st.pins)) out.pins = st.pins.filter(p => p && parts[p.part] && Array.isArray(p.at) && p.at.length === 3 && p.at.every(num))
+  if (Array.isArray(st.pins)) out.pins = st.pins.filter(p => p && known(p.part) && Array.isArray(p.at) && p.at.length === 3 && p.at.every(num))
     .map(p => ({ id: String(p.id), part: p.part, at: p.at.slice(), note: typeof p.note === 'string' ? p.note : '' }));
-  if (Array.isArray(st.sketches)) out.sketches = st.sketches.filter(k => k && k.plane && 'xyz'.includes(k.plane.axis) && num(k.plane.offset) && Array.isArray(k.points))
-    .map(k => ({ id: String(k.id), name: typeof k.name === 'string' ? k.name : String(k.id), plane: { axis: k.plane.axis, offset: k.plane.offset },
-                 closed: !!k.closed, points: k.points.filter(q => q && num(q.u) && num(q.v)).map(q => ({ u: q.u, v: q.v, smooth: !!q.smooth })) }));
   return out;
 }
 
@@ -2094,7 +2560,52 @@ function saveLocal() {
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: Date.now(), state: S }));
     lastSavedAt = Date.now();
   } catch (e) { lastSavedAt = null; }
+  saveDisk();
   renderSaveNote();
+}
+
+// ---------- a copy on disk, when the sim runs from serve.py on this machine ----------
+// Browser storage alone isn't safe: the Claude app's browser pane loses it on an app restart (a scene was lost that way, 2026-11-09).
+// serve.py keeps scenes/autosave.json (plus timed backups); the public site has no server, so there this stays off.
+const DISK = { on: /^(localhost|127\.0\.0\.1)$/.test(location.hostname), supported: null, ok: null, at: null, timer: null, from: false };
+function saveDisk() {
+  if (!DISK.on || DISK.supported === false) return;
+  clearTimeout(DISK.timer);
+  DISK.timer = setTimeout(async () => {
+    try {
+      const r = await fetch('autosave', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sceneFile()) });
+      if (!r.headers.get('X-BSPK-Autosave')) DISK.supported = false;   // a plain file server: it can't keep a copy
+      else { DISK.supported = true; DISK.ok = r.ok; if (r.ok) DISK.at = Date.now(); }
+    } catch (e) { DISK.ok = false; }
+    renderSaveNote();
+  }, 400);
+}
+// On opening: if this browser has nothing saved (or something older), pick up the copy on disk.
+async function restoreFromDisk() {
+  if (!DISK.on) return;
+  let r;
+  try { r = await fetch('autosave', { cache: 'no-store' }); } catch (e) { return; }
+  DISK.supported = !!r.headers.get('X-BSPK-Autosave');
+  if (!DISK.supported) { renderSaveNote(); return; }
+  if (r.status === 200) {
+    let data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    const diskAt = data && Date.parse(data.savedAt);
+    const untouched = hIndex === 0 && history.length === 1 && !pending;   // never overwrite edits made since opening
+    if (data && data.state && untouched && (!lastSavedAt || diskAt > lastSavedAt + 1000)) {
+      S = normalizeState(data.state);
+      history = [{ state: clone(S), entries: [] }];
+      hIndex = 0;
+      restoredAt = diskAt || Date.now();
+      DISK.from = true;
+      solve();
+      renderSelected();
+      renderLog();
+      saveLocal();
+      return;
+    }
+  }
+  saveDisk();   // make sure the disk copy exists and matches this browser
 }
 function restoreAutosave() {
   try {
@@ -2108,10 +2619,13 @@ function restoreAutosave() {
 }
 const storageOK = (() => { try { localStorage.setItem('bspk-studio.test', '1'); localStorage.removeItem('bspk-studio.test'); return true; } catch (e) { return false; } })();
 function renderSaveNote() {
-  document.getElementById('saveNote').textContent = !storageOK
+  const disk = !DISK.on ? '' : DISK.supported === false ? ' Not on disk: start the sim with python3 serve.py to keep a copy in scenes/.'
+    : DISK.ok === false ? ' Couldn’t write the disk copy just now (is serve.py still running?).'
+    : DISK.at ? ` Also saved to scenes/autosave.json at ${clockText(DISK.at)}, with backups every 10 minutes.` : '';
+  document.getElementById('saveNote').textContent = (!storageOK
     ? 'This browser isn’t allowing an autosave. Use Save scene to keep your work.'
     : lastSavedAt ? `Autosaved in this browser at ${clockText(lastSavedAt)}. Save scene writes a file you can keep or send.`
-    : 'Every change autosaves in this browser. Save scene writes a file you can keep or send.';
+    : 'Every change autosaves in this browser. Save scene writes a file you can keep or send.') + disk;
 }
 
 function partRecord(id) {
@@ -2134,6 +2648,14 @@ function partRecord(id) {
     const h = HAND[id], hs = S.hands[id];
     Object.assign(rec, { on_arbor: ARBOR[h.arbor].name, turns: rateLine(id), locked: !!S.locks[id],
       length_mm: +(hs.length * scale).toFixed(3), z_mm: +(hs.z * scale).toFixed(3), thickness_mm: +(hs.t * scale).toFixed(3) });
+  } else if (p.kind === 'drawn') {
+    const d = drawnOf(id), k = sketchOf(d);
+    const pts = P => P.map(q => ({ u: +(q.u * scale).toFixed(3), v: +(q.v * scale).toFixed(3), smooth: q.smooth, ...(q.w ? { depth: +(q.w * scale).toFixed(3) } : {}) }));
+    Object.assign(rec, { thickness_mm: +(d.thickness * scale).toFixed(3), grows: growText(d, k), clashes_checked: false,
+      outline: k ? { sketch: k.id, plane: { axis: k.plane.axis, offset_mm: +(k.plane.offset * scale).toFixed(3) }, closed: k.closed,
+        faces_at_mm: faceOffsets(d, k).map(v => +(v * scale).toFixed(3)), points_mm: pts(k.points) } : null,
+      back_outline_mm: d.back ? pts(d.back) : 'same as the front',
+      joining_edge_dots_mm: (d.edges || []).map((e, i) => (e && e.length ? { edge: i + 1, dots: e.map(q => ({ along: +q.t.toFixed(4), offset: q.d.map(v => +(v * scale).toFixed(3)), smooth: q.smooth })) } : null)).filter(Boolean) });
   } else {
     rec.movement_d_mm = +(S.movementD * scale).toFixed(3);
   }
@@ -2167,6 +2689,9 @@ function reportText() {
   for (const id of named) L.push(`  - ${parts[id].name}${S.info[id].name ? ` → “${S.info[id].name}”` : ''}${S.info[id].note ? `: ${S.info[id].note}` : ''}`);
   L.push('');
   L.push(S.sketches.length ? `Sketches (${S.sketches.length}):` : 'Sketches: none');
+  L.push(S.drawn.length ? `Drawn parts (${S.drawn.length}, not checked for clashes yet):` : 'Drawn parts: none');
+  for (const d of S.drawn) { const k = sketchOf(d); L.push(`  - ${nameOf(d.id)}: ${k ? k.name : 'missing sketch'} pushed ${f2(d.thickness * s)} mm ${growText(d, k)}${d.back ? ', with its own back outline (a loft)' : ''}${k && !k.closed ? ' (outline open, no body)' : ''}`); }
+  L.push('');
   for (const k of S.sketches) L.push(`  - ${k.name}: ${k.points.length} points (${k.points.filter(q => q.smooth).length} smooth), ${k.closed ? 'closed' : 'open'}, on the ${'xyz'.includes(k.plane.axis) ? { x: 'YZ', y: 'XZ', z: 'XY' }[k.plane.axis] : '?'} plane at ${k.plane.axis} = ${f2(k.plane.offset * s)} mm`);
   L.push('');
   const recent = history.slice(1, hIndex + 1).flatMap(h => h.entries).slice(-15);
@@ -2224,7 +2749,7 @@ function renderLog() {
   for (let i = hIndex; i >= 1; i--) for (const en of history[i].entries) {
     items.push(`<li class="${en.who}${en.stuck ? ' stuck' : ''}"><b>${en.who === 'you' ? 'You' : 'Auto'}</b>${esc(en.text)}</li>`);
   }
-  if (restoredAt) items.push(`<li class="empty">Picked up where you left off: your last session, autosaved ${new Date(restoredAt).toLocaleString()}. Reset train starts over.</li>`);
+  if (restoredAt) items.push(`<li class="empty">Picked up where you left off: your last session, autosaved ${new Date(restoredAt).toLocaleString()}${DISK.from ? ' (from the copy on disk, scenes/autosave.json)' : ''}. Reset train starts over.</li>`);
   document.getElementById('log').innerHTML = items.length ? items.join('') : '<li class="empty">No changes yet. Select a part and drag its arrows, or type values.</li>';
   document.getElementById('minGap').value = S.minGap;
   document.getElementById('undo').disabled = hIndex === 0;
@@ -2308,6 +2833,11 @@ function frameAt(x, y, z, r) {
 function frame(id) {
   const p = parts[id];
   if (!p || p.kind === 'plate') return fit();
+  if (p.kind === 'drawn') {
+    if (!p.bbox) return fit();
+    const c = p.bbox.getCenter(new THREE.Vector3()), r = p.bbox.getSize(new THREE.Vector3()).length() / 2;
+    return frameAt(c.x * scale, c.y * scale, c.z * scale, Math.max(r, 2) * scale);
+  }
   const c = p.root.getWorldPosition(new THREE.Vector3());
   const a = ARBOR[id];
   const r = a ? Math.max(...a.gears.map(g => D.gears[g.id].ra)) : S.hands[id].length;
@@ -2383,10 +2913,10 @@ document.getElementById('minGap').addEventListener('change', e => {
 });
 document.getElementById('resetTrain').addEventListener('click', () => {
   cancelPending();
-  const keep = { info: S.info, pins: S.pins, sketches: S.sketches };
+  const keep = { info: S.info, pins: S.pins, sketches: S.sketches, drawn: S.drawn };
   S = { ...clone(DEFAULT_STATE), ...clone(keep) };
   restoredAt = null;
-  commit({ text: 'Reset the train to the default layout and locks (your pins, notes and sketches are kept)', adapt: false });
+  commit({ text: 'Reset the train to the default layout and locks (your pins, notes, sketches and drawn parts are kept)', adapt: false });
 });
 
 // Small handle for driving and reading the sim from scripts. Lengths are in displayed mm (print scale applied).
@@ -2418,6 +2948,9 @@ window.studio = {
   pins: () => clone(S.pins),
   info: () => clone(S.info),
   sketches: () => clone(S.sketches),
+  drawn: () => clone(S.drawn),
+  makePart: (sketchId, thicknessMm = 1) => makeDrawnFrom(sketchId, thicknessMm),
+  removePart: id => removeDrawn(id),
   setTool,
   tool: () => tool,
   partLock: (id, on = true) => setPartLock(id, on),
@@ -2433,6 +2966,7 @@ setScale(1);
 setView('iso');
 renderSelected();
 renderLog();
+restoreFromDisk();
 
 let last = performance.now(), lastPick = 0;
 (function tick(now) {
