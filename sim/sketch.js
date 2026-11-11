@@ -293,7 +293,7 @@
     balls.length = 0;
     for (const k of S.sketches) {
       if (tgE && tgE.k.id === k.id) { drawCage(tgE); continue; }
-      if (ownerOf(k) && !sketching()) continue;   // a part's outline shows only while you edit it
+      if ((ownerOf(k) || cutUser(k)) && !sketching()) continue;   // a part's outline (or a pocket's) shows only while you edit it
       const mine = sketching() && k.id === curId();
       const pts = sample(k);
       if (pts.length > 1) {
@@ -1191,7 +1191,7 @@
     const row3 = document.createElement('div');
     row3.className = 'row';
     row3.innerHTML = `<button data-a="new">New sketch</button>${k && !k.closed && k.points.length >= 3 ? '<button data-a="close">Close shape</button>' : ''}${k && k.closed ? '<button data-a="open">Open shape</button>' : ''}` +
-      (k && k.closed && k.points.length >= 3 && !ownerOf(k) ? '<button class="primary" data-a="mkpart">Make it a part</button>' : '');
+      (k && k.closed && k.points.length >= 3 && !ownerOf(k) && !cutUser(k) ? '<button class="primary" data-a="mkpart">Make it a part</button>' : '');
     section.appendChild(row3);
     if (k && st.sel != null && k.points[st.sel]) {
       const q = k.points[st.sel], ax = AXES[k.plane.axis];
@@ -1211,7 +1211,7 @@
     ul.className = 'pins';
     ul.innerHTML = S.sketches.map(x => `<li data-k="${x.id}" class="${x.id === st.current && sketching() ? 'on' : ''}">
       <div class="pin-top"><b style="color:var(--sketch)">${x.id}</b><span class="where">${esc(x.name)} · ${AXES[x.plane.axis].label} at ${AXES[x.plane.axis].n} ${f2(x.plane.offset * scale)} · ${x.points.length} dots${x.closed ? ', closed' : ''}</span>
-      ${ownerOf(x) ? `<span class="where">→ ${esc(nameOf(ownerOf(x).id))}</span>` : x.closed && x.points.length >= 3 ? '<button class="mini" data-a="mkpart">Make part</button>' : ''}
+      ${ownerOf(x) ? `<span class="where">→ ${esc(nameOf(ownerOf(x).id))}</span>` : cutUser(x) ? `<span class="where">→ pocket in ${esc(nameOf(cutUser(x).id))}</span>` : x.closed && x.points.length >= 3 ? '<button class="mini" data-a="mkpart">Make part</button>' : ''}
       ${sketching() ? '<button class="mini" data-a="edit">Edit</button>' : ''}<button class="mini" data-a="delk">Remove</button></div></li>`).join('');
     section.appendChild(ul);
   }

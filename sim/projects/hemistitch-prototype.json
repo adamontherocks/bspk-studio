@@ -1,0 +1,544 @@
+{
+ "format": "bspk-studio-scene",
+ "version": 3,
+ "savedAt": "2026-11-10T00:00:00.000Z",
+ "state": {
+  "sketches": [
+   {
+    "id": "K1",
+    "name": "Case outline (AXIS × 2.5, reference)",
+    "plane": {
+     "axis": "z",
+     "offset": 0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 38.75,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -38.75,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   }
+  ]
+ },
+ "project": {
+  "format": "bspk-studio-project",
+  "id": "hemistitch-prototype",
+  "name": "Hemistitch prototype",
+  "title": "Hemistitch · desktop prototype",
+  "blurb": "One faux barrel drives the going train to a faux escapement; the motion works turn two compound discs, hours on the left and minutes on the right, read at a fixed index at 3 o’clock. Real size in mm: module 1 teeth in 2.8 mm acrylic layers, for the Makera Z1. Rods, bearings, plates and bridges come next. Lock what you place; ask Claude to check the rest.",
+  "source": [
+   "Numbers from the brief in VISION §10.8 (2026-11-10). Proportions: AXIS v1 grown 2.5× (case 50 × 29 mm, discs Ø19 at ±10.5 mm). Pinions carry +0.3 profile shift and wheels −0.3 so 12-leaf pinions aren’t undercut. The faux barrel stands in for the motor pod, which comes last."
+  ],
+  "groups": {
+   "power": "Power (faux barrel)",
+   "going": "Going train",
+   "escape": "Faux escapement",
+   "motion": "Motion works",
+   "discs": "Discs"
+  },
+  "focus": [
+   {
+    "id": "power",
+    "label": "Power: barrel → center pinion",
+    "parts": [
+     "barrel",
+     "center"
+    ]
+   },
+   {
+    "id": "going",
+    "label": "Going train: center → third → fourth → escape",
+    "parts": [
+     "center",
+     "third",
+     "fourth",
+     "escape",
+     "fork",
+     "balance"
+    ]
+   },
+   {
+    "id": "motion",
+    "label": "Motion works and discs: center → minute wheel → hour wheel",
+    "parts": [
+     "center",
+     "mwheel",
+     "hour",
+     "minute_disc",
+     "hour_disc"
+    ]
+   }
+  ],
+  "rules": {
+   "minModule": 1,
+   "fixedModule": true,
+   "why": "the 1 mm end mill has to fit between the pinion teeth"
+  },
+  "rate": {
+   "arbor": "center",
+   "period": 3600,
+   "dir": -1
+  },
+  "targets": [
+   {
+    "label": "Minute disc",
+    "arbor": "center",
+    "period": 3600,
+    "dir": -1
+   },
+   {
+    "label": "Hour disc",
+    "arbor": "hour",
+    "period": 43200,
+    "dir": -1
+   },
+   {
+    "label": "Escape wheel (faux)",
+    "arbor": "escape",
+    "period": 60,
+    "dir": 1
+   }
+  ],
+  "arbors": [
+   {
+    "id": "barrel",
+    "name": "Faux barrel",
+    "group": "power",
+    "level": 0,
+    "staticArbor": true,
+    "drumH": 6.1,
+    "role": "Stands in for the barrel: a drum with 42 teeth driving the center pinion, at a barrel’s size and turning at its speed (once in 3.5 hours). Later the motor pod clicks into the back and turns it through a ring inside the drum; the spring drawn inside is only a picture.",
+    "gears": [
+     {
+      "id": "barrel_teeth",
+      "label": "Barrel teeth",
+      "z": 42,
+      "t": 2.8,
+      "x": -0.3
+     }
+    ]
+   },
+   {
+    "id": "center",
+    "name": "Center arbor",
+    "group": "going",
+    "level": 1,
+    "role": "Turns once an hour. The barrel drives its pinion; its wheel drives the third wheel; its cannon pinion drives the motion works; the minute disc sits on top of it, under the minutes index.",
+    "gears": [
+     {
+      "id": "center_pinion",
+      "label": "Center pinion",
+      "z": 12,
+      "t": 2.8,
+      "x": 0.3
+     },
+     {
+      "id": "center_wheel",
+      "label": "Center wheel",
+      "z": 48,
+      "t": 2.8,
+      "x": -0.3
+     },
+     {
+      "id": "cannon_pinion",
+      "label": "Cannon pinion",
+      "z": 12,
+      "t": 2.8,
+      "x": 0.3
+     }
+    ]
+   },
+   {
+    "id": "third",
+    "name": "Third wheel",
+    "group": "going",
+    "level": 2,
+    "role": "Turns once in 15 minutes: 4× the center wheel. Drives the fourth wheel.",
+    "gears": [
+     {
+      "id": "third_pinion",
+      "label": "Third pinion",
+      "z": 12,
+      "t": 2.8,
+      "x": 0.3
+     },
+     {
+      "id": "third_wheel",
+      "label": "Third wheel",
+      "z": 45,
+      "t": 2.8,
+      "x": -0.3
+     }
+    ]
+   },
+   {
+    "id": "fourth",
+    "name": "Fourth wheel",
+    "group": "going",
+    "level": 3,
+    "role": "Turns once in 4 minutes. Drives the escape pinion.",
+    "gears": [
+     {
+      "id": "fourth_pinion",
+      "label": "Fourth pinion",
+      "z": 12,
+      "t": 2.8,
+      "x": 0.3
+     },
+     {
+      "id": "fourth_wheel",
+      "label": "Fourth wheel",
+      "z": 48,
+      "t": 2.8,
+      "x": -0.3
+     }
+    ]
+   },
+   {
+    "id": "escape",
+    "name": "Faux escape wheel",
+    "group": "escape",
+    "level": 4,
+    "role": "Turns once a minute, the seconds rate. A real escape wheel turns about ten times faster; this one is driven, not released, so it just turns.",
+    "gears": [
+     {
+      "id": "escape_pinion",
+      "label": "Escape pinion",
+      "z": 12,
+      "t": 2.8,
+      "x": 0.3
+     },
+     {
+      "id": "escape_wheel",
+      "label": "Escape wheel (faux)",
+      "z": 20,
+      "t": 2.8
+     }
+    ]
+   },
+   {
+    "id": "fork",
+    "name": "Faux pallet fork",
+    "group": "escape",
+    "level": 4,
+    "role": "A placeholder for the pallet fork: a plain disc for the space it sweeps between the escape wheel and the balance. It doesn’t move.",
+    "gears": [
+     {
+      "id": "fork_body",
+      "label": "Pallet fork (its sweep)",
+      "z": 14,
+      "t": 2.8,
+      "plain": true
+     }
+    ]
+   },
+   {
+    "id": "balance",
+    "name": "Faux balance",
+    "group": "escape",
+    "level": 4,
+    "role": "A placeholder for the balance wheel, at a balance’s size beside the fork. It doesn’t move.",
+    "gears": [
+     {
+      "id": "balance_wheel",
+      "label": "Balance wheel",
+      "z": 30,
+      "t": 2.8,
+      "plain": true
+     }
+    ]
+   },
+   {
+    "id": "mwheel",
+    "name": "Minute wheel",
+    "group": "motion",
+    "level": 5,
+    "role": "Rides on a stud above the front plate. The cannon pinion turns its 48-tooth wheel 4:1; its 14-leaf pinion turns the hour wheel 3:1, so 12:1 in all.",
+    "gears": [
+     {
+      "id": "minute_wheel",
+      "label": "Minute wheel",
+      "z": 48,
+      "t": 2.8,
+      "x": -0.3
+     },
+     {
+      "id": "minute_pinion",
+      "label": "Minute pinion",
+      "z": 14,
+      "t": 2.8,
+      "x": 0.3
+     }
+    ]
+   },
+   {
+    "id": "hour",
+    "name": "Hour wheel",
+    "group": "motion",
+    "level": 6,
+    "role": "Rides on a stud above the front plate. Turns once in 12 hours and carries the hour disc on top: the smaller gear under the disc, as a compound part.",
+    "gears": [
+     {
+      "id": "hour_wheel",
+      "label": "Hour wheel",
+      "z": 42,
+      "t": 2.8,
+      "x": -0.3
+     }
+    ]
+   }
+  ],
+  "hands": [
+   {
+    "id": "minute_disc",
+    "name": "Minute disc",
+    "arbor": "center",
+    "group": "discs",
+    "level": 7,
+    "shape": "disc",
+    "marks": 60,
+    "labels": [
+     "0",
+     "5",
+     "10",
+     "15",
+     "20",
+     "25",
+     "30",
+     "35",
+     "40",
+     "45",
+     "50",
+     "55"
+    ],
+    "indicator": 0,
+    "role": "The minute disc: 2.8 mm acrylic, Ø47.5 (AXIS’s Ø19 × 2.5), fixed to the center arbor above the cannon pinion. One turn an hour; the minutes pass the fixed index at 3 o’clock."
+   },
+   {
+    "id": "hour_disc",
+    "name": "Hour disc",
+    "arbor": "hour",
+    "group": "discs",
+    "level": 7,
+    "shape": "disc",
+    "marks": 12,
+    "labels": [
+     "12",
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9",
+     "10",
+     "11"
+    ],
+    "indicator": 0,
+    "role": "The hour disc, 1 to 12: 2.8 mm acrylic, Ø47.5, fixed on top of the hour wheel. One number passes the fixed index at 3 o’clock each hour, so one turn in 12 hours."
+   }
+  ],
+  "stages": {
+   "s_barrel": [
+    "barrel_teeth",
+    "center_pinion"
+   ],
+   "s_center": [
+    "center_wheel",
+    "third_pinion"
+   ],
+   "s_third": [
+    "third_wheel",
+    "fourth_pinion"
+   ],
+   "s_fourth": [
+    "fourth_wheel",
+    "escape_pinion"
+   ],
+   "s_minute": [
+    "cannon_pinion",
+    "minute_wheel"
+   ],
+   "s_hour": [
+    "minute_pinion",
+    "hour_wheel"
+   ]
+  },
+  "plate": {
+   "name": "Work surface",
+   "role": "Stands in for the back plate until plates and bridges are drawn. The yellow outline is the AXIS case grown 2.5× (125 × 72.5 mm, 77.5 at the middle): a reference, not a boundary."
+  },
+  "defaults": {
+   "movementD": 150,
+   "minGap": 0.5,
+   "zMax": 30,
+   "view": {
+    "height": 24,
+    "mid": 11
+   },
+   "stages": {
+    "s_barrel": {
+     "m": 1,
+     "z": 1.0
+    },
+    "s_center": {
+     "m": 1,
+     "z": 7.6
+    },
+    "s_third": {
+     "m": 1,
+     "z": 4.3
+    },
+    "s_fourth": {
+     "m": 1,
+     "z": 1.0
+    },
+    "s_minute": {
+     "m": 1,
+     "z": 14.2
+    },
+    "s_hour": {
+     "m": 1,
+     "z": 17.5
+    }
+   },
+   "solo": {
+    "escape_wheel": {
+     "m": 1.4,
+     "z": 7.6
+    },
+    "fork_body": {
+     "m": 1,
+     "z": 7.6
+    },
+    "balance_wheel": {
+     "m": 1,
+     "z": 7.6
+    }
+   },
+   "pos": {
+    "center": [
+     26.25,
+     0.0
+    ],
+    "barrel": [
+     45.341775781324124,
+     19.091990402146276
+    ],
+    "third": [
+     -1.0746590174862405,
+     -12.383981975847183
+    ],
+    "fourth": [
+     -16.619574345100016,
+     11.503370482249094
+    ],
+    "escape": [
+     -34.2783233092094,
+     -12.748816739165923
+    ],
+    "fork": [
+     -54.43211144320275,
+     -1.666180597430115
+    ],
+    "balance": [
+     -46.98462276029646,
+     19.67146014183585
+    ],
+    "mwheel": [
+     -1.1047619047619044,
+     12.3173455392705
+    ],
+    "hour": [
+     -26.25,
+     0.0
+    ]
+   },
+   "hands": {
+    "minute_disc": {
+     "length": 23.75,
+     "z": 20.8,
+     "t": 2.8
+    },
+    "hour_disc": {
+     "length": 23.75,
+     "z": 20.8,
+     "t": 2.8
+    }
+   },
+   "locks": {
+    "minute_disc": true,
+    "hour_disc": true
+   }
+  }
+ }
+}

@@ -4,10 +4,12 @@
   'use strict';
   const N_FLANK = 10, N_TIP = 3, N_VALLEY = 4;
 
+  // shift: profile shift x (in modules). + moves the teeth outward and thickens them (pinions, against undercut),
+  // − the opposite; a mesh with shifts x and −x keeps its usual centre distance.
   function computeGear(s) {
-    const m = s.module, z = Math.round(s.teeth), pa = s.pressure_angle * Math.PI / 180;
-    const rp = m * z / 2, rb = rp * Math.cos(pa), ra = rp + m, rf = rp - 1.25 * m;
-    const half = Math.PI / (2 * z) + (Math.tan(pa) - pa);
+    const m = s.module, z = Math.round(s.teeth), pa = s.pressure_angle * Math.PI / 180, x = s.shift || 0;
+    const rp = m * z / 2, rb = rp * Math.cos(pa), ra = rp + m * (1 + x), rf = rp - m * (1.25 - x);
+    const half = Math.PI / (2 * z) + 2 * x * Math.tan(pa) / z + (Math.tan(pa) - pa);
     const t0 = rf > rb ? Math.sqrt((rf / rb) ** 2 - 1) : 0;
     const t1 = Math.sqrt((ra / rb) ** 2 - 1);
     const flank = [];
@@ -18,7 +20,7 @@
     const tipHalf = -flank[N_FLANK][1];
     const rootHalf = rf < rb ? half : -flank[0][1];
     const step = 2 * Math.PI / z;
-    return { m, z, pa, rp, rb, ra, rf, half, flank, tipHalf, rootHalf, step,
+    return { m, z, pa, x, rp, rb, ra, rf, half, flank, tipHalf, rootHalf, step,
              pointed: tipHalf <= 0, crowded: step - 2 * rootHalf <= 0 };
   }
 

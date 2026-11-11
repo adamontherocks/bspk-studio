@@ -193,16 +193,22 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
   <aside>
     <header>
       <div class="eyebrow">BSPK Studio</div>
-      <h1>Watch train · regulator layout</h1>
-      <div class="sub">Barrel-driven going train. Minutes, seconds and hours each turn their own wheel on their own axis; no cannon pinion. A faux escape wheel stands in for the escapement. Lock the parts you place. Unlocked parts move, resize and re-height so the train keeps meshing.</div>
-      <nav class="tabs"><a class="on" href="index.html">Watch train</a><a href="gear.html">Single gear</a></nav>
+      <h1 id="projTitle"></h1>
+      <div class="sub" id="projBlurb"></div>
+      <nav class="tabs"><a class="on" href="index.html" id="projTab"></a><a href="gear.html">Single gear</a></nav>
     </header>
+
+    <section>
+      <div class="eyebrow">Project</div>
+      <div class="row"><select id="projectPick" aria-label="Project"></select><button id="projectOpen">Open</button></div>
+      <p class="note" id="projectNote"></p>
+    </section>
 
     <section>
       <div class="eyebrow">Motion</div>
       <div class="row"><button class="primary" id="play">Pause</button><button id="resetTime">Reset to 12:00</button></div>
       <div class="field"><div class="head"><span>Speed</span><b id="speedTxt"></b></div><input type="range" id="speed" min="0" max="10" step="1" value="0" aria-label="Simulation speed"></div>
-      <label class="toggle"><input type="checkbox" id="stepped" checked> Step on each beat, like an escapement releases the train</label>
+      <label class="toggle" id="steppedRow"><input type="checkbox" id="stepped" checked> Step on each beat, like an escapement releases the train</label>
       <dl id="motionStats"></dl>
     </section>
 
@@ -245,21 +251,15 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
       <div class="row"><button data-view="iso">Iso</button><button data-view="top">Dial side</button><button data-view="back">Back</button><button data-view="side">Side</button><button id="fit">Fit</button></div>
       <div class="field"><div class="head"><span>Explode</span><b id="explodeTxt">0%</b></div><input type="range" id="explode" min="0" max="100" step="1" value="0" aria-label="Explode"></div>
       <div class="field"><div class="head"><span>Focus</span></div>
-        <select id="focus" aria-label="Focus on a transmission">
-          <option value="all">All parts</option>
-          <option value="power">Power: barrel → center pinion</option>
-          <option value="minutes">Minutes: center → minute intermediate → minute wheel</option>
-          <option value="seconds">Seconds: center → third → fourth → escape</option>
-          <option value="hours">Hours: center → intermediate → hour wheel</option>
-        </select></div>
+        <select id="focus" aria-label="Focus on a transmission"></select></div>
       <div class="field"><div class="head"><span>Print scale</span><b id="scaleTxt"></b></div><input type="range" id="scale" min="1" max="6" step="0.5" value="1" aria-label="Print scale"></div>
       <label class="toggle"><input type="checkbox" id="labelsToggle" checked> Labels</label>
       <label class="toggle"><input type="checkbox" id="edges" checked> Edge lines</label>
     </section>
 
-    <section>
+    <section id="sourceSection">
       <div class="eyebrow">Source</div>
-      <p class="note">Default going-train tooth counts are the 43&nbsp;mm (19‴) example in <a href="https://abbeyclock.com/gbk/gbk6.html" target="_blank" rel="noopener">Chapter VI: The Train</a>: barrel 90 / center pinion 12, 80/10, 75/10, 75/8, escape wheel 16, giving 18,000 vph. The hour train (12/48 then 14/42), the minute drive (40/20 then 40/80 through a minute intermediate, 1:1), the layout and all sizes are designed here. Teeth are drawn involute; that text calls for epicyclic (cycloidal) teeth in watch trains.</p>
+      <p class="note" id="projSource"></p>
     </section>
   </aside>
 </main>
@@ -271,6 +271,7 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js"></script>
 <script src="involute.js"></script>
 <script>
 'use strict';
@@ -280,84 +281,120 @@ const ARBOR_R = 0.2, BARREL_ARBOR_R = 0.7;
 const M_MIN = 0.03, M_MAX = 3;
 const EXPLODE_STEP = 5;
 const SPEEDS = [1, 2, 5, 10, 30, 60, 300, 600, 1800, 3600, 7200];
-const RATE_ROOT = 'center';  // its speed is the given: once an hour, clockwise
 const LOCK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.3" width="8" height="5.7" rx="1.2" fill="currentColor"/><path d="M3.9 5.3V3.9a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
 const UNLOCK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.6" y="5.9" width="7" height="5" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 5.9V3.9a2.1 2.1 0 0 1 4.1-.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
 
-const GROUPS = {
-  power:   { label: 'Power' },
-  minutes: { label: 'Minutes' },
-  going:   { label: 'Going train' },
-  seconds: { label: 'Seconds' },
-  escape:  { label: 'Faux escapement' },
-  hours:   { label: 'Hours' },
-  plate:   { label: 'Plate' },
-  drawn:   { label: 'Drawn part' },
-};
+// Groups every project has; a project adds its own (§ the project, below).
+const CORE_GROUPS = { plate: { label: 'Plate' }, drawn: { label: 'Drawn part' } };
 // The colour code, chosen for red-green colour blindness: parts are white, the selected part is blue,
 // a part that collides is red. Nothing else uses red, and a clash also shows a warning triangle on its label.
 // The plate is grey so the white parts read against it.
 const LOOK = { part: 0xe3e8ec, plate: 0x5d6976, hover: 0xa9d2f2, selected: 0x2f86ec, clash: 0xff3b2a };
-const FOCUS = {
-  all: null,
-  power: ['barrel', 'center'],
-  minutes: ['center', 'minter', 'minute', 'minute_hand'],
-  seconds: ['center', 'third', 'fourth', 'escape', 'seconds_hand'],
-  hours: ['center', 'inter', 'hour', 'hour_hand'],
+// ---------- the project: what this machine is made of ----------
+// Everything specific to one machine lives here as data, never in the code below (VISION §3.10): its axes and
+// gears, which gears mesh, its hands, the speed it's driven at and the speeds it's checked against, its starting
+// layout and locks, and the words on the page. A scene carries its project, so a Hemistitch scene opens as
+// Hemistitch. The clock (the beta test bed) is the project a scene gets when it doesn't say.
+const CLOCK_PROJECT = {
+  format: 'bspk-studio-project',
+  id: 'clock',
+  name: 'Watch train',
+  title: 'Watch train · regulator layout',
+  blurb: 'Barrel-driven going train. Minutes, seconds and hours each turn their own wheel on their own axis; no cannon pinion. A faux escape wheel stands in for the escapement. Lock the parts you place. Unlocked parts move, resize and re-height so the train keeps meshing.',
+  source: ['Default going-train tooth counts are the 43 mm (19‴) example in ', { text: 'Chapter VI: The Train', href: 'https://abbeyclock.com/gbk/gbk6.html' },
+    ': barrel 90 / center pinion 12, 80/10, 75/10, 75/8, escape wheel 16, giving 18,000 vph. The hour train (12/48 then 14/42), the minute drive (40/20 then 40/80 through a minute intermediate, 1:1), the layout and all sizes are designed here. Teeth are drawn involute; that text calls for epicyclic (cycloidal) teeth in watch trains.'],
+  groups: { power: 'Power', minutes: 'Minutes', going: 'Going train', seconds: 'Seconds', escape: 'Faux escapement', hours: 'Hours' },
+  focus: [
+    { id: 'power', label: 'Power: barrel → center pinion', parts: ['barrel', 'center'] },
+    { id: 'minutes', label: 'Minutes: center → minute intermediate → minute wheel', parts: ['center', 'minter', 'minute', 'minute_hand'] },
+    { id: 'seconds', label: 'Seconds: center → third → fourth → escape', parts: ['center', 'third', 'fourth', 'escape', 'seconds_hand'] },
+    { id: 'hours', label: 'Hours: center → intermediate → hour wheel', parts: ['center', 'inter', 'hour', 'hour_hand'] },
+  ],
+  // The given: this axis turns once per period (seconds), clockwise (dir -1) or counter-clockwise (dir 1) seen from the dial side.
+  rate: { arbor: 'center', period: 3600, dir: -1 },
+  // The speeds the checks hold the design to.
+  targets: [
+    { label: 'Minute axis', arbor: 'minute', period: 3600, dir: -1 },
+    { label: 'Seconds axis', arbor: 'fourth', period: 60, dir: -1 },
+    { label: 'Hour axis', arbor: 'hour', period: 43200, dir: -1 },
+  ],
+  // Which gear the beat comes from (vph = its teeth × 2 per turn), if the machine has one.
+  beat: { gear: 'escape_wheel', label: 'Escape wheel' },
+  // Each axis and the gears on it, bottom to top. level: its layer when the view is exploded. drumH: the gear is a barrel's teeth on a drum this tall.
+  arbors: [
+    { id: 'barrel', name: 'Barrel', group: 'power', level: 0, staticArbor: true, drumH: 2.4,
+      role: 'The motor. The mainspring inside the drum drives the whole train. Its centre holds still while the drum turns. Lid left off so the spring shows.',
+      gears: [{ id: 'barrel_teeth', label: 'Barrel teeth', z: 90, t: 0.4 }] },
+    { id: 'center', name: 'Center wheel', group: 'going', level: 1,
+      role: 'Turns once an hour, driven by the barrel. Drives the third wheel, the minute wheel (through the minute intermediate) and the hour train. It no longer carries the minute hand.',
+      gears: [
+        { id: 'center_pinion', label: 'Center pinion', z: 12, t: 0.7 },
+        { id: 'center_wheel', label: 'Center wheel', z: 80, t: 0.3 },
+        { id: 'minute_drive', label: 'Minute-drive wheel', z: 40, t: 0.3 },
+        { id: 'hour_drive', label: 'Hour-drive pinion', z: 12, t: 0.6 }] },
+    { id: 'third', name: 'Third wheel', group: 'going', level: 2,
+      role: 'Speeds the train up 8× from the center wheel and passes it on to the fourth wheel.',
+      gears: [
+        { id: 'third_pinion', label: 'Third pinion', z: 10, t: 0.6 },
+        { id: 'third_wheel', label: 'Third wheel', z: 75, t: 0.3 }] },
+    { id: 'fourth', name: 'Fourth wheel', group: 'seconds', level: 3,
+      role: 'Turns once a minute. The seconds hand turns on its axis.',
+      gears: [
+        { id: 'fourth_pinion', label: 'Fourth pinion', z: 10, t: 0.6 },
+        { id: 'fourth_wheel', label: 'Fourth wheel', z: 75, t: 0.3 }] },
+    { id: 'escape', name: 'Faux escape wheel', group: 'escape', level: 4,
+      role: 'Stands in for the escapement and balance. It sits where the escape wheel goes and turns at escape-wheel speed. With beat stepping on, it advances half a tooth per beat, which is how a real escapement releases the train.',
+      gears: [
+        { id: 'escape_pinion', label: 'Escape pinion', z: 8, t: 0.6 },
+        { id: 'escape_wheel', label: 'Escape wheel (faux)', z: 16, t: 0.3 }] },
+    { id: 'minter', name: 'Minute intermediate', group: 'minutes', level: 5,
+      role: 'Carries the drive from the center axis out to the minute wheel: 40 into 20, then 40 into 80, so 1:1 overall. Two meshes keep the minute wheel turning the same way as the center wheel.',
+      gears: [
+        { id: 'minter_pinion', label: 'Minute intermediate pinion', z: 20, t: 0.6 },
+        { id: 'minter_wheel', label: 'Minute intermediate wheel', z: 40, t: 0.3 }] },
+    { id: 'minute', name: 'Minute wheel', group: 'minutes', level: 6,
+      role: 'Its own wheel on its own axis, carrying the minute hand. Driven from the center axis through the minute intermediate, so it turns clockwise once an hour.',
+      gears: [{ id: 'minute_wheel', label: 'Minute wheel', z: 80, t: 0.3 }] },
+    { id: 'inter', name: 'Hour intermediate', group: 'hours', level: 7,
+      role: 'First hour reduction (4:1), driven by the hour-drive pinion on the center axis.',
+      gears: [
+        { id: 'inter_wheel', label: 'Intermediate wheel', z: 48, t: 0.3 },
+        { id: 'inter_pinion', label: 'Intermediate pinion', z: 14, t: 0.6 }] },
+    { id: 'hour', name: 'Hour wheel', group: 'hours', level: 8,
+      role: 'Second hour reduction (3:1). Turns once in 12 hours on its own axis and carries the hour hand.',
+      gears: [{ id: 'hour_wheel', label: 'Hour wheel', z: 42, t: 0.3 }] },
+  ],
+  hands: [
+    { id: 'hour_hand', name: 'Hour hand', arbor: 'hour', group: 'hours', level: 9, w0: 0.95, w1: 0.45,
+      role: 'On the hour wheel axis. One turn in 12 hours.' },
+    { id: 'seconds_hand', name: 'Seconds hand', arbor: 'fourth', group: 'seconds', level: 9, w0: 0.3, w1: 0.14, tail: 1.3,
+      role: 'On the fourth wheel axis. One turn a minute.' },
+    { id: 'minute_hand', name: 'Minute hand', arbor: 'minute', group: 'minutes', level: 10, w0: 0.75, w1: 0.3,
+      role: 'On the minute wheel axis. One turn an hour.' },
+  ],
+  // A stage is one mesh: its two gears share a module (tooth size) and a height.
+  stages: {
+    s_barrel: ['barrel_teeth', 'center_pinion'], s_center: ['center_wheel', 'third_pinion'], s_third: ['third_wheel', 'fourth_pinion'],
+    s_fourth: ['fourth_wheel', 'escape_pinion'], s_mdrive: ['minute_drive', 'minter_pinion'], s_minute: ['minter_wheel', 'minute_wheel'],
+    s_hour1: ['hour_drive', 'inter_wheel'], s_hour2: ['inter_pinion', 'hour_wheel'],
+  },
+  // Where it starts (all in the sim's units; the print scale multiplies them). Reset train goes back here.
+  defaults: {
+    movementD: 43,
+    minGap: 0.05,
+    stages: {
+      s_barrel: { m: 0.2, z: 0.3 }, s_center: { m: 0.15, z: 3.0 }, s_third: { m: 0.15, z: 3.7 }, s_fourth: { m: 0.15, z: 4.4 },
+      s_mdrive: { m: 0.22, z: 4.85 }, s_minute: { m: 0.15, z: 5.35 }, s_hour1: { m: 0.25, z: 5.9 }, s_hour2: { m: 0.25, z: 6.6 },
+    },
+    solo: { escape_wheel: { m: 0.35, z: 5.1 } },   // gears that mesh with nothing: their own module and height
+    // Laid out by direction from a neighbour it meshes with, starting from the driven axis at 0, 0: [axis, neighbour, degrees].
+    layout: [['barrel', 'center', 180], ['third', 'center', -50], ['fourth', 'third', -132.9],
+      ['escape', 'fourth', -30], ['minter', 'center', 30], ['minute', 'minter', -50], ['inter', 'center', 90], ['hour', 'inter', 90]],
+    hands: { hour_hand: { length: 5, z: 7.6, t: 0.15 }, seconds_hand: { length: 4.5, z: 7.6, t: 0.12 }, minute_hand: { length: 9, z: 8.0, t: 0.15 } },
+    locks: { barrel_teeth: true, minute_wheel: true, fourth_wheel: true, escape_wheel: true, hour_wheel: true,
+             minute_hand: true, seconds_hand: true, hour_hand: true },
+  },
 };
-
-// What each part is. Tooth counts are fixed for now, so every speed stays locked.
-const ARBOR_DEFS = [
-  { id: 'barrel', name: 'Barrel', group: 'power', level: 0, staticArbor: true, drumH: 2.4,
-    role: 'The motor. The mainspring inside the drum drives the whole train. Its centre holds still while the drum turns. Lid left off so the spring shows.',
-    gears: [{ id: 'barrel_teeth', label: 'Barrel teeth', z: 90, t: 0.4 }] },
-  { id: 'center', name: 'Center wheel', group: 'going', level: 1,
-    role: 'Turns once an hour, driven by the barrel. Drives the third wheel, the minute wheel (through the minute intermediate) and the hour train. It no longer carries the minute hand.',
-    gears: [
-      { id: 'center_pinion', label: 'Center pinion', z: 12, t: 0.7 },
-      { id: 'center_wheel', label: 'Center wheel', z: 80, t: 0.3 },
-      { id: 'minute_drive', label: 'Minute-drive wheel', z: 40, t: 0.3 },
-      { id: 'hour_drive', label: 'Hour-drive pinion', z: 12, t: 0.6 }] },
-  { id: 'third', name: 'Third wheel', group: 'going', level: 2,
-    role: 'Speeds the train up 8× from the center wheel and passes it on to the fourth wheel.',
-    gears: [
-      { id: 'third_pinion', label: 'Third pinion', z: 10, t: 0.6 },
-      { id: 'third_wheel', label: 'Third wheel', z: 75, t: 0.3 }] },
-  { id: 'fourth', name: 'Fourth wheel', group: 'seconds', level: 3,
-    role: 'Turns once a minute. The seconds hand turns on its axis.',
-    gears: [
-      { id: 'fourth_pinion', label: 'Fourth pinion', z: 10, t: 0.6 },
-      { id: 'fourth_wheel', label: 'Fourth wheel', z: 75, t: 0.3 }] },
-  { id: 'escape', name: 'Faux escape wheel', group: 'escape', level: 4,
-    role: 'Stands in for the escapement and balance. It sits where the escape wheel goes and turns at escape-wheel speed. With beat stepping on, it advances half a tooth per beat, which is how a real escapement releases the train.',
-    gears: [
-      { id: 'escape_pinion', label: 'Escape pinion', z: 8, t: 0.6 },
-      { id: 'escape_wheel', label: 'Escape wheel (faux)', z: 16, t: 0.3 }] },
-  { id: 'minter', name: 'Minute intermediate', group: 'minutes', level: 5,
-    role: 'Carries the drive from the center axis out to the minute wheel: 40 into 20, then 40 into 80, so 1:1 overall. Two meshes keep the minute wheel turning the same way as the center wheel.',
-    gears: [
-      { id: 'minter_pinion', label: 'Minute intermediate pinion', z: 20, t: 0.6 },
-      { id: 'minter_wheel', label: 'Minute intermediate wheel', z: 40, t: 0.3 }] },
-  { id: 'minute', name: 'Minute wheel', group: 'minutes', level: 6,
-    role: 'Its own wheel on its own axis, carrying the minute hand. Driven from the center axis through the minute intermediate, so it turns clockwise once an hour.',
-    gears: [{ id: 'minute_wheel', label: 'Minute wheel', z: 80, t: 0.3 }] },
-  { id: 'inter', name: 'Hour intermediate', group: 'hours', level: 7,
-    role: 'First hour reduction (4:1), driven by the hour-drive pinion on the center axis.',
-    gears: [
-      { id: 'inter_wheel', label: 'Intermediate wheel', z: 48, t: 0.3 },
-      { id: 'inter_pinion', label: 'Intermediate pinion', z: 14, t: 0.6 }] },
-  { id: 'hour', name: 'Hour wheel', group: 'hours', level: 8,
-    role: 'Second hour reduction (3:1). Turns once in 12 hours on its own axis and carries the hour hand.',
-    gears: [{ id: 'hour_wheel', label: 'Hour wheel', z: 42, t: 0.3 }] },
-];
-const HAND_DEFS = [
-  { id: 'hour_hand', name: 'Hour hand', arbor: 'hour', group: 'hours', level: 9, w0: 0.95, w1: 0.45,
-    role: 'On the hour wheel axis. One turn in 12 hours.' },
-  { id: 'seconds_hand', name: 'Seconds hand', arbor: 'fourth', group: 'seconds', level: 9, w0: 0.3, w1: 0.14, tail: 1.3,
-    role: 'On the fourth wheel axis. One turn a minute.' },
-  { id: 'minute_hand', name: 'Minute hand', arbor: 'minute', group: 'minutes', level: 10, w0: 0.75, w1: 0.3,
-    role: 'On the minute wheel axis. One turn an hour.' },
-];
 
 const clone = o => JSON.parse(JSON.stringify(o));
 const hex = c => '#' + c.toString(16).padStart(6, '0');
@@ -369,6 +406,70 @@ const clonePos = p => Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v
 const listText = (xs, word = 'and') => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ${word} ${xs[xs.length - 1]}`);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
+// Can the sim build this project? Returns what's wrong, or '' when it's fine.
+function projectProblem(p) {
+  if (!p || typeof p !== 'object' || p.format !== 'bspk-studio-project') return 'it isn’t a BSPK Studio project';
+  const okId = s => typeof s === 'string' && /^[A-Za-z][\w-]*$/.test(s), num = v => typeof v === 'number' && isFinite(v);
+  const ids = new Set(), gearAxis = {};
+  if (!Array.isArray(p.arbors) || !p.arbors.length) return 'it has no axes';
+  for (const a of p.arbors) {
+    if (!a || !okId(a.id) || ids.has(a.id) || !Array.isArray(a.gears) || !a.gears.length) return `axis “${a && a.id}” is missing its id or gears`;
+    ids.add(a.id);
+    for (const g of a.gears) {
+      if (!g || !okId(g.id) || ids.has(g.id) || !Number.isInteger(g.z) || g.z < 3 || !num(g.t) || g.t <= 0) return `gear “${g && g.id}” on ${a.id} needs an id, a tooth count and a thickness`;
+      ids.add(g.id);
+      gearAxis[g.id] = a.id;
+    }
+  }
+  if (p.hands !== undefined && !Array.isArray(p.hands)) return 'its hands aren’t a list';
+  for (const h of p.hands || []) {
+    if (!h || !okId(h.id) || ids.has(h.id) || !p.arbors.some(a => a.id === h.arbor)) return `hand “${h && h.id}” needs an id and an axis`;
+    ids.add(h.id);
+  }
+  const meshed = new Set();
+  for (const [sid, pair] of Object.entries(p.stages || {})) {
+    if (!okId(sid) || !Array.isArray(pair) || pair.length !== 2 || !(pair[0] in gearAxis) || !(pair[1] in gearAxis) || gearAxis[pair[0]] === gearAxis[pair[1]])
+      return `mesh “${sid}” needs two gears on different axes`;
+    for (const g of pair) { if (meshed.has(g)) return `${g} is in two meshes`; meshed.add(g); }
+  }
+  if (!p.rate || !p.arbors.some(a => a.id === p.rate.arbor) || !num(p.rate.period) || p.rate.period <= 0) return 'it doesn’t say which axis is driven, or how fast';
+  for (const r of p.targets || []) if (!r || !p.arbors.some(a => a.id === r.arbor) || !num(r.period) || r.period <= 0) return 'one of its speed checks is incomplete';
+  if (!p.defaults || typeof p.defaults !== 'object') return 'it has no starting layout';
+  if (/[<>]/.test(JSON.stringify(p))) return 'its text contains < or >, which the page won’t show';
+  return '';
+}
+// A scene's project: the one it carries, or the clock for scenes from before projects. null if it carries one that can't be built.
+const sceneProject = data => (data.project === undefined ? CLOCK_PROJECT : projectProblem(data.project) ? null : data.project);
+const projectKey = p => JSON.stringify(p);
+
+// The project this page is built for: the one in browser storage, or the clock. Opening a different one reloads
+// the page with it (openScene), because every part on screen is built for one project.
+const AUTOSAVE_KEY = 'bspk-studio.scene', SWITCH_KEY = 'bspk-studio.switching', NOTICE_KEY = 'bspk-studio.notice';
+const PROJECT = (() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || 'null');
+    if (saved && saved.project && !projectProblem(saved.project)) return saved.project;
+  } catch (e) { /* no storage: the clock */ }
+  return CLOCK_PROJECT;
+})();
+let bootNotice = '';
+try {
+  const wanted = sessionStorage.getItem(SWITCH_KEY);
+  bootNotice = sessionStorage.getItem(NOTICE_KEY) || '';
+  sessionStorage.removeItem(NOTICE_KEY);
+  if (wanted === projectKey(PROJECT)) sessionStorage.removeItem(SWITCH_KEY);
+  else if (wanted) bootNotice = 'Couldn’t open that project: this browser didn’t keep it through the reload. Your previous scene is shown instead.';
+} catch (e) { /* no session storage */ }
+
+const RATE_ROOT = PROJECT.rate.arbor;
+const RATE_W = (PROJECT.rate.dir > 0 ? 2 : -2) * Math.PI / PROJECT.rate.period;
+const ARBOR_DEFS = PROJECT.arbors.map((a, i) => ({ name: a.id, role: '', level: i, ...a, group: a.group || 'parts' }));
+const HAND_DEFS = (PROJECT.hands || []).map((h, i) => ({ name: h.id, role: '', level: ARBOR_DEFS.length + i, w0: 0.6, w1: 0.3, ...h, group: h.group || 'parts' }));
+const GROUPS = Object.fromEntries([...ARBOR_DEFS, ...HAND_DEFS].map(p => [p.group, { label: p.group }]));
+for (const [k, v] of Object.entries(PROJECT.groups || {})) GROUPS[k] = { label: String(v) };
+Object.assign(GROUPS, CORE_GROUPS);
+const FOCUS = { all: null, ...Object.fromEntries((PROJECT.focus || []).map(f => [f.id, f.parts || []])) };
+
 const GEAR_DEFS = {};
 for (const a of ARBOR_DEFS) for (const g of a.gears) GEAR_DEFS[g.id] = { ...g, arbor: a.id };
 const ARBOR = Object.fromEntries(ARBOR_DEFS.map(a => [a.id, a]));
@@ -378,44 +479,43 @@ const arborOf = id => (HAND[id] ? HAND[id].arbor : id);
 const mainGear = a => ARBOR[a].gears.reduce((p, q) => (q.z > p.z ? q : p)).id;
 const LMAX = Math.max(...ARBOR_DEFS.map(a => a.level), ...HAND_DEFS.map(h => h.level));
 
-// A stage is one mesh: both gears share its module (tooth size) and its height.
-const DEFAULT_STAGES = {
-  s_barrel: { gears: ['barrel_teeth', 'center_pinion'], m: 0.2, z: 0.3 },
-  s_center: { gears: ['center_wheel', 'third_pinion'], m: 0.15, z: 3.0 },
-  s_third:  { gears: ['third_wheel', 'fourth_pinion'], m: 0.15, z: 3.7 },
-  s_fourth: { gears: ['fourth_wheel', 'escape_pinion'], m: 0.15, z: 4.4 },
-  s_mdrive: { gears: ['minute_drive', 'minter_pinion'], m: 0.22, z: 4.85 },
-  s_minute: { gears: ['minter_wheel', 'minute_wheel'], m: 0.15, z: 5.35 },
-  s_hour1:  { gears: ['hour_drive', 'inter_wheel'], m: 0.25, z: 5.9 },
-  s_hour2:  { gears: ['inter_pinion', 'hour_wheel'], m: 0.25, z: 6.6 },
-};
+const PD = PROJECT.defaults;
+const Z_MAX = PD.zMax || 20;   // the height controls' range
+const DEFAULT_STAGES = Object.fromEntries(Object.entries(PROJECT.stages || {}).map(([sid, gears]) =>
+  [sid, { gears: gears.slice(), m: (PD.stages && PD.stages[sid] && PD.stages[sid].m) || 0.5, z: (PD.stages && PD.stages[sid] && PD.stages[sid].z) || 0 }]));
 const STAGE_IDS = Object.keys(DEFAULT_STAGES);
 const gearStage = {};
 for (const sid of STAGE_IDS) for (const g of DEFAULT_STAGES[sid].gears) gearStage[g] = sid;
 
 // Starting layout, laid out by direction from a neighbour; stored as absolute X/Y.
 function polarLayout(stages, spec) {
-  const pos = { center: [0, 0] };
+  const pos = { [RATE_ROOT]: [0, 0] };
   for (const [child, parent, deg] of spec) {
     const sid = Object.keys(stages).find(k => { const ar = stages[k].gears.map(g => GEAR_DEFS[g].arbor); return ar.includes(child) && ar.includes(parent); });
+    if (!sid || !pos[parent]) continue;
     const s = stages[sid], d = s.m * s.gears.reduce((n, g) => n + GEAR_DEFS[g].z, 0) / 2, a = deg * Math.PI / 180;
     pos[child] = [pos[parent][0] + d * Math.cos(a), pos[parent][1] + d * Math.sin(a)];
   }
   return pos;
 }
+const startPos = () => {
+  const pos = { ...polarLayout(DEFAULT_STAGES, PD.layout || []) };
+  for (const [a, p] of Object.entries(PD.pos || {})) if (ARBOR[a] && Array.isArray(p)) pos[a] = [+p[0], +p[1]];
+  for (const a of ARBOR_IDS) if (!pos[a]) pos[a] = [0, 0];
+  return pos;
+};
 
 // Everything you can change. Locked parts are never changed by auto-adjust.
 const DEFAULT_STATE = {
-  movementD: 43,
-  minGap: 0.05,  // real mm between non-meshing parts, sideways and vertically; set it for the print or cut process
+  movementD: PD.movementD || 43,
+  minGap: PD.minGap !== undefined ? PD.minGap : 0.05,  // real mm between non-meshing parts, sideways and vertically; set it for the print or cut process
   stages: DEFAULT_STAGES,
-  solo: { escape_wheel: { m: 0.35, z: 5.1 } },
-  pos: polarLayout(DEFAULT_STAGES, [['barrel', 'center', 180], ['third', 'center', -50], ['fourth', 'third', -132.9],
-    ['escape', 'fourth', -30], ['minter', 'center', 30], ['minute', 'minter', -50], ['inter', 'center', 90], ['hour', 'inter', 90]]),
+  // Gears that mesh with nothing keep their own module and height.
+  solo: Object.fromEntries(Object.keys(GEAR_DEFS).filter(g => !gearStage[g]).map(g => [g, { m: (PD.solo && PD.solo[g] && PD.solo[g].m) || 0.5, z: (PD.solo && PD.solo[g] && PD.solo[g].z) || 0 }])),
+  pos: startPos(),
   thick: Object.fromEntries(Object.entries(GEAR_DEFS).map(([id, g]) => [id, g.t])),
-  hands: { hour_hand: { length: 5, z: 7.6, t: 0.15 }, seconds_hand: { length: 4.5, z: 7.6, t: 0.12 }, minute_hand: { length: 9, z: 8.0, t: 0.15 } },
-  locks: { barrel_teeth: true, minute_wheel: true, fourth_wheel: true, escape_wheel: true, hour_wheel: true,
-           minute_hand: true, seconds_hand: true, hour_hand: true },
+  hands: Object.fromEntries(HAND_DEFS.map(h => [h.id, { length: 5, z: 1, t: 0.15, ...((PD.hands || {})[h.id] || {}) }])),
+  locks: Object.fromEntries(Object.entries(PD.locks || {}).filter(([k, v]) => v && (GEAR_DEFS[k] || HAND[k]))),
   // The design record: your names and notes per part, pins dropped on parts, and 2D sketches.
   info: {},      // partId -> { name, note }
   pins: [],      // { id: 'P1', part, at: [x, y, z] in the part's own frame, note }
@@ -424,9 +524,30 @@ const DEFAULT_STATE = {
                  // w (optional, on front and back dots): the dot's own depth in or out of its face, positive toward the back
                  // edges: null | per dot, the dots on the joining edge from front dot i to back dot i: [{ t, d: [x, y, z], smooth }]
                  // the sketch's dots are the front outline; back (same dot count) is the far face's own outline, null = a copy of the front
-  version: 2,
+  version: 2,    // the layout of this state object (unchanged since 2026-11-05)
 };
-const SCHEMA_VERSION = 2;
+// Scene files and browser storage: 3 (2026-11-10) carries the project beside the state; 2 is the clock, from before projects.
+const SCHEMA_VERSION = 3;
+
+// The page's words come from the project too (as text: a project file can't inject markup).
+document.title = `BSPK Studio · ${PROJECT.name}`;
+document.getElementById('projTitle').textContent = PROJECT.title || PROJECT.name;
+document.getElementById('projBlurb').textContent = PROJECT.blurb || '';
+document.getElementById('projTab').textContent = PROJECT.name;
+{
+  const sel = document.getElementById('focus');
+  for (const [v, label] of [['all', 'All parts'], ...(PROJECT.focus || []).map(f => [f.id, f.label || f.id])]) sel.add(new Option(label, v));
+  const note = document.getElementById('projSource');
+  for (const bit of [].concat(PROJECT.source || [])) {
+    if (typeof bit === 'string') note.append(bit);
+    else if (bit && typeof bit.text === 'string' && /^https:\/\//.test(bit.href || '')) {
+      const a = document.createElement('a');
+      Object.assign(a, { href: bit.href, target: '_blank', rel: 'noopener', textContent: bit.text });
+      note.append(a);
+    } else if (bit && typeof bit.text === 'string') note.append(bit.text);
+  }
+  document.getElementById('sourceSection').hidden = !note.textContent;
+}
 
 let S = clone(DEFAULT_STATE);
 let scale = 1;  // print scale: multiplies every dimension; the minimum gap is in real mm
@@ -463,7 +584,10 @@ function derive(st, lite = false) {
   }
   for (const [gid, s] of Object.entries(st.solo)) Object.assign(gears[gid], { m: s.m, z0: s.z, soloId: gid, isWheel: true });
   for (const G of Object.values(gears)) {
-    G.rp = G.m * G.z / 2; G.ra = G.rp + G.m; G.rf = G.rp - 1.25 * G.m; G.rb = G.rp * Math.cos(PA); G.z1 = G.z0 + G.t;
+    const x = G.x || 0;   // profile shift, in modules
+    G.rp = G.m * G.z / 2; G.rb = G.rp * Math.cos(PA); G.z1 = G.z0 + G.t;
+    if (G.plain) { G.ra = G.rf = G.rp; continue; }   // a plain wheel: no teeth, just its outline
+    G.ra = G.rp + G.m * (1 + x); G.rf = G.rp - G.m * (1.25 - x);
   }
   const pos = lite ? st.pos : clonePos(st.pos);
 
@@ -483,7 +607,7 @@ function derive(st, lite = false) {
   if (lite) return { gears, pos, tops, drum };
 
   const meshes = Object.values(st.stages).map(s => s.gears);
-  const omega = { [RATE_ROOT]: -2 * Math.PI / 3600 };  // 1 rev/h, clockwise seen from the dial side
+  const omega = { [RATE_ROOT]: RATE_W };  // the project's given speed (negative = clockwise seen from the dial side)
   for (let changed = true; changed;) {
     changed = false;
     for (const [g1, g2] of meshes) {
@@ -492,6 +616,7 @@ function derive(st, lite = false) {
       else if (a2 in omega && !(a1 in omega)) { omega[a1] = -omega[a2] * gears[g2].z / gears[g1].z; changed = true; }
     }
   }
+  for (const a of ARBOR_IDS) if (!(a in omega)) omega[a] = 0;   // nothing drives it: it stands still
 
   // Tooth phase per gear so meshing teeth interleave: a driven gear's gap faces its driver's tooth.
   const psi = {};
@@ -508,6 +633,7 @@ function derive(st, lite = false) {
       changed = true;
     }
   }
+  for (const g of Object.keys(gears)) if (!(g in psi)) psi[g] = 0;
   return { gears, pos, tops, drum, meshes, omega, psi };
 }
 
@@ -527,7 +653,7 @@ function elements(st, D) {
   }
   for (const h of HAND_DEFS) {
     const [x, y] = D.pos[h.arbor], hs = st.hands[h.id];
-    els.push({ part: h.id, arbor: h.arbor, hand: h.id, name: `${h.name} sweep`, x, y, r: hs.length, z0: hs.z, z1: hs.z + hs.t });
+    els.push({ part: h.id, arbor: h.arbor, hand: h.id, name: h.shape === 'disc' ? h.name : `${h.name} sweep`, x, y, r: hs.length, z0: hs.z, z1: hs.z + hs.t });
   }
   return els;
 }
@@ -556,13 +682,10 @@ function clashCost(st, D) {
 }
 
 function analyse(st, D) {
-  const rates = [
-    { label: 'Minute axis', arbor: 'minute', target: 3600 },
-    { label: 'Seconds axis', arbor: 'fourth', target: 60 },
-    { label: 'Hour axis', arbor: 'hour', target: 43200 },
-  ].map(r => {
-    const w = D.omega[r.arbor], T = 2 * Math.PI / Math.abs(w);
-    return { ...r, w, ok: Math.abs(T - r.target) < 1e-6 * r.target && w < 0 };
+  const rates = (PROJECT.targets || []).map(r => ({ label: r.label || `${ARBOR[r.arbor].name} axis`, arbor: r.arbor, target: r.period, dir: r.dir > 0 ? 1 : -1 })).map(r => {
+    const w = D.omega[r.arbor], T = 2 * Math.PI / Math.abs(w), dir = r.dir;
+    delete r.dir;
+    return { ...r, w, ok: Math.abs(T - r.target) < 1e-6 * r.target && w * dir > 0 };
   });
 
   const els = elements(st, D);
@@ -602,6 +725,7 @@ function analyse(st, D) {
   // Involute interference: a tip that reaches past the partner's interference point cuts into its flank.
   const interference = [];
   for (const [g1, g2] of D.meshes) {
+    if (GEAR_DEFS[g1].bought && GEAR_DEFS[g2].bought) continue;   // a bought pair keeps its maker's tooth form (clock pinions are cycloidal); we only draw it involute
     const Ga = D.gears[g1], Gb = D.gears[g2], a = Ga.rp + Gb.rp;
     for (const [X, Y] of [[Ga, Gb], [Gb, Ga]]) {
       const lim = Math.sqrt(X.rb ** 2 + (a * Math.sin(PA)) ** 2);
@@ -614,7 +738,9 @@ function analyse(st, D) {
 let D = derive(S), A = null;  // A is filled by the first solve(), once the view settings exist
 
 // ---------- keeping the train meshed ----------
-// A mesh's size is fixed when either gear in it is locked, or you are resizing it right now.
+// A mesh's size is fixed when either gear in it is locked, or you are resizing it right now, or the project fixes
+// every tooth size (a cutter sets it: Hemistitch's 1 mm end mill). Then only you resize teeth, never auto-adjust.
+const SIZE_FIXED = !!(PROJECT.rules && PROJECT.rules.fixedModule);
 // Its two arbors must then sit exactly one centre distance apart. Every other mesh takes its size from the spacing.
 function fixedEdges(a, fixedM) {
   const out = [];
@@ -646,7 +772,7 @@ function placeOn(cur, cons, prevP) {
 
 // After you change something: put every arbor back where its meshes need it. `held` is what you just changed.
 function settle(held, prev = clonePos(S.pos)) {
-  const fixedM = sid => stageLocked(sid) || held.m.has(sid);
+  const fixedM = sid => SIZE_FIXED || stageLocked(sid) || held.m.has(sid);
   const pinned = new Set(ARBOR_IDS.filter(lockPinned));
   // 1. An unlocked part you move can only swing around a locked part it meshes with directly.
   for (const L of held.pos) if (!pinned.has(L)) {
@@ -669,11 +795,18 @@ function settle(held, prev = clonePos(S.pos)) {
       queue.push(F);
     }
   }
-  // 3. Unlocked parts stay meshed with the fixed ones.
+  // 3. Unlocked parts stay meshed with the fixed ones. When every tooth size is fixed, that runs on down the train:
+  // each part that moved carries the next one with it.
   const fixed = new Set([...pinned, ...held.pos]);
-  for (const B of ARBOR_IDS) if (!fixed.has(B)) {
-    const cons = fixedEdges(B, fixedM).filter(([, o]) => fixed.has(o));
-    if (cons.length) S.pos[B] = placeOn(S.pos[B], cons, prev[B]);
+  for (let pass = 0; pass < (SIZE_FIXED ? ARBOR_IDS.length : 1); pass++) {
+    let placed = false;
+    for (const B of ARBOR_IDS) if (!fixed.has(B)) {
+      const cons = fixedEdges(B, fixedM).filter(([, o]) => fixed.has(o));
+      if (!cons.length) continue;
+      S.pos[B] = placeOn(S.pos[B], cons, prev[B]);
+      if (SIZE_FIXED) { fixed.add(B); placed = true; }
+    }
+    if (!placed) break;
   }
   // 4. Unlocked meshes take their size from the spacing.
   for (const sid of STAGE_IDS) if (!fixedM(sid)) {
@@ -684,7 +817,7 @@ function settle(held, prev = clonePos(S.pos)) {
 
 // Auto-adjust: search the unlocked parts (swing, slide, raise, lower) for the smallest change that clears the clashes.
 function adapt(held) {
-  const fixedM = sid => stageLocked(sid) || held.m.has(sid);
+  const fixedM = sid => SIZE_FIXED || stageLocked(sid) || held.m.has(sid);
   const fixed = new Set([...ARBOR_IDS.filter(lockPinned), ...held.pos]);
   const vars = [];
   for (const B of ARBOR_IDS) if (!fixed.has(B)) {
@@ -795,7 +928,7 @@ function adapt(held) {
 function changeNotes(a, b, held) {
   const out = [], follow = [];
   let small = 0;
-  const fixedM = sid => stageLocked(sid) || held.m.has(sid);
+  const fixedM = sid => SIZE_FIXED || stageLocked(sid) || held.m.has(sid);
   for (const id of ARBOR_IDS) {
     if (held.pos.has(id)) continue;
     const d = dist(a.pos[id], b.pos[id]);
@@ -864,7 +997,7 @@ function fixHint(Y, all) {
 }
 // Why an unlocked part couldn't get out of the way: what it has to stay meshed with.
 function tiedTo(e, held) {
-  const ties = fixedEdges(e.arbor, sid => stageLocked(sid) || held.m.has(sid)).map(([sid, o]) => {
+  const ties = fixedEdges(e.arbor, sid => SIZE_FIXED || stageLocked(sid) || held.m.has(sid)).map(([sid, o]) => {
     const g = S.stages[sid].gears.find(x => GEAR_DEFS[x].arbor === o);
     return S.locks[g] ? `the locked ${GEAR_DEFS[g].label}` : `the ${GEAR_DEFS[g].label} you just resized`;
   });
@@ -993,7 +1126,7 @@ function addMesh(part, geom, parent, { edges = true, mat = part.mat, gear = null
 function clearPart(part) {
   for (const g of [part.statics, part.spin]) for (const c of [...g.children]) {
     g.remove(c);
-    c.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.map) { o.material.map.dispose(); o.material.dispose(); } });
   }
   part.edges = [];
   part.gearMeshes = {};
@@ -1022,7 +1155,13 @@ function addCrossings(shape, rf, arms) {
 }
 
 function gearGeometry(G, { hole = 0, crossings = false } = {}) {
-  const g = computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG });
+  if (G.plain) {   // no teeth: a plain wheel, with crossings when it's big enough to look like one
+    const shape = new THREE.Shape();
+    shape.absarc(0, 0, G.rp, 0, Math.PI * 2, false);
+    if (crossings) addCrossings(shape, G.rp, 4);
+    return new THREE.ExtrudeGeometry(shape, { depth: G.t, bevelEnabled: false, curveSegments: 64 });
+  }
+  const g = computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0 });
   const shape = new THREE.Shape(outline(g).map(([x, y]) => new THREE.Vector2(x, y)));
   if (hole > 0) {
     const h = new THREE.Path();
@@ -1181,6 +1320,7 @@ function edgeAtDepth(C, tau) {
 // Each wall is a surface stretched between its four edges (a Coons patch): flat for a straight push, curved when an edge bends,
 // and a smooth saddle (not a crease) when the wall twists. Until the back gets its own dots it's a copy of the front.
 function buildDrawn(part, d, k) {
+  if (k && k.closed && k.points.length >= 3 && d.cuts && d.cuts.length && isFlat(d, k) && window.ClipperLib) return buildPlate(part, d, k);
   clearPart(part);
   part.bbox = null;
   if (!k || !k.closed || k.points.length < 3) return;   // an open outline has no body until it's closed again
@@ -1268,6 +1408,121 @@ function buildDrawn(part, d, k) {
   part.anchorLocal.set(b.max.x, (b.min.y + b.max.y) / 2, b.max.z);
 }
 
+// ---------- holes and pockets: a flat drawn part becomes a plate you can machine ----------
+// A cut goes straight through a part along its plane's normal, or into it from one face to a depth: the 2.5D work a
+// 3-axis mill does. Circles (holes, bearing seats, pins, screws, windows) or any closed sketch on the same plane (pockets).
+// A cut can sit on an axis: it follows that axis when the arbor moves. A part takes cuts while it's flat:
+// no back outline of its own, no dot depths, no joining-edge dots.
+const CUT_KINDS = {
+  hole:    { label: 'Hole', d: 3.0 },
+  rod:     { label: 'Rod hole · 3 mm', d: 3.0 },
+  bearing: { label: 'Bearing pocket · 3×6×2.5 flanged', d: 6.0, depth: 2.5, seat: { d: 7.2, depth: 0.6 } },
+  clear:   { label: 'Clearance hole', d: 6.0 },
+  screw:   { label: 'Screw hole · M3 countersunk', d: 3.4, csk: { d: 6.3 } },
+  pilot:   { label: 'Screw pilot · M3 self-tapping', d: 2.5, depth: 7 },
+  dowel:   { label: 'Dowel hole · 3 mm', d: 3.0 },
+  window:  { label: 'Window', d: 25 },
+  pocket:  { label: 'Pocket from a sketch' },
+};
+const isFlat = (d, k) => !!k && !d.back && !k.points.some(q => q.w) && !(d.edges || []).some(e => e && e.length);
+const cutLabel = c => c.name || (CUT_KINDS[c.kind] ? CUT_KINDS[c.kind].label : 'Cut');
+// Where a circle cut sits on its part's plane: on its axis if it follows one (and the plane faces that axis), else where you put it.
+function cutCenter(c, k) {
+  if (c.axis && ARBOR[c.axis] && k && k.plane.axis === 'z') return [S.pos[c.axis][0], S.pos[c.axis][1]];
+  return c.at;
+}
+// A cut as layers along the part's depth, measured from its front face (0) to its back face (T): each { s0, s1, path }.
+function cutLayers(c, k, T) {
+  const D = c.depth == null ? T : Math.min(T, Math.max(0, c.depth));
+  const iv = (a, b) => (c.from === 'back' ? [T - Math.min(T, b), T - a] : [a, Math.min(T, b)]);
+  const ring = (cx, cy, r) => Array.from({ length: 72 }, (_, i) => [cx + r * Math.cos(i * Math.PI / 36), cy + r * Math.sin(i * Math.PI / 36)]);
+  if (c.kind === 'pocket') {
+    const kk = S.sketches.find(x => x.id === c.sketch);
+    if (!kk || !kk.closed || kk.points.length < 3 || kk.plane.axis !== k.plane.axis) return [];
+    return [{ iv: iv(0, D), path: outlinePoints(kk).slice(0, -1).map(p => [p[0], p[1]]) }];
+  }
+  const at = cutCenter(c, k);
+  if (!at || !(c.d > 0)) return [];
+  const out = [{ iv: iv(0, D), path: ring(at[0], at[1], c.d / 2) }];
+  if (c.seat && c.seat.d > c.d && c.seat.depth > 0) out.push({ iv: iv(0, Math.min(D, c.seat.depth)), path: ring(at[0], at[1], c.seat.d / 2) });
+  if (c.csk && c.csk.d > c.d) {   // a 90° countersink, drawn as 4 steps (the export makes it a true cone)
+    const h = (c.csk.d - c.d) / 2;
+    for (let i = 0; i < 4; i++) out.push({ iv: iv(h * i / 4, h * (i + 1) / 4), path: ring(at[0], at[1], c.csk.d / 2 - h * (i + 0.5) / 4) });
+  }
+  return out;
+}
+const CLIP = 1e4;   // Clipper works in integers: 0.1 µm
+const toClip = path => path.map(([u, v]) => ({ X: Math.round(u * CLIP), Y: Math.round(v * CLIP) }));
+// The outline minus the cuts, as THREE shapes (with their holes) and every loop for the edge lines.
+function plateSection(outline, cutPaths) {
+  const C = ClipperLib, cl = new C.Clipper(), tree = new C.PolyTree();
+  cl.AddPath(toClip(outline), C.PolyType.ptSubject, true);
+  if (cutPaths.length) cl.AddPaths(cutPaths.map(toClip), C.PolyType.ptClip, true);
+  cl.Execute(C.ClipType.ctDifference, tree, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+  const shapes = [], loops = [], V = c => c.map(p => new THREE.Vector2(p.X / CLIP, p.Y / CLIP));
+  const walk = node => {
+    for (const outer of node.Childs()) {
+      const sh = new THREE.Shape(V(outer.Contour()));
+      loops.push(outer.Contour());
+      for (const hole of outer.Childs()) { sh.holes.push(new THREE.Path(V(hole.Contour()))); loops.push(hole.Contour()); walk(hole); }
+      shapes.push(sh);
+    }
+  };
+  walk(tree);
+  return { shapes, loops };
+}
+const loopKey = L => L.map(p => `${Math.round(p.X / 10)},${Math.round(p.Y / 10)}`).sort().join(';');
+function buildPlate(part, d, k) {
+  clearPart(part);
+  part.bbox = null;
+  const T = d.thickness, [f0, f1] = faceOffsets(d, k), dir = Math.sign(f1 - f0) || 1, ax = k.plane.axis;
+  const outline = outlinePoints(k).slice(0, -1).map(p => [p[0], p[1]]);
+  const layers = (d.cuts || []).flatMap(c => cutLayers(c, k, T));
+  const cutsAt = [0, T, ...layers.flatMap(l => l.iv)].map(s => Math.min(T, Math.max(0, s))).sort((a, b) => a - b)
+    .filter((s, i, a) => i === 0 || s - a[i - 1] > 1e-6);
+  const eu = new THREE.Vector3(...planeToModel(ax, 0, 1, 0)), ev = new THREE.Vector3(...planeToModel(ax, 0, 0, 1));
+  const en = new THREE.Vector3(...planeToModel(ax, 1, 0, 0));
+  const toModel = (u, v, s) => eu.clone().multiplyScalar(u).add(ev.clone().multiplyScalar(v)).add(en.clone().multiplyScalar(f0 + dir * s));
+  const slabs = [];
+  for (let i = 0; i < cutsAt.length - 1; i++) {
+    const a = cutsAt[i], b = cutsAt[i + 1], mid = (a + b) / 2;
+    const sec = plateSection(outline, layers.filter(l => l.iv[0] <= mid && l.iv[1] >= mid).map(l => l.path));
+    slabs.push({ a, b, sec, keys: new Set(sec.loops.map(loopKey)) });
+    if (!sec.shapes.length) continue;
+    const geo = new THREE.ExtrudeGeometry(sec.shapes, { depth: b - a, bevelEnabled: false, curveSegments: 1 });
+    const m = new THREE.Matrix4().makeBasis(eu, ev, en.clone().multiplyScalar(dir));
+    m.setPosition(en.clone().multiplyScalar(f0 + dir * a));
+    geo.applyMatrix4(m);
+    geo.computeVertexNormals();
+    addMesh(part, geo, part.statics, { edges: false });
+  }
+  // Edge lines where the shape really changes: every loop on the two faces, and a cut's rim where it starts or stops.
+  const ep = [], ring = (L, s) => { for (let j = 0; j < L.length; j++) { const p = L[j], q = L[(j + 1) % L.length], A = toModel(p.X / CLIP, p.Y / CLIP, s), B = toModel(q.X / CLIP, q.Y / CLIP, s); ep.push(A.x, A.y, A.z, B.x, B.y, B.z); } };
+  slabs.forEach((sl, i) => {
+    const below = slabs[i - 1], above = slabs[i + 1];
+    for (const L of sl.sec.loops) {
+      const key = loopKey(L);
+      if (!below || !below.keys.has(key)) ring(L, sl.a);
+      if (!above || !above.keys.has(key)) ring(L, sl.b);
+    }
+  });
+  if (ep.length) {
+    const eg = new THREE.BufferGeometry();
+    eg.setAttribute('position', new THREE.Float32BufferAttribute(ep, 3));
+    const lines = new THREE.LineSegments(eg, part.edgeMat);
+    lines.visible = edgesOn;
+    part.statics.add(lines);
+    part.edges.push(lines);
+  }
+  const box = new THREE.Box3();
+  part.statics.traverse(o => { if (o.isMesh) { o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox); } });
+  if (box.isEmpty()) return;
+  part.bbox = box;
+  part.anchorLocal.set(box.max.x, (box.min.y + box.max.y) / 2, box.max.z);
+}
+// The sketches a part uses as pocket outlines (so the sketch list says where they went).
+const cutUser = k => (k ? S.drawn.find(d => (d.cuts || []).some(c => c.kind === 'pocket' && c.sketch === k.id)) || null : null);
+
 function addLabel(id) {
   const p = parts[id];
   const el = document.createElement('div');
@@ -1323,7 +1578,8 @@ function syncDrawn() {
       rebuilt = true;
     }
     const p = parts[d.id], k = sketchOf(d);
-    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges]);
+    const cutKey = (d.cuts || []).map(c => [c, c.axis && S.pos[c.axis], c.kind === 'pocket' && (S.sketches.find(x => x.id === c.sketch) || {}).points]);
+    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey]);
     if (p.key !== key) { buildDrawn(p, d, k); p.key = key; rebuilt = true; }
   }
   return rebuilt;
@@ -1348,7 +1604,7 @@ function buildArbor(part, a) {
   part.statics.add(axis);
   for (const g of a.gears) {
     const G = D.gears[g.id];
-    const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { crossings: G.z >= 16 });
+    const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { crossings: G.plain ? G.rp > 8 : G.z >= 16 });
     const mesh = addMesh(part, geom, part.spin, { gear: g.id });
     mesh.position.z = G.z0;
     part.gearMeshes[g.id] = mesh;
@@ -1378,6 +1634,7 @@ function buildArbor(part, a) {
 
 function buildHand(part, h, hs) {
   clearPart(part);
+  if (h.shape === 'disc') return buildDisc(part, h, hs);
   const tip = h.w1 * 1.6, tail = h.tail || 0.6;
   const shape = new THREE.Shape([[-h.w0 / 2, -tail], [-h.w1 / 2, hs.length - tip], [0, hs.length], [h.w1 / 2, hs.length - tip], [h.w0 / 2, -tail]]
     .map(([px, py]) => new THREE.Vector2(px, py)));
@@ -1387,14 +1644,63 @@ function buildHand(part, h, hs) {
   part.anchorSpin = new THREE.Vector3(0, hs.length * 0.72, hs.z + hs.t);
 }
 
-const plate = makePart({ id: 'plate', name: 'Mainplate', group: 'plate', kind: 'plate', level: -1,
-  role: 'Base plate. A plain plate: no holes, jewels or bearings until you add them. Parts can hang past its edge without a flag; Checks shows how far out they reach.' });
+// A disc on an axis: a plain disc with its numbers and ticks printed on top, and a fixed index beside it.
+// The numbers are placed so they arrive at the index in order as the disc turns (whichever way it turns),
+// and each reads upright when it's at the index.
+function discFace(h, hs) {
+  const N = h.marks || 0, labels = h.labels || [];
+  if (!N && !labels.length) return null;
+  const S2 = 1024, c = S2 / 2, R = hs.length, px = c / R;   // pixels per mm
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S2;
+  const g = cv.getContext('2d');
+  const w = D.omega[h.arbor], sgn = w > 0 ? 1 : -1, ind = h.indicator || 0;
+  const at = (r, a) => [c + r * px * Math.cos(a), c - r * px * Math.sin(a)];
+  g.strokeStyle = g.fillStyle = '#1d2733';
+  for (let k = 0; k < N; k++) {   // ticks, one per mark
+    const a = ind - sgn * 2 * Math.PI * k / N, major = labels.length && k % Math.round(N / labels.length) === 0;
+    const [x0, y0] = at(R * 0.97, a), [x1, y1] = at(R * (major ? 0.86 : 0.91), a);
+    g.lineWidth = major ? 6 : 3;
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  }
+  g.font = `600 ${Math.round(R * 0.13 * px)}px system-ui, -apple-system, sans-serif`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  labels.forEach((txt, k) => {
+    const a = ind - sgn * 2 * Math.PI * k / labels.length, [x, y] = at(R * 0.74, a);
+    g.save(); g.translate(x, y); g.rotate(Math.PI / 2 - (a - ind + Math.PI / 2)); g.fillText(String(txt), 0, 0); g.restore();
+  });
+  const tex = new THREE.CanvasTexture(cv);
+  tex.anisotropy = 4;
+  return tex;
+}
+function buildDisc(part, h, hs) {
+  const R = hs.length;
+  addMesh(part, ring(R, Math.min(1.5, R * 0.2), hs.t), part.spin).position.z = hs.z;
+  const tex = discFace(h, hs);
+  if (tex) {
+    const face = new THREE.Mesh(new THREE.CircleGeometry(R * 0.995, 96), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    face.position.z = hs.z + hs.t + 0.02;
+    face.userData.part = part.id;
+    part.spin.add(face);
+  }
+  if (h.indicator != null) {   // the fixed index: a small pointer just outside the rim; it stays put while the disc turns
+    const wd = Math.max(0.6, R * 0.05), L = Math.max(1.2, R * 0.09), r0 = R + 0.4;
+    const tri = new THREE.Shape([[r0, 0], [r0 + L, wd], [r0 + L, -wd]].map(([x, y]) => new THREE.Vector2(x, y)));
+    const m = addMesh(part, new THREE.ExtrudeGeometry(tri, { depth: hs.t, bevelEnabled: false }), part.statics);
+    m.rotation.z = h.indicator;
+    m.position.z = hs.z;
+  }
+  part.anchorSpin = new THREE.Vector3(R * 0.55, 0, hs.z + hs.t);
+}
+
+const plate = makePart({ id: 'plate', name: (PROJECT.plate && PROJECT.plate.name) || 'Mainplate', group: 'plate', kind: 'plate', level: -1,
+  role: (PROJECT.plate && PROJECT.plate.role) || 'Base plate. A plain plate: no holes, jewels or bearings until you add them. Parts can hang past its edge without a flag; Checks shows how far out they reach.' });
 plate.mat.transparent = true;
 plate.mat.opacity = 0.55;
 plate.mat.userData.baseOpacity = 0.55;
 for (const a of ARBOR_DEFS) makePart({ id: a.id, name: a.name, group: a.group, role: a.role, kind: 'arbor', level: a.level });
 for (const h of HAND_DEFS) makePart({ id: h.id, name: h.name, group: h.group, role: h.role, kind: 'hand', level: h.level });
-parts.barrel.mats.push(springMat);
+for (const a of ARBOR_DEFS) if (a.drumH) parts[a.id].mats.push(springMat);
 
 function syncScene() {
   let rebuilt = false;
@@ -1611,14 +1917,15 @@ function rateLine(id) {
   if (parts[id].kind === 'plate') return `Ø ${f1(S.movementD * scale)} mm · fixed`;
   if (parts[id].kind === 'drawn') { const d = drawnOf(id); return `${f2(d.thickness * scale)} mm thick · not checked for clashes`; }
   const w = D.omega[arborOf(id)];
+  if (!w) return 'doesn’t turn: nothing drives it';
   return `1 rev / ${periodText(w)} · ${dirText(w)}`;
 }
 
 function teethLine(id) {
   const p = parts[id];
-  if (p.kind === 'arbor') return ARBOR[id].gears.map(g => `${GEAR_DEFS[g.id].label.toLowerCase()} ${g.z}`).join(' · ');
-  if (p.kind === 'hand') return `on ${ARBOR[HAND[id].arbor].name.toLowerCase()} axis · ${f2(S.hands[id].length * scale)} mm`;
-  if (p.kind === 'drawn') { const k = sketchOf(drawnOf(id)); return k ? `outline: ${k.name} · ${k.points.length} dots${k.closed ? '' : ' · open, so no body'}` : 'its sketch is gone'; }
+  if (p.kind === 'arbor') return ARBOR[id].gears.map(g => (g.plain ? `${GEAR_DEFS[g.id].label.toLowerCase()} Ø ${f1(2 * D.gears[g.id].rp * scale)} mm` : `${GEAR_DEFS[g.id].label.toLowerCase()} ${g.z}`)).join(' · ');
+  if (p.kind === 'hand') return `on ${ARBOR[HAND[id].arbor].name.toLowerCase()} axis · ${HAND[id].shape === 'disc' ? `Ø ${f2(2 * S.hands[id].length * scale)}` : f2(S.hands[id].length * scale)} mm`;
+  if (p.kind === 'drawn') { const d = drawnOf(id), k = sketchOf(d), nc = (d.cuts || []).length; return k ? `outline: ${k.name} · ${k.points.length} dots${k.closed ? '' : ' · open, so no body'}${nc ? ` · ${nc} hole${nc > 1 ? 's and pockets' : ''}` : ''}` : 'its sketch is gone'; }
   return 'plain plate';
 }
 const partLocked = id => (parts[id].kind === 'arbor' ? lockPinned(id) : parts[id].kind === 'hand' ? !!S.locks[id] : false);
@@ -2114,28 +2421,28 @@ function gearControls(gid) {
   const G = D.gears[gid], sc = scale;
   const defM = G.stage ? DEFAULT_STAGES[G.stage].m : DEFAULT_STATE.solo[gid].m;
   return [
-    control({ label: 'Scale · pitch Ø', unit: 'mm', min: defM * G.z * 0.3 * sc, max: defM * G.z * 3 * sc, step: 0.01, value: G.m * G.z * sc,
+    control({ label: G.plain ? 'Scale · Ø' : 'Scale · pitch Ø', unit: 'mm', min: defM * G.z * 0.3 * sc, max: defM * G.z * 3 * sc, step: 0.01, value: G.m * G.z * sc,
       onInput: v => liveEdit(EDIT.pitch(gid, v / sc)),
       onCommit: (v0, v1) => commit({ key: `pitch:${gid}`, from: v0, to: v1, make: (x, y) => `${G.label} pitch Ø ${f2(x)} → ${f2(y)} mm${withPartner(gid, 'resized')}` }) }),
-    control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: G.z0 * sc,
+    control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: Z_MAX * sc, step: 0.05, value: G.z0 * sc,
       onInput: v => liveEdit(EDIT.z(gid, v / sc)),
       onCommit: (v0, v1) => commit({ key: `z:${gid}`, from: v0, to: v1, make: (x, y) => `${G.label} height ${f2(x)} → ${f2(y)} mm${withPartner(gid, 'moved')}` }) }),
-    control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: 3 * sc, step: 0.01, value: G.t * sc,
+    control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: Math.max(3, G.t * 2) * sc, step: 0.01, value: G.t * sc,
       onInput: v => liveEdit(EDIT.thick(gid, v / sc)),
       onCommit: (v0, v1) => commit({ key: `t:${gid}`, from: v0, to: v1, make: (x, y) => `${G.label} thickness ${f2(x)} → ${f2(y)} mm` }) }),
   ];
 }
 // A hand's length, height and thickness.
 function handControls(hid) {
-  const h = HAND[hid], hs = S.hands[hid], sc = scale;
+  const h = HAND[hid], hs = S.hands[hid], sc = scale, disc = h.shape === 'disc';
   return [
-    control({ label: 'Scale · length', unit: 'mm', min: 1 * sc, max: S.movementD / 2 * sc, step: 0.05, value: hs.length * sc,
+    control({ label: disc ? 'Scale · radius' : 'Scale · length', unit: 'mm', min: 1 * sc, max: S.movementD / 2 * sc, step: 0.05, value: hs.length * sc,
       onInput: v => liveEdit(EDIT.hand(hid, 'length', Math.max(0.5, v / sc))),
-      onCommit: (v0, v1) => commit({ key: `len:${hid}`, from: v0, to: v1, make: (x, y) => `${h.name} length ${f2(x)} → ${f2(y)} mm` }) }),
-    control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: 20 * sc, step: 0.05, value: hs.z * sc,
+      onCommit: (v0, v1) => commit({ key: `len:${hid}`, from: v0, to: v1, make: (x, y) => `${h.name} ${disc ? 'radius' : 'length'} ${f2(x)} → ${f2(y)} mm` }) }),
+    control({ label: 'Z · height above plate', unit: 'mm', min: 0, max: Z_MAX * sc, step: 0.05, value: hs.z * sc,
       onInput: v => liveEdit(EDIT.hand(hid, 'z', Math.max(0, v / sc))),
       onCommit: (v0, v1) => commit({ key: `hz:${hid}`, from: v0, to: v1, make: (x, y) => `${h.name} height ${f2(x)} → ${f2(y)} mm` }) }),
-    control({ label: 'Thickness', unit: 'mm', min: 0.03 * sc, max: 1 * sc, step: 0.01, value: hs.t * sc,
+    control({ label: 'Thickness', unit: 'mm', min: 0.03 * sc, max: Math.max(1, hs.t * 2) * sc, step: 0.01, value: hs.t * sc,
       onInput: v => liveEdit(EDIT.hand(hid, 't', Math.max(0.02, v / sc))),
       onCommit: (v0, v1) => commit({ key: `ht:${hid}`, from: v0, to: v1, make: (x, y) => `${h.name} thickness ${f2(x)} → ${f2(y)} mm` }) }),
   ];
@@ -2246,7 +2553,7 @@ function renderSelected() {
   }
   const p = parts[selectedId], sc = scale;
   const head = document.createElement('div');
-  head.innerHTML = `<div class="sel-head"><span class="sw" style="background:${hex(p.color)}"></span><b>${esc(nameOf(p.id))}</b><span class="chip">${GROUPS[p.group].label}</span></div><p class="role">${p.role}</p>`;
+  head.innerHTML = `<div class="sel-head"><span class="sw" style="background:${hex(p.color)}"></span><b>${esc(nameOf(p.id))}</b><span class="chip">${esc(GROUPS[p.group].label)}</span></div><p class="role">${esc(p.role)}</p>`;
   el.appendChild(head);
   el.appendChild(recordBlock(p.id));
 
@@ -2268,12 +2575,12 @@ function renderSelected() {
       card.dataset.gear = g.id;
       const gh = document.createElement('div');
       gh.className = 'gh';
-      gh.innerHTML = `<div><b>${G.label}</b><small>${G.z} teeth · module ${f3(G.m * sc)}</small></div>`;
+      gh.innerHTML = `<div><b>${G.label}</b><small>${G.plain ? `no teeth · Ø ${f2(2 * G.rp * sc)} mm` : `${G.z} teeth · module ${f3(G.m * sc)}${G.x ? ` · profile shift ${G.x > 0 ? '+' : '−'}${f2(Math.abs(G.x))}` : ''}`}${G.bought ? ' · bought part' : ''}${G.estimate ? ' · size estimated' : ''}</small></div>`;
       gh.appendChild(lockButton(g.id, G.label));
       card.appendChild(gh);
       card.appendChild(para('gl', partner
         ? `Meshes with ${partner.label}${S.locks[partner.id] ? ' (locked)' : ''} on <button class="link" data-go="${partner.arbor}">${ARBOR[partner.arbor].name}</button>. Resize or raise one and the other follows; speeds stay the same.`
-        : 'Nothing meshes with its teeth, so it sizes on its own.'));
+        : G.plain ? 'A plain wheel with no teeth: it takes up its space and meshes with nothing.' : 'Nothing meshes with its teeth, so it sizes on its own.'));
       for (const c of gearControls(g.id)) card.appendChild(c);
       card.addEventListener('click', e => { if (!e.target.closest('input,button')) setActiveGear(g.id); });
       el.appendChild(card);
@@ -2325,6 +2632,26 @@ function renderSelected() {
     if (k) el.appendChild(control({ label: `Plane position · ${n}`, unit: 'mm', min: -60 * sc, max: 60 * sc, step: 0.05, value: k.plane.offset * sc,
       onInput: v => { beginEdit(); k.plane.offset = +(v / sc).toFixed(4); requestSolve(); },
       onCommit: (v0, v1) => commit({ key: `dp:${p.id}`, from: v0, to: v1, adapt: false, make: (x, y) => `${nameOf(p.id)} plane ${n} ${f2(x)} → ${f2(y)} mm` }) }));
+    el.appendChild(subHead(`Holes and pockets · cut straight in along ${n}`));
+    if (!k || !isFlat(d, k)) el.appendChild(para('pin', 'Holes and pockets need a flat part: no back outline of its own, no dot depths and no joining-edge dots.'));
+    else if (!window.ClipperLib) el.appendChild(para('pin', 'Holes and pockets need the Clipper library, which didn’t load (no internet?). They’re kept and show again once it loads.'));
+    else {
+      for (const c of d.cuts || []) el.appendChild(cutCard(p.id, d, k, c));
+      const add = document.createElement('div');
+      add.className = 'row';
+      add.innerHTML = `<select data-a="cutkind" aria-label="Kind of cut">${Object.entries(CUT_KINDS).map(([kk, v]) => `<option value="${kk}">${v.label}</option>`).join('')}</select><button data-a="addcut">Add</button>`;
+      add.addEventListener('click', e => {
+        if (e.target.dataset.a !== 'addcut') return;
+        const kind = add.querySelector('select').value;
+        if (kind === 'pocket') {
+          const kk = S.sketches.find(x => x.closed && x.points.length >= 3 && x.plane.axis === k.plane.axis && x.id !== k.id && !S.drawn.some(dd => dd.sketch === x.id));
+          if (!kk) { showText('No outline for a pocket', `Draw a closed sketch on a ${{ x: 'side (YZ)', y: 'front (XZ)', z: 'top (XY)' }[k.plane.axis]} plane first: its shape becomes the pocket.`); return; }
+          addCut(p.id, { kind, sketch: kk.id });
+        } else addCut(p.id, { kind });
+      });
+      el.appendChild(add);
+      el.appendChild(para('note', 'Depth blank = straight through. A hole set on an axis follows that axis when you move the arbor. Bearing pockets come with a seat for the flange (7.2 × 0.6 here: check your bearings). Countersinks show as steps; the export cuts a true cone.'));
+    }
     el.appendChild(subHead('Outlines · the dots you see belong to one of them'));
     const face = window.Sketcher ? window.Sketcher.face() : 'front', liveEdge = window.Sketcher ? window.Sketcher.edge() : null;
     const faces = document.createElement('div');
@@ -2392,6 +2719,91 @@ function makeDrawnFrom(sketchId, thickness = 1) {
   select(d.id);
   return d.id;
 }
+// Cuts: every change is one logged, undoable step. Sizes and positions are in sim units (displayed mm ÷ print scale).
+function addCut(pid, spec = {}) {
+  const d = drawnOf(pid), k = sketchOf(d);
+  if (!d || !k) return null;
+  const kind = CUT_KINDS[spec.kind] ? spec.kind : 'hole', base = CUT_KINDS[kind];
+  if (kind === 'pocket' && !S.sketches.some(x => x.id === spec.sketch)) return null;
+  cancelPending();
+  const n = (d.cuts || []).reduce((m, c) => Math.max(m, +String(c.id).slice(1) || 0), 0) + 1;
+  const c = { id: `h${n}`, kind, ...(spec.name ? { name: String(spec.name) } : {}) };
+  if (kind === 'pocket') c.sketch = spec.sketch;
+  else {
+    const p = parts[pid], b = p && p.bbox, mid = b ? modelToPlane(k.plane.axis, b.getCenter(new THREE.Vector3()).toArray()) : [0, 0];
+    c.at = spec.at ? spec.at.slice() : [mid[0], mid[1]];
+    c.d = spec.d != null ? spec.d : base.d;
+    if (spec.axis && ARBOR[spec.axis]) { c.axis = spec.axis; c.at = cutCenter(c, k).slice(); }
+  }
+  c.from = spec.from === 'back' ? 'back' : 'front';
+  c.depth = spec.depth !== undefined ? spec.depth : base.depth != null ? base.depth : null;
+  c.seat = spec.seat !== undefined ? spec.seat : base.seat ? { ...base.seat } : null;
+  c.csk = spec.csk !== undefined ? spec.csk : base.csk ? { ...base.csk } : null;
+  d.cuts = [...(d.cuts || []), c];
+  commit({ text: `${nameOf(pid)}: added ${cutLabel(c)} (${cutSummary(c, k)})`, adapt: false });
+  return c.id;
+}
+function changeCut(pid, cid, mutate, text) {
+  const d = drawnOf(pid), c = d && (d.cuts || []).find(x => x.id === cid);
+  if (!c) return false;
+  cancelPending();
+  mutate(c, sketchOf(d));
+  commit({ text: `${nameOf(pid)}: ${text}`, adapt: false });
+  return true;
+}
+function removeCut(pid, cid) {
+  const d = drawnOf(pid), c = d && (d.cuts || []).find(x => x.id === cid);
+  if (!c) return false;
+  cancelPending();
+  d.cuts = d.cuts.filter(x => x.id !== cid);
+  if (!d.cuts.length) delete d.cuts;
+  commit({ text: `${nameOf(pid)}: removed ${cutLabel(c)}`, adapt: false });
+  return true;
+}
+function cutSummary(c, k) {
+  const s = scale, bits = [];
+  if (c.kind === 'pocket') { const kk = S.sketches.find(x => x.id === c.sketch); bits.push(`outline ${kk ? kk.name : 'missing'}`); }
+  else bits.push(`Ø ${f2(c.d * s)}`);
+  bits.push(c.depth == null ? 'through' : `${f2(c.depth * s)} deep from the ${c.from}`);
+  if (c.depth == null && c.from === 'back') bits.push('cut from the back');
+  if (c.seat) bits.push(`seat Ø ${f2(c.seat.d * s)} × ${f2(c.seat.depth * s)}`);
+  if (c.csk) bits.push(`countersunk Ø ${f2(c.csk.d * s)}`);
+  if (c.axis && ARBOR[c.axis]) bits.push(`on the ${ARBOR[c.axis].name} axis`);
+  return bits.join(' · ');
+}
+// One cut's card in a drawn part's panel: its size, depth, face and where it sits.
+function cutCard(pid, d, k, c) {
+  const sc = scale, box = document.createElement('div'), ax = k.plane.axis;
+  const [U, V] = { x: ['Y', 'Z'], y: ['X', 'Z'], z: ['X', 'Y'] }[ax];
+  box.className = 'gear-card';
+  const at = c.kind === 'pocket' ? null : cutCenter(c, k);
+  const sketches = S.sketches.filter(x => x.closed && x.points.length >= 3 && x.plane.axis === ax && x.id !== k.id && !S.drawn.some(dd => dd.sketch === x.id));
+  box.innerHTML = `<div class="gh"><div><b>${esc(cutLabel(c))}</b><small>${esc(cutSummary(c, k))}</small></div><button class="mini" data-cut="del">Remove</button></div>
+    <div class="row">${c.kind === 'pocket'
+      ? `<label class="field-l" style="flex:1.4">Outline<select data-cutf="sketch">${sketches.map(x => `<option value="${x.id}" ${x.id === c.sketch ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>`
+      : `<label class="field-l" style="flex:1">Ø mm<input class="txt" type="number" step="0.01" min="0" data-cutf="d" value="${+(c.d * sc).toFixed(3)}"></label>`}
+      <label class="field-l" style="flex:1">Depth mm<input class="txt" type="number" step="0.01" min="0" data-cutf="depth" placeholder="through" value="${c.depth == null ? '' : +(c.depth * sc).toFixed(3)}"></label>
+      <label class="field-l" style="flex:1">From<select data-cutf="from"><option value="front" ${c.from !== 'back' ? 'selected' : ''}>front</option><option value="back" ${c.from === 'back' ? 'selected' : ''}>back</option></select></label></div>` +
+    (c.kind === 'pocket' ? '' : `<div class="row">${ax === 'z' ? `<label class="field-l" style="flex:1.4">On axis<select data-cutf="axis"><option value="">free</option>${ARBOR_DEFS.map(a => `<option value="${a.id}" ${c.axis === a.id ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select></label>` : ''}
+      <label class="field-l" style="flex:1">${U} mm<input class="txt" type="number" step="0.01" data-cutf="u" value="${+(at[0] * sc).toFixed(3)}" ${c.axis ? 'disabled' : ''}></label>
+      <label class="field-l" style="flex:1">${V} mm<input class="txt" type="number" step="0.01" data-cutf="v" value="${+(at[1] * sc).toFixed(3)}" ${c.axis ? 'disabled' : ''}></label></div>`);
+  box.addEventListener('change', e => {
+    const f = e.target.dataset.cutf, raw = e.target.value;
+    if (!f) return;
+    const v = +raw, name = cutLabel(c);
+    if (f === 'd' && raw !== '' && v > 0) changeCut(pid, c.id, x => { x.d = v / sc; }, `${name} Ø → ${f2(v)} mm`);
+    else if (f === 'depth') changeCut(pid, c.id, x => { x.depth = raw === '' || !(v > 0) ? null : v / sc; }, `${name} ${raw === '' || !(v > 0) ? 'now goes through' : `depth → ${f2(v)} mm`}`);
+    else if (f === 'from') changeCut(pid, c.id, x => { x.from = raw === 'back' ? 'back' : 'front'; }, `${name} now cut from the ${raw === 'back' ? 'back' : 'front'}`);
+    else if (f === 'sketch') changeCut(pid, c.id, x => { x.sketch = raw; }, `${name} outline → ${(S.sketches.find(x => x.id === raw) || {}).name || raw}`);
+    else if (f === 'axis') changeCut(pid, c.id, (x, kk) => { x.at = cutCenter(x, kk).slice(); if (raw && ARBOR[raw]) { x.axis = raw; x.at = cutCenter(x, kk).slice(); } else delete x.axis; },
+      raw ? `${name} follows the ${ARBOR[raw].name} axis` : `${name} no longer follows an axis`);
+    else if ((f === 'u' || f === 'v') && raw !== '' && isFinite(v)) changeCut(pid, c.id, x => { x.at = x.at.slice(); x.at[f === 'u' ? 0 : 1] = v / sc; }, `${name} ${f === 'u' ? U : V} → ${f2(v)} mm`);
+    else renderSelected();
+  });
+  box.addEventListener('click', e => { if (e.target.dataset.cut === 'del') removeCut(pid, c.id); });
+  return box;
+}
+
 function removeDrawn(id) {
   const d = drawnOf(id), k = sketchOf(d);
   if (!d) return;
@@ -2417,13 +2829,25 @@ function renderPartsList() {
 function renderChecks() {
   const s = scale, items = [];
   for (const r of A.rates) items.push([r.ok ? 'ok' : 'err', `<b>${r.label}</b>: 1 rev / ${periodText(r.w)}, ${dirText(r.w)}`]);
-  items.push(['info', `<b>Beat</b>: ${Math.round(VPH).toLocaleString()} vph (${f1(BEAT_HZ)} beats/s). Barrel: 1 rev / ${periodText(D.omega.barrel)}.`]);
+  const motion = [...(BEAT ? [`<b>Beat</b>: ${Math.round(VPH).toLocaleString()} vph (${f1(BEAT_HZ)} beats/s).`] : []),
+    ...ARBOR_DEFS.filter(a => a.drumH && D.omega[a.id]).map(a => `${esc(a.name)}: 1 rev / ${periodText(D.omega[a.id])}.`)];
+  if (motion.length) items.push(['info', motion.join(' ')]);
   items.push(A.collisions.length
     ? ['err', `<b>${A.collisions.length} clash${A.collisions.length > 1 ? 'es' : ''}</b> (parts shown red, with a warning triangle on their labels)<div class="mono">${A.collisions.map(c => `${c.text}: ${clashAmount(c)}`).join('<br>')}</div>`]
     : ['ok', `<b>Collisions</b>: none. Every non-meshing pair (wheels, pinions, drum, hand sweeps) is at least ${S.minGap} mm apart`]);
   const over = A.envelope.r - S.movementD / 2;
   items.push(['info', `<b>Furthest reach</b>: ${A.envelope.name} at r ${f2(A.envelope.r * s)} mm; the plate edge is at r ${f2(S.movementD / 2 * s)} mm` +
     (over > 0 ? `, so it hangs ${f2(over * s)} mm past the plate (not flagged: the plate isn’t a boundary)` : '')]);
+  const minM = PROJECT.rules && PROJECT.rules.minModule;
+  if (minM) {
+    const ours = sid => !S.stages[sid].gears.some(g => GEAR_DEFS[g].bought);
+    const small = [...STAGE_IDS.filter(sid => ours(sid) && S.stages[sid].m < minM - 1e-9).map(sid => `${meshName(sid)}: module ${f3(S.stages[sid].m * s)}`),
+      ...Object.keys(S.solo).filter(g => !GEAR_DEFS[g].plain && !GEAR_DEFS[g].bought && S.solo[g].m < minM - 1e-9).map(g => `${GEAR_DEFS[g].label}: module ${f3(S.solo[g].m * s)}`)];
+    const boughtN = Object.values(GEAR_DEFS).filter(g => g.bought).length;
+    items.push(small.length
+      ? ['warn', `<b>Teeth smaller than the cutter allows</b> (module ${minM} is the smallest${PROJECT.rules.why ? `: ${esc(PROJECT.rules.why)}` : ''})<div class="mono">${small.map(esc).join('<br>')}</div>`]
+      : ['ok', `<b>Tooth size</b>: every mesh we cut is module ${minM} or larger${PROJECT.rules.why ? ` (${esc(PROJECT.rules.why)})` : ''}${boughtN ? `; the ${boughtN} bought gears keep their own teeth` : ''}${SIZE_FIXED ? '. Auto-adjust never changes tooth sizes in this project' : ''}`]);
+  }
   if (S.drawn.length) items.push(['info', `<b>Drawn parts not checked for clashes yet</b>: ${S.drawn.map(d => esc(nameOf(d.id))).join(', ')}`]);
   items.push(['info', `<b>Tightest clearances</b><div class="mono">${A.near.slice(0, 3).map(n => `${n.text}: ${f3(n.clear * s)} mm`).join('<br>')}</div>`]);
   if (A.interference.length) {
@@ -2492,7 +2916,6 @@ function restore(i) {
 }
 
 // ---------- the data record: autosave, scene files, part files, the report ----------
-const AUTOSAVE_KEY = 'bspk-studio.scene';
 let restoredAt = null, lastSavedAt = null;
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-');
 const clockText = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2538,8 +2961,16 @@ function normalizeState(st) {
       const okDot = q => q && num(q.t) && q.t > 0 && q.t < 1 && Array.isArray(q.d) && q.d.length === 3 && q.d.every(num);
       const edges = Array.isArray(d.edges) && d.edges.length === k.points.length
         ? d.edges.map(e => (Array.isArray(e) ? e.filter(okDot).map(q => ({ t: q.t, d: q.d.slice(), smooth: !!q.smooth })).sort((a, b) => a.t - b.t) : [])) : null;
+      const okXY = a => Array.isArray(a) && a.length === 2 && a.every(num);
+      const cuts = (Array.isArray(d.cuts) ? d.cuts : []).filter(c => c && /^h\d+$/.test(String(c.id)) && CUT_KINDS[c.kind]
+          && (c.kind === 'pocket' ? out.sketches.some(x => x.id === String(c.sketch)) : num(c.d) && c.d > 0 && okXY(c.at)))
+        .map(c => ({ id: String(c.id), kind: c.kind, ...(typeof c.name === 'string' && c.name ? { name: c.name } : {}),
+          ...(c.kind === 'pocket' ? { sketch: String(c.sketch) } : { at: c.at.slice(), d: c.d, ...(typeof c.axis === 'string' && c.axis ? { axis: c.axis } : {}) }),
+          from: c.from === 'back' ? 'back' : 'front', depth: num(c.depth) && c.depth > 0 ? c.depth : null,
+          seat: c.seat && num(c.seat.d) && num(c.seat.depth) && c.seat.d > 0 && c.seat.depth > 0 ? { d: c.seat.d, depth: c.seat.depth } : null,
+          csk: c.csk && num(c.csk.d) && c.csk.d > 0 ? { d: c.csk.d } : null }));
       return { id: String(d.id), name: typeof d.name === 'string' && d.name ? d.name : String(d.id), sketch: String(d.sketch), thickness: d.thickness,
-               grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges };
+               grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges, ...(cuts.length ? { cuts } : {}) };
     });
   const known = k => !!parts[k] || out.drawn.some(d => d.id === k);
   if (st.info && typeof st.info === 'object') {
@@ -2557,7 +2988,7 @@ function normalizeState(st) {
 
 function saveLocal() {
   try {
-    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: Date.now(), state: S }));
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: Date.now(), state: S, project: PROJECT }));
     lastSavedAt = Date.now();
   } catch (e) { lastSavedAt = null; }
   saveDisk();
@@ -2593,6 +3024,9 @@ async function restoreFromDisk() {
     const diskAt = data && Date.parse(data.savedAt);
     const untouched = hIndex === 0 && history.length === 1 && !pending;   // never overwrite edits made since opening
     if (data && data.state && untouched && (!lastSavedAt || diskAt > lastSavedAt + 1000)) {
+      const p = sceneProject(data);
+      if (!p) { saveDisk(); return; }   // a disk copy whose project can't be built: keep this browser's scene and overwrite it
+      if (projectKey(p) !== projectKey(PROJECT)) { openScene(data, 'Picked up the copy on disk (scenes/autosave.json)', diskAt, false); return; }
       S = normalizeState(data.state);
       history = [{ state: clone(S), entries: [] }];
       hIndex = 0;
@@ -2610,7 +3044,7 @@ async function restoreFromDisk() {
 function restoreAutosave() {
   try {
     const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || 'null');
-    if (!saved || saved.version !== SCHEMA_VERSION || !saved.state) return;
+    if (!saved || ![2, SCHEMA_VERSION].includes(saved.version) || !saved.state) return;
     S = normalizeState(saved.state);
     history = [{ state: clone(S), entries: [] }];
     hIndex = 0;
@@ -2640,6 +3074,8 @@ function partRecord(id) {
       gears: ARBOR[id].gears.map(g => {
         const G = D.gears[g.id];
         return { id: g.id, label: G.label, teeth: G.z, module_mm: +(G.m * scale).toFixed(4), pitch_d_mm: +(G.m * G.z * scale).toFixed(3),
+                 ...(G.x ? { profile_shift: G.x } : {}), ...(G.plain ? { plain: true, teeth: 0, outer_d_mm: +(2 * G.rp * scale).toFixed(3) } : {}),
+                 ...(G.bought ? { bought: true } : {}), ...(G.estimate ? { size_estimated: true } : {}),
                  outer_d_mm: +(2 * G.ra * scale).toFixed(3), z_mm: +(G.z0 * scale).toFixed(3), thickness_mm: +(G.t * scale).toFixed(3),
                  locked: !!S.locks[g.id], meshes_with: G.partner ? GEAR_DEFS[G.partner].label : null };
       }),
@@ -2647,10 +3083,15 @@ function partRecord(id) {
   } else if (p.kind === 'hand') {
     const h = HAND[id], hs = S.hands[id];
     Object.assign(rec, { on_arbor: ARBOR[h.arbor].name, turns: rateLine(id), locked: !!S.locks[id],
-      length_mm: +(hs.length * scale).toFixed(3), z_mm: +(hs.z * scale).toFixed(3), thickness_mm: +(hs.t * scale).toFixed(3) });
+      length_mm: +(hs.length * scale).toFixed(3), z_mm: +(hs.z * scale).toFixed(3), thickness_mm: +(hs.t * scale).toFixed(3),
+      ...(h.shape === 'disc' ? { shape: 'disc', diameter_mm: +(2 * hs.length * scale).toFixed(3) } : {}) });
   } else if (p.kind === 'drawn') {
     const d = drawnOf(id), k = sketchOf(d);
     const pts = P => P.map(q => ({ u: +(q.u * scale).toFixed(3), v: +(q.v * scale).toFixed(3), smooth: q.smooth, ...(q.w ? { depth: +(q.w * scale).toFixed(3) } : {}) }));
+    const mm = v => +(v * scale).toFixed(3);
+    if (d.cuts && d.cuts.length) rec.cuts = d.cuts.map(c => ({ id: c.id, kind: c.kind, name: cutLabel(c), from: c.from, depth_mm: c.depth == null ? 'through' : mm(c.depth),
+      ...(c.kind === 'pocket' ? { outline_sketch: c.sketch } : { d_mm: mm(c.d), at_mm: (cutCenter(c, k) || c.at).map(mm), ...(c.axis ? { on_axis: c.axis } : {}) }),
+      ...(c.seat ? { seat_mm: { d: mm(c.seat.d), depth: mm(c.seat.depth) } } : {}), ...(c.csk ? { countersink_d_mm: mm(c.csk.d) } : {}) }));
     Object.assign(rec, { thickness_mm: +(d.thickness * scale).toFixed(3), grows: growText(d, k), clashes_checked: false,
       outline: k ? { sketch: k.id, plane: { axis: k.plane.axis, offset_mm: +(k.plane.offset * scale).toFixed(3) }, closed: k.closed,
         faces_at_mm: faceOffsets(d, k).map(v => +(v * scale).toFixed(3)), points_mm: pts(k.points) } : null,
@@ -2663,13 +3104,89 @@ function partRecord(id) {
   return rec;
 }
 const sceneFile = () => ({ format: 'bspk-studio-scene', version: SCHEMA_VERSION, savedAt: new Date().toISOString(), print_scale: scale,
-  state: S, parts: partOrder.map(partRecord), log: history.slice(1, hIndex + 1).flatMap(h => h.entries) });
+  state: S, project: PROJECT, parts: partOrder.map(partRecord), log: history.slice(1, hIndex + 1).flatMap(h => h.entries) });
+
+// Open a scene from a file, the disk copy or a script. Same project: it replaces the scene like any change.
+// Another project: it's handed to browser storage and the page reloads to build that project's parts.
+// Returns what happened: 'opened', 'reloading', or an error message.
+function openScene(data, text, savedAt, keep = true) {
+  if (!data || data.format !== 'bspk-studio-scene' || !data.state || typeof data.state !== 'object') return 'it isn’t a BSPK Studio scene';
+  const p = sceneProject(data);
+  if (!p) return `its project can’t be built: ${projectProblem(data.project)}`;
+  if (projectKey(p) === projectKey(PROJECT)) {
+    cancelPending();
+    S = normalizeState(data.state);
+    commit({ text, adapt: false });
+    return 'opened';
+  }
+  if (!storageOK) return 'opening a different project needs browser storage, and this browser isn’t allowing it';
+  let wanted = null;
+  try { wanted = sessionStorage.getItem(SWITCH_KEY); } catch (e) { /* none */ }
+  if (wanted === projectKey(p)) return 'the page already reloaded once for this project and still couldn’t open it';
+  let backup = Promise.resolve();
+  if (keep) {
+    // Keep the scene you're leaving: a copy for this project in browser storage (Project → Open brings it back),
+    // and, when serve.py is running, a backup in scenes/autosave-backups/.
+    const leaving = sceneFile();
+    try { localStorage.setItem(projectSlot(PROJECT.id), JSON.stringify({ version: SCHEMA_VERSION, savedAt: Date.now(), state: S, project: PROJECT })); } catch (e) { /* full: the disk backup still runs */ }
+    if (DISK.on && DISK.supported !== false) {
+      clearTimeout(DISK.timer);
+      backup = fetch('autosave?backup=1', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(leaving) }).catch(() => null);
+    }
+    savedAt = Math.max(savedAt || 0, Date.parse(leaving.savedAt) + 2000);   // newer than that backup, so the disk copy isn't picked up over it
+  }
+  try {
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: savedAt || Date.now(), state: data.state, project: p }));
+    sessionStorage.setItem(SWITCH_KEY, projectKey(p));
+    sessionStorage.setItem(NOTICE_KEY, `${text}. It’s a different project (${p.name}), so the page reloaded to build it; undo starts fresh from here.` +
+      (keep ? ` The ${PROJECT.name} scene you left is kept: Project → Open brings it back${DISK.on && DISK.supported !== false ? ', and a copy is in scenes/autosave-backups/' : ''}.` : ''));
+  } catch (e) { return 'this browser wouldn’t store it, so it can’t switch projects'; }
+  Promise.race([backup, new Promise(r => setTimeout(r, 2500))]).then(() => location.reload());
+  return 'reloading';
+}
+const projectSlot = id => `${AUTOSAVE_KEY}.project.${id}`;
+
+// Project → Open: the projects that come with the sim, plus the one open now if it came from a file.
+const BUILT_IN = [
+  { id: 'hemistitch-slava', name: 'Hemistitch + Slava donor', file: 'projects/hemistitch-slava.json' },
+  { id: 'hemistitch-prototype', name: 'Hemistitch prototype', file: 'projects/hemistitch-prototype.json' },
+  { id: 'clock', name: 'Watch train (the beta)', scene: () => ({ format: 'bspk-studio-scene', state: {}, project: CLOCK_PROJECT }) },
+];
+{
+  const pick = document.getElementById('projectPick'), btn = document.getElementById('projectOpen');
+  const list = BUILT_IN.some(b => b.id === PROJECT.id) ? BUILT_IN : [{ id: PROJECT.id, name: PROJECT.name }, ...BUILT_IN];
+  for (const b of list) pick.add(new Option(b.id === PROJECT.id ? `${b.name} (open now)` : b.name, b.id));
+  pick.value = PROJECT.id;
+  const sync = () => {
+    btn.disabled = pick.value === PROJECT.id;
+    let kept = false;
+    try { kept = !!localStorage.getItem(projectSlot(pick.value)); } catch (e) { /* none */ }
+    document.getElementById('projectNote').textContent = pick.value === PROJECT.id
+      ? `${PROJECT.name} is open.`
+      : `Open ${pick.options[pick.selectedIndex].text}${kept ? ' where you left it' : ' fresh'}. This scene is kept first${DISK.on ? ' (and backed up on disk when serve.py is running)' : ''}; Save scene also writes a file you can keep.`;
+  };
+  pick.addEventListener('change', sync);
+  btn.addEventListener('click', async () => {
+    const b = BUILT_IN.find(x => x.id === pick.value);
+    if (!b) return;
+    let data = null, text = `Opened ${b.name}`;
+    try { data = JSON.parse(localStorage.getItem(projectSlot(b.id)) || 'null'); } catch (e) { data = null; }
+    if (data && data.state) { data = { format: 'bspk-studio-scene', state: data.state, project: data.project }; text += ' where you left it'; }
+    else {
+      try { data = b.scene ? b.scene() : await (await fetch(b.file, { cache: 'no-store' })).json(); } catch (e) { data = null; }
+      if (!data) { showText('Couldn’t open that project', `${b.name}: its file (${b.file}) didn’t load.`); return; }
+    }
+    const res = openScene(data, text);
+    if (res !== 'opened' && res !== 'reloading') showText('Couldn’t open that project', `${b.name}: ${res}`);
+  });
+  sync();
+}
 
 // The report is what you hand to Claude: what's locked, what clashes, your pins and notes, sketches, recent changes.
 function reportText() {
   const s = scale, L = [];
   L.push(`BSPK Studio report · ${new Date().toLocaleString()}`);
-  L.push(`Scene: watch train, movement Ø ${f1(S.movementD * s)} mm, minimum gap ${S.minGap} mm, print scale ${s}×`);
+  L.push(`Scene: ${PROJECT.name.toLowerCase()}, movement Ø ${f1(S.movementD * s)} mm, minimum gap ${S.minGap} mm, print scale ${s}×`);
   L.push('');
   L.push('Rates: ' + A.rates.map(r => `${r.label.toLowerCase()} 1 rev / ${periodText(r.w)} ${dirText(r.w)}${r.ok ? '' : ' (WRONG)'}`).join('; '));
   const locked = partOrder.filter(id => partLocked(id)).map(id => {
@@ -2733,10 +3250,8 @@ document.getElementById('loadFile').addEventListener('change', async e => {
   if (!file) return;
   try {
     const data = JSON.parse(await file.text());
-    if (!data || data.format !== 'bspk-studio-scene' || !data.state) throw new Error('not a BSPK Studio scene file');
-    cancelPending();
-    S = normalizeState(data.state);
-    commit({ text: `Loaded scene “${file.name}”${data.savedAt ? ` (saved ${new Date(data.savedAt).toLocaleString()})` : ''}`, adapt: false });
+    const res = openScene(data, `Loaded scene “${file.name}”${data && data.savedAt ? ` (saved ${new Date(data.savedAt).toLocaleString()})` : ''}`);
+    if (res !== 'opened' && res !== 'reloading') throw new Error(res);
   } catch (err) {
     showText('Couldn’t load that file', `${file.name}: ${err.message}\n\nLoad scene takes a file written by Save scene.`);
   }
@@ -2749,7 +3264,8 @@ function renderLog() {
   for (let i = hIndex; i >= 1; i--) for (const en of history[i].entries) {
     items.push(`<li class="${en.who}${en.stuck ? ' stuck' : ''}"><b>${en.who === 'you' ? 'You' : 'Auto'}</b>${esc(en.text)}</li>`);
   }
-  if (restoredAt) items.push(`<li class="empty">Picked up where you left off: your last session, autosaved ${new Date(restoredAt).toLocaleString()}${DISK.from ? ' (from the copy on disk, scenes/autosave.json)' : ''}. Reset train starts over.</li>`);
+  if (bootNotice) items.push(`<li class="empty">${esc(bootNotice)}</li>`);
+  if (restoredAt && !bootNotice) items.push(`<li class="empty">Picked up where you left off: your last session, autosaved ${new Date(restoredAt).toLocaleString()}${DISK.from ? ' (from the copy on disk, scenes/autosave.json)' : ''}. Reset train starts over.</li>`);
   document.getElementById('log').innerHTML = items.length ? items.join('') : '<li class="empty">No changes yet. Select a part and drag its arrows, or type values.</li>';
   document.getElementById('minGap').value = S.minGap;
   document.getElementById('undo').disabled = hIndex === 0;
@@ -2757,10 +3273,12 @@ function renderLog() {
 }
 
 // ---------- motion ----------
-const VPH = Math.abs(D.omega.escape) / (2 * Math.PI) * 3600 * GEAR_DEFS.escape_wheel.z * 2;
+const BEAT = PROJECT.beat && GEAR_DEFS[PROJECT.beat.gear] ? PROJECT.beat : null;
+const BEAT_W = () => D.omega[GEAR_DEFS[BEAT.gear].arbor];
+const VPH = BEAT ? Math.abs(BEAT_W()) / (2 * Math.PI) * 3600 * GEAR_DEFS[BEAT.gear].z * 2 : 0;
 const BEAT_HZ = VPH / 3600;
-let t = 0, playing = true, speedIdx = 0, stepped = true;
-const tEff = () => (stepped ? Math.floor(t * BEAT_HZ + 1e-9) / BEAT_HZ : t);
+let t = 0, playing = true, speedIdx = 0, stepped = !!BEAT_HZ;
+const tEff = () => (stepped && BEAT_HZ ? Math.floor(t * BEAT_HZ + 1e-9) / BEAT_HZ : t);
 
 function dialText(te) {
   const s = ((te % 43200) + 43200) % 43200;
@@ -2774,13 +3292,15 @@ function updateClock(te, now) {
   dialEl.textContent = dialText(te);
   const beat = Math.floor(t * BEAT_HZ + 1e-9);
   if (beat !== lastBeat) { lastBeat = beat; beatFlashUntil = now + 60; }
-  beatEl.classList.toggle('on', SPEEDS[speedIdx] > 10 ? playing : now < beatFlashUntil);
+  beatEl.classList.toggle('on', !!BEAT && (SPEEDS[speedIdx] > 10 ? playing : now < beatFlashUntil));
   const el = Math.floor(t);
   statsEl.innerHTML = row('Elapsed', `${Math.floor(el / 3600)}h ${String(Math.floor(el / 60) % 60).padStart(2, '0')}m ${String(el % 60).padStart(2, '0')}s`)
-    + row('Beats', beat.toLocaleString())
-    + row('Escape wheel', `${f1(Math.abs(D.omega.escape) * 60 / (2 * Math.PI))} rpm`);
+    + (BEAT ? row('Beats', beat.toLocaleString())
+      + row(esc(BEAT.label || GEAR_DEFS[BEAT.gear].label), `${f1(Math.abs(BEAT_W()) * 60 / (2 * Math.PI))} rpm`) : '');
 }
-document.getElementById('beatTxt').textContent = `${Math.round(VPH).toLocaleString()} vph`;
+document.getElementById('beatTxt').textContent = BEAT ? `${Math.round(VPH).toLocaleString()} vph` : '';
+document.getElementById('steppedRow').hidden = !BEAT;
+document.getElementById('stepped').checked = stepped;
 
 function setSpeed(i) {
   speedIdx = Math.max(0, Math.min(SPEEDS.length - 1, i));
@@ -2792,7 +3312,7 @@ function setSpeed(i) {
 // ---------- view ----------
 let grid = null;
 const VIEWS = { iso: [1, -1.15, 0.95], top: [0, -0.001, 1], back: [0, -0.001, -1], side: [0, -1, 0.02] };
-const stackMid = () => (4.2 + explode * EXPLODE_STEP * LMAX / 2) * scale;
+const stackMid = () => ((PD.view && PD.view.mid != null ? PD.view.mid : 4.2) + explode * EXPLODE_STEP * LMAX / 2) * scale;
 
 function rebuildGrid() {
   if (grid) { scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
@@ -2807,7 +3327,7 @@ function rebuildGrid() {
 }
 
 function fit() {
-  const Dm = S.movementD * scale, H = (9.4 + EXPLODE_STEP * LMAX * explode) * scale;
+  const Dm = S.movementD * scale, H = (((PD.view && PD.view.height) || 9.4) + EXPLODE_STEP * LMAX * explode) * scale;
   const R = 0.5 * Math.hypot(Dm, H);
   const vHalf = camera.fov * Math.PI / 360;
   const half = Math.min(vHalf, Math.atan(Math.tan(vHalf) * camera.aspect));
@@ -2923,6 +3443,8 @@ document.getElementById('resetTrain').addEventListener('click', () => {
 function scripted(mutate, text) { cancelPending(); liveEdit(mutate); commit({ text }); }
 window.studio = {
   state: () => clone(S),
+  project: () => clone(PROJECT),
+  openScene: (data, text = 'Opened a scene from a script') => openScene(clone(data), text),
   analysis: () => A,
   periods: () => Object.fromEntries(Object.entries(D.omega).map(([k, w]) => [k, { seconds: 2 * Math.PI / Math.abs(w), dir: dirText(w) }])),
   positions: () => clonePos(S.pos),
@@ -2950,6 +3472,33 @@ window.studio = {
   sketches: () => clone(S.sketches),
   drawn: () => clone(S.drawn),
   makePart: (sketchId, thicknessMm = 1) => makeDrawnFrom(sketchId, thicknessMm),
+  addSketch: ({ name, plane, closed = true, points }) => {
+    if (!plane || !'xyz'.includes(plane.axis) || !Array.isArray(points) || points.length < 2) return null;
+    cancelPending();
+    const n = S.sketches.reduce((mx, k) => Math.max(mx, +String(k.id).slice(1) || 0), 0) + 1;
+    const k = { id: `K${n}`, name: name ? String(name) : `Sketch ${n}`, plane: { axis: plane.axis, offset: +(plane.offset || 0) / scale }, closed: !!closed,
+      points: points.map(q => ({ u: q.u / scale, v: q.v / scale, smooth: !!q.smooth })) };
+    S.sketches.push(k);
+    commit({ text: `Drew ${k.name} (${k.points.length} dots${k.closed ? ', closed' : ''})`, adapt: false });
+    return k.id;
+  },
+  setPart: (id, { name, thickness, grow } = {}) => {
+    const d = drawnOf(id);
+    if (!d) return false;
+    cancelPending();
+    if (typeof name === 'string' && name) S.info[id] = { ...(S.info[id] || {}), name };   // the same as typing it into the part's Name field
+    if (thickness > 0) d.thickness = Math.max(minThickness(d, sketchOf(d)), thickness / scale);
+    if (['plus', 'minus', 'both'].includes(grow)) d.grow = grow;
+    commit({ text: `${nameOf(id)}: ${[name && 'renamed', thickness && `${f2(d.thickness * scale)} mm thick`, grow && `grows ${growText(d, sketchOf(d))}`].filter(Boolean).join(', ')}`, adapt: false });
+    return true;
+  },
+  addCut: (pid, spec = {}) => {
+    const u = v => (v == null ? v : v / scale);
+    return addCut(pid, { ...spec, d: u(spec.d), depth: spec.depth === null ? null : u(spec.depth), at: spec.at && spec.at.map(u),
+      seat: spec.seat ? { d: u(spec.seat.d), depth: u(spec.seat.depth) } : spec.seat, csk: spec.csk ? { d: u(spec.csk.d) } : spec.csk });
+  },
+  removeCut: (pid, cid) => removeCut(pid, cid),
+  cuts: pid => clone((drawnOf(pid) || {}).cuts || []),
   removePart: id => removeDrawn(id),
   setTool,
   tool: () => tool,

@@ -1,0 +1,2495 @@
+{
+ "format": "bspk-studio-scene",
+ "version": 3,
+ "savedAt": "2026-11-11T00:00:00.000Z",
+ "state": {
+  "sketches": [
+   {
+    "id": "K1",
+    "name": "Case outline (AXIS × 2.5, bow 4.25, reference)",
+    "plane": {
+     "axis": "z",
+     "offset": 0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K2",
+    "name": "Slava 5671 footprint, back (Ø55.8, estimated position)",
+    "plane": {
+     "axis": "z",
+     "offset": 4.0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 54.15,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": 52.0262,
+      "v": 10.6769,
+      "smooth": true
+     },
+     {
+      "u": 45.9783,
+      "v": 19.7283,
+      "smooth": true
+     },
+     {
+      "u": 36.9269,
+      "v": 25.7762,
+      "smooth": true
+     },
+     {
+      "u": 26.25,
+      "v": 27.9,
+      "smooth": true
+     },
+     {
+      "u": 15.5731,
+      "v": 25.7762,
+      "smooth": true
+     },
+     {
+      "u": 6.5217,
+      "v": 19.7283,
+      "smooth": true
+     },
+     {
+      "u": 0.4738,
+      "v": 10.6769,
+      "smooth": true
+     },
+     {
+      "u": -1.65,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": 0.4738,
+      "v": -10.6769,
+      "smooth": true
+     },
+     {
+      "u": 6.5217,
+      "v": -19.7283,
+      "smooth": true
+     },
+     {
+      "u": 15.5731,
+      "v": -25.7762,
+      "smooth": true
+     },
+     {
+      "u": 26.25,
+      "v": -27.9,
+      "smooth": true
+     },
+     {
+      "u": 36.9269,
+      "v": -25.7762,
+      "smooth": true
+     },
+     {
+      "u": 45.9783,
+      "v": -19.7283,
+      "smooth": true
+     },
+     {
+      "u": 52.0262,
+      "v": -10.6769,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K3",
+    "name": "Slava 5671 footprint, front (19 mm deep)",
+    "plane": {
+     "axis": "z",
+     "offset": 23.0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 54.15,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": 52.0262,
+      "v": 10.6769,
+      "smooth": true
+     },
+     {
+      "u": 45.9783,
+      "v": 19.7283,
+      "smooth": true
+     },
+     {
+      "u": 36.9269,
+      "v": 25.7762,
+      "smooth": true
+     },
+     {
+      "u": 26.25,
+      "v": 27.9,
+      "smooth": true
+     },
+     {
+      "u": 15.5731,
+      "v": 25.7762,
+      "smooth": true
+     },
+     {
+      "u": 6.5217,
+      "v": 19.7283,
+      "smooth": true
+     },
+     {
+      "u": 0.4738,
+      "v": 10.6769,
+      "smooth": true
+     },
+     {
+      "u": -1.65,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": 0.4738,
+      "v": -10.6769,
+      "smooth": true
+     },
+     {
+      "u": 6.5217,
+      "v": -19.7283,
+      "smooth": true
+     },
+     {
+      "u": 15.5731,
+      "v": -25.7762,
+      "smooth": true
+     },
+     {
+      "u": 26.25,
+      "v": -27.9,
+      "smooth": true
+     },
+     {
+      "u": 36.9269,
+      "v": -25.7762,
+      "smooth": true
+     },
+     {
+      "u": 45.9783,
+      "v": -19.7283,
+      "smooth": true
+     },
+     {
+      "u": 52.0262,
+      "v": -10.6769,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K4",
+    "name": "P1 main plate / back outline",
+    "plane": {
+     "axis": "z",
+     "offset": 0.0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K5",
+    "name": "P2 Slava plate, lower outline",
+    "plane": {
+     "axis": "z",
+     "offset": 4.0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K6",
+    "name": "P3 Slava plate, upper outline",
+    "plane": {
+     "axis": "z",
+     "offset": 13.525
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K7",
+    "name": "P4 support plate outline",
+    "plane": {
+     "axis": "z",
+     "offset": 23.05
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K8",
+    "name": "P5 motion plate outline",
+    "plane": {
+     "axis": "z",
+     "offset": 26.05
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K9",
+    "name": "P6 top plate outline",
+    "plane": {
+     "axis": "z",
+     "offset": 29.35
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": 36.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": 33.3211,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 26.25,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -26.25,
+      "smooth": true
+     },
+     {
+      "u": -59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": -52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 52.5,
+      "v": -36.25,
+      "smooth": true
+     },
+     {
+      "u": 59.5711,
+      "v": -33.3211,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -26.25,
+      "smooth": true
+     }
+    ]
+   }
+  ],
+  "drawn": [
+   {
+    "id": "D1",
+    "name": "P1 main plate / back",
+    "sketch": "K4",
+    "thickness": 4.0,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "window",
+      "name": "Balance window (estimated position)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "sl_balance",
+      "at": [
+       8.075292299461868,
+       7.105427357601002e-15
+      ],
+      "d": 25
+     },
+     {
+      "id": "h2",
+      "kind": "hole",
+      "name": "Winding key access · going barrel (estimated)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "sl_barrel",
+      "at": [
+       40.83989500128759,
+       -7.489657125089461
+      ],
+      "d": 8
+     },
+     {
+      "id": "h3",
+      "kind": "hole",
+      "name": "Winding key access · alarm (estimated)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       18.25,
+       11.3
+      ],
+      "d": 8
+     },
+     {
+      "id": "h4",
+      "kind": "screw",
+      "name": "Screw A1 · M3 countersunk",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h5",
+      "kind": "screw",
+      "name": "Screw A2 · M3 countersunk",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h6",
+      "kind": "screw",
+      "name": "Screw A3 · M3 countersunk",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -20,
+       34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h7",
+      "kind": "screw",
+      "name": "Screw A4 · M3 countersunk",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h8",
+      "kind": "screw",
+      "name": "Screw A5 · M3 countersunk",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h9",
+      "kind": "screw",
+      "name": "Screw A6 · M3 countersunk",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h10",
+      "kind": "dowel",
+      "name": "Dowel 1",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -46,
+       22
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h11",
+      "kind": "dowel",
+      "name": "Dowel 2",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       48,
+       -28
+      ],
+      "d": 3.0
+     }
+    ]
+   },
+   {
+    "id": "D2",
+    "name": "P2 Slava plate, lower",
+    "sketch": "K5",
+    "thickness": 9.525,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "hole",
+      "name": "Slava recess · Ø56.1 (55.8 + fit)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "center",
+      "at": [
+       26.25,
+       0.0
+      ],
+      "d": 56.1
+     },
+     {
+      "id": "h2",
+      "kind": "pilot",
+      "name": "Screw A1 · pilot",
+      "from": "front",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h3",
+      "kind": "pilot",
+      "name": "Screw A2 · pilot",
+      "from": "front",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       -29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h4",
+      "kind": "pilot",
+      "name": "Screw A3 · pilot",
+      "from": "front",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -20,
+       34
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h5",
+      "kind": "pilot",
+      "name": "Screw A4 · pilot",
+      "from": "front",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -20,
+       -34
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h6",
+      "kind": "pilot",
+      "name": "Screw A5 · pilot",
+      "from": "front",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h7",
+      "kind": "pilot",
+      "name": "Screw A6 · pilot",
+      "from": "front",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       -29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h8",
+      "kind": "pilot",
+      "name": "Screw B1 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -57,
+       0
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h9",
+      "kind": "pilot",
+      "name": "Screw B2 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -40,
+       32
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h10",
+      "kind": "pilot",
+      "name": "Screw B3 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -40,
+       -32
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h11",
+      "kind": "pilot",
+      "name": "Screw B4 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       0,
+       -35.5
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h12",
+      "kind": "pilot",
+      "name": "Screw B5 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       40,
+       33
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h13",
+      "kind": "pilot",
+      "name": "Screw B6 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       40,
+       -33
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h14",
+      "kind": "dowel",
+      "name": "Dowel 1",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -46,
+       22
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h15",
+      "kind": "dowel",
+      "name": "Dowel 2",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       48,
+       -28
+      ],
+      "d": 3.0
+     }
+    ]
+   },
+   {
+    "id": "D3",
+    "name": "P3 Slava plate, upper",
+    "sketch": "K6",
+    "thickness": 9.525,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "hole",
+      "name": "Slava recess · Ø56.1 (55.8 + fit)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "center",
+      "at": [
+       26.25,
+       0.0
+      ],
+      "d": 56.1
+     },
+     {
+      "id": "h2",
+      "kind": "screw",
+      "name": "Screw B1 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -57,
+       0
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h3",
+      "kind": "screw",
+      "name": "Screw B2 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -40,
+       32
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h4",
+      "kind": "screw",
+      "name": "Screw B3 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -40,
+       -32
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h5",
+      "kind": "screw",
+      "name": "Screw B4 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       0,
+       -35.5
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h6",
+      "kind": "screw",
+      "name": "Screw B5 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       40,
+       33
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h7",
+      "kind": "screw",
+      "name": "Screw B6 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       40,
+       -33
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h8",
+      "kind": "pilot",
+      "name": "Screw C1 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h9",
+      "kind": "pilot",
+      "name": "Screw C2 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       -29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h10",
+      "kind": "pilot",
+      "name": "Screw C3 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -20,
+       -34
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h11",
+      "kind": "pilot",
+      "name": "Screw C4 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       20,
+       -34
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h12",
+      "kind": "pilot",
+      "name": "Screw C5 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h13",
+      "kind": "pilot",
+      "name": "Screw C6 · pilot",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       -29
+      ],
+      "d": 2.5
+     },
+     {
+      "id": "h14",
+      "kind": "dowel",
+      "name": "Dowel 1",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -46,
+       22
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h15",
+      "kind": "dowel",
+      "name": "Dowel 2",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       48,
+       -28
+      ],
+      "d": 3.0
+     }
+    ]
+   },
+   {
+    "id": "D4",
+    "name": "P4 support plate",
+    "sketch": "K7",
+    "thickness": 3.0,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "bearing",
+      "name": "Bearing · transfer tube (lower)",
+      "from": "back",
+      "depth": 2.5,
+      "seat": {
+       "d": 7.2,
+       "depth": 0.6
+      },
+      "csk": null,
+      "axis": "center",
+      "at": [
+       26.25,
+       0.0
+      ],
+      "d": 6.0
+     },
+     {
+      "id": "h2",
+      "kind": "clear",
+      "name": "Slava center arbor clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "center",
+      "at": [
+       26.25,
+       0.0
+      ],
+      "d": 4.0
+     },
+     {
+      "id": "h3",
+      "kind": "bearing",
+      "name": "Bearing · minute wheel arbor (lower)",
+      "from": "back",
+      "depth": 2.5,
+      "seat": {
+       "d": 7.2,
+       "depth": 0.6
+      },
+      "csk": null,
+      "axis": "mwheel",
+      "at": [
+       -1.1047619047619044,
+       12.3173455392705
+      ],
+      "d": 6.0
+     },
+     {
+      "id": "h4",
+      "kind": "bearing",
+      "name": "Bearing · hour arbor (lower)",
+      "from": "back",
+      "depth": 2.5,
+      "seat": {
+       "d": 7.2,
+       "depth": 0.6
+      },
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       0.0
+      ],
+      "d": 6.0
+     },
+     {
+      "id": "h5",
+      "kind": "hole",
+      "name": "Screw C1 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h6",
+      "kind": "hole",
+      "name": "Screw C2 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h7",
+      "kind": "hole",
+      "name": "Screw C3 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h8",
+      "kind": "hole",
+      "name": "Screw C4 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h9",
+      "kind": "hole",
+      "name": "Screw C5 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h10",
+      "kind": "hole",
+      "name": "Screw C6 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h11",
+      "kind": "dowel",
+      "name": "Dowel 1",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -46,
+       22
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h12",
+      "kind": "dowel",
+      "name": "Dowel 2",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       48,
+       -28
+      ],
+      "d": 3.0
+     }
+    ]
+   },
+   {
+    "id": "D5",
+    "name": "P5 motion plate",
+    "sketch": "K8",
+    "thickness": 3.3,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "hole",
+      "name": "Minute wheel pocket (48 teeth + 0.5)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "mwheel",
+      "at": [
+       -1.1047619047619044,
+       12.3173455392705
+      ],
+      "d": 50.4
+     },
+     {
+      "id": "h2",
+      "kind": "hole",
+      "name": "Transfer gear pocket (12 teeth + 0.5)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "center",
+      "at": [
+       26.25,
+       0.0
+      ],
+      "d": 15.6
+     },
+     {
+      "id": "h3",
+      "kind": "clear",
+      "name": "Hour arbor clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       0.0
+      ],
+      "d": 4.0
+     },
+     {
+      "id": "h4",
+      "kind": "hole",
+      "name": "Screw C1 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h5",
+      "kind": "hole",
+      "name": "Screw C2 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h6",
+      "kind": "hole",
+      "name": "Screw C3 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h7",
+      "kind": "hole",
+      "name": "Screw C4 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h8",
+      "kind": "hole",
+      "name": "Screw C5 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h9",
+      "kind": "hole",
+      "name": "Screw C6 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h10",
+      "kind": "dowel",
+      "name": "Dowel 1",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -46,
+       22
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h11",
+      "kind": "dowel",
+      "name": "Dowel 2",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       48,
+       -28
+      ],
+      "d": 3.0
+     }
+    ]
+   },
+   {
+    "id": "D6",
+    "name": "P6 top plate",
+    "sketch": "K9",
+    "thickness": 6.35,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "hole",
+      "name": "Hour wheel pocket (42 teeth + 0.5)",
+      "from": "front",
+      "depth": 3.3,
+      "seat": null,
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       0.0
+      ],
+      "d": 44.4
+     },
+     {
+      "id": "h2",
+      "kind": "hole",
+      "name": "Minute pinion pocket (14 leaves + 0.5)",
+      "from": "front",
+      "depth": 3.3,
+      "seat": null,
+      "csk": null,
+      "axis": "mwheel",
+      "at": [
+       -1.1047619047619044,
+       12.3173455392705
+      ],
+      "d": 17.6
+     },
+     {
+      "id": "h3",
+      "kind": "bearing",
+      "name": "Bearing · transfer tube (upper)",
+      "from": "back",
+      "depth": 2.5,
+      "seat": {
+       "d": 7.2,
+       "depth": 0.6
+      },
+      "csk": null,
+      "axis": "center",
+      "at": [
+       26.25,
+       0.0
+      ],
+      "d": 6.0
+     },
+     {
+      "id": "h4",
+      "kind": "bearing",
+      "name": "Bearing · minute wheel arbor (upper)",
+      "from": "back",
+      "depth": 2.5,
+      "seat": {
+       "d": 7.2,
+       "depth": 0.6
+      },
+      "csk": null,
+      "axis": "mwheel",
+      "at": [
+       -1.1047619047619044,
+       12.3173455392705
+      ],
+      "d": 6.0
+     },
+     {
+      "id": "h5",
+      "kind": "bearing",
+      "name": "Bearing · hour arbor (upper)",
+      "from": "back",
+      "depth": 2.5,
+      "seat": {
+       "d": 7.2,
+       "depth": 0.6
+      },
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       0.0
+      ],
+      "d": 6.0
+     },
+     {
+      "id": "h6",
+      "kind": "clear",
+      "name": "Transfer tube clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "center",
+      "at": [
+       26.25,
+       0.0
+      ],
+      "d": 3.5
+     },
+     {
+      "id": "h7",
+      "kind": "clear",
+      "name": "Minute wheel arbor clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "mwheel",
+      "at": [
+       -1.1047619047619044,
+       12.3173455392705
+      ],
+      "d": 3.5
+     },
+     {
+      "id": "h8",
+      "kind": "clear",
+      "name": "Hour arbor clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       0.0
+      ],
+      "d": 3.5
+     },
+     {
+      "id": "h9",
+      "kind": "screw",
+      "name": "Screw C1 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h10",
+      "kind": "screw",
+      "name": "Screw C2 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h11",
+      "kind": "screw",
+      "name": "Screw C3 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       -20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h12",
+      "kind": "screw",
+      "name": "Screw C4 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h13",
+      "kind": "screw",
+      "name": "Screw C5 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h14",
+      "kind": "screw",
+      "name": "Screw C6 · M3 countersunk",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h15",
+      "kind": "dowel",
+      "name": "Dowel 1",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -46,
+       22
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h16",
+      "kind": "dowel",
+      "name": "Dowel 2",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       48,
+       -28
+      ],
+      "d": 3.0
+     }
+    ]
+   }
+  ]
+ },
+ "project": {
+  "format": "bspk-studio-project",
+  "id": "hemistitch-slava",
+  "name": "Hemistitch + Slava donor",
+  "title": "Hemistitch · Slava 5671 engine",
+  "blurb": "Phase 1 of the fully mechanical plan: a Slava 5671 alarm-clock movement (Swiss lever, 18,000 beats an hour) is the engine. Its barrel, train, escapement and balance stay in its own plates; we tap its center arbor for our motion works and the two discs. Slava parts are bought, and their sizes are estimates from the 1987 factory manual until the clock arrives. Our parts are module 1 in 2.8 mm acrylic.",
+  "source": [
+   "Slava 5671: Shamonova, Repair of Mechanical Alarm Clocks (1987): 55.8 mm, 19 mm deep, 11 jewels, free (Swiss) lever, 15-tooth escape wheel, brass balance with a 0.4 s period, both springs in barrels, 36 h per wind, friction cannon pinion on the center arbor. Arbor positions are scaled from its Fig. 1 drawing; tooth counts and the balance diameter are guesses, to measure on the real one. Discs and motion works: VISION §10.8."
+  ],
+  "groups": {
+   "donor": "Slava engine (bought)",
+   "motion": "Motion works",
+   "discs": "Discs"
+  },
+  "focus": [
+   {
+    "id": "donor",
+    "label": "Slava engine: barrel → center → third → seconds → escape → balance",
+    "parts": [
+     "sl_barrel",
+     "center",
+     "sl_third",
+     "sl_fourth",
+     "sl_escape",
+     "sl_fork",
+     "sl_balance"
+    ]
+   },
+   {
+    "id": "motion",
+    "label": "Motion works and discs: center → minute wheel → hour wheel",
+    "parts": [
+     "center",
+     "mwheel",
+     "hour",
+     "minute_disc",
+     "hour_disc"
+    ]
+   }
+  ],
+  "rules": {
+   "minModule": 1,
+   "fixedModule": true,
+   "why": "the 1 mm end mill has to fit between the pinion teeth"
+  },
+  "rate": {
+   "arbor": "center",
+   "period": 3600,
+   "dir": -1
+  },
+  "targets": [
+   {
+    "label": "Minute disc",
+    "arbor": "center",
+    "period": 3600,
+    "dir": -1
+   },
+   {
+    "label": "Hour disc",
+    "arbor": "hour",
+    "period": 43200,
+    "dir": -1
+   },
+   {
+    "label": "Seconds wheel (Slava)",
+    "arbor": "sl_fourth",
+    "period": 60,
+    "dir": -1
+   },
+   {
+    "label": "Escape wheel (Slava, 18,000 bph)",
+    "arbor": "sl_escape",
+    "period": 6,
+    "dir": 1
+   }
+  ],
+  "beat": {
+   "gear": "sl_escape_wheel",
+   "label": "Escape wheel (Slava)"
+  },
+  "arbors": [
+   {
+    "id": "sl_barrel",
+    "name": "Slava going barrel",
+    "group": "donor",
+    "level": 0,
+    "staticArbor": true,
+    "drumH": 4.0,
+    "role": "Bought (Slava). The mainspring (2.9 × 0.2 × 611 mm) in a closed barrel, inside about Ø20.8; at least 36 hours per wind. Drives the center pinion. Tooth count and drum size are estimates.",
+    "gears": [
+     {
+      "id": "sl_barrel_teeth",
+      "label": "Barrel teeth (Slava)",
+      "z": 72,
+      "t": 0.6,
+      "bought": true,
+      "estimate": true
+     }
+    ]
+   },
+   {
+    "id": "center",
+    "name": "Center arbor",
+    "group": "donor",
+    "level": 1,
+    "role": "The Slava’s center arbor: turns once an hour. Inside the Slava its pinion is driven by the barrel and its wheel drives the third wheel. Above the Slava our transfer tube (3 mm OD brass, in bearings in P4 and P6) slips over it and grips it by friction, so you can still set the time. The tube carries our module-1 transfer gear in P5, which drives the minute wheel, and the minute disc on top.",
+    "gears": [
+     {
+      "id": "sl_center_pinion",
+      "label": "Center pinion (Slava)",
+      "z": 10,
+      "t": 1.0,
+      "bought": true,
+      "estimate": true
+     },
+     {
+      "id": "sl_center_wheel",
+      "label": "Center wheel (Slava)",
+      "z": 60,
+      "t": 0.4,
+      "bought": true,
+      "estimate": true
+     },
+     {
+      "id": "cannon_pinion",
+      "label": "Transfer gear (ours)",
+      "z": 12,
+      "t": 2.8,
+      "x": 0.3
+     }
+    ]
+   },
+   {
+    "id": "sl_third",
+    "name": "Third wheel (Slava)",
+    "group": "donor",
+    "level": 2,
+    "role": "Bought (Slava): the intermediate wheel. Position scaled from the manual’s drawing; tooth counts are guesses.",
+    "gears": [
+     {
+      "id": "sl_third_pinion",
+      "label": "Third pinion (Slava)",
+      "z": 8,
+      "t": 0.8,
+      "bought": true,
+      "estimate": true
+     },
+     {
+      "id": "sl_third_wheel",
+      "label": "Third wheel (Slava)",
+      "z": 64,
+      "t": 0.4,
+      "bought": true,
+      "estimate": true
+     }
+    ]
+   },
+   {
+    "id": "sl_fourth",
+    "name": "Seconds wheel (Slava)",
+    "group": "donor",
+    "level": 3,
+    "role": "Bought (Slava): turns once a minute and drives the escape pinion. Tooth counts are guesses.",
+    "gears": [
+     {
+      "id": "sl_fourth_pinion",
+      "label": "Seconds pinion (Slava)",
+      "z": 8,
+      "t": 0.8,
+      "bought": true,
+      "estimate": true
+     },
+     {
+      "id": "sl_fourth_wheel",
+      "label": "Seconds wheel (Slava)",
+      "z": 60,
+      "t": 0.3,
+      "bought": true,
+      "estimate": true
+     }
+    ]
+   },
+   {
+    "id": "sl_escape",
+    "name": "Escape wheel (Slava)",
+    "group": "donor",
+    "level": 4,
+    "role": "Bought (Slava): 15 club teeth (confirmed), jeweled pivots. At 18,000 beats an hour it turns every 6 seconds, released half a tooth per beat. Size estimated.",
+    "gears": [
+     {
+      "id": "sl_escape_pinion",
+      "label": "Escape pinion (Slava)",
+      "z": 6,
+      "t": 0.6,
+      "bought": true,
+      "estimate": true
+     },
+     {
+      "id": "sl_escape_wheel",
+      "label": "Escape wheel (Slava)",
+      "z": 15,
+      "t": 0.4,
+      "bought": true,
+      "estimate": true
+     }
+    ]
+   },
+   {
+    "id": "sl_fork",
+    "name": "Pallet fork (Slava)",
+    "group": "donor",
+    "level": 4,
+    "role": "Bought (Slava): the jeweled pallet fork, shown as the space it sweeps. Between the escape wheel and the balance, in line with both (Playtner’s proportions). It rocks each beat; the sim doesn’t animate that yet.",
+    "gears": [
+     {
+      "id": "sl_fork_body",
+      "label": "Pallet fork (its sweep)",
+      "z": 18,
+      "t": 0.5,
+      "bought": true,
+      "estimate": true,
+      "plain": true
+     }
+    ]
+   },
+   {
+    "id": "sl_balance",
+    "name": "Balance (Slava)",
+    "group": "donor",
+    "level": 4,
+    "role": "Bought (Slava): brass balance with its hairspring, a 0.4 s swing (18,000 beats an hour), under its own cock on the back: the beating heart behind the case-back window. About Ø15 and about 18 mm from the center arbor, both estimated from the manual’s drawing. It swings; the sim doesn’t animate that yet.",
+    "gears": [
+     {
+      "id": "sl_balance_wheel",
+      "label": "Balance wheel (Slava)",
+      "z": 30,
+      "t": 0.8,
+      "bought": true,
+      "estimate": true,
+      "plain": true
+     }
+    ]
+   },
+   {
+    "id": "mwheel",
+    "name": "Minute wheel",
+    "group": "motion",
+    "level": 5,
+    "role": "Ours. Its 3 mm rod turns in bearings in P4 and P6. The transfer gear turns its 48-tooth wheel 4:1 (in P5); its 14-leaf pinion turns the hour wheel 3:1 (in the pocket under P6), so 12:1 in all.",
+    "gears": [
+     {
+      "id": "minute_wheel",
+      "label": "Minute wheel",
+      "z": 48,
+      "t": 2.8,
+      "x": -0.3
+     },
+     {
+      "id": "minute_pinion",
+      "label": "Minute pinion",
+      "z": 14,
+      "t": 2.8,
+      "x": 0.3
+     }
+    ]
+   },
+   {
+    "id": "hour",
+    "name": "Hour wheel",
+    "group": "motion",
+    "level": 6,
+    "role": "Ours. Its 3 mm rod turns in bearings in P4 and P6; the wheel sits in the pocket under P6, turns once in 12 hours, and the hour disc is pressed on the rod above the top plate.",
+    "gears": [
+     {
+      "id": "hour_wheel",
+      "label": "Hour wheel",
+      "z": 42,
+      "t": 2.8,
+      "x": -0.3
+     }
+    ]
+   }
+  ],
+  "hands": [
+   {
+    "id": "minute_disc",
+    "name": "Minute disc",
+    "arbor": "center",
+    "group": "discs",
+    "level": 7,
+    "shape": "disc",
+    "marks": 60,
+    "labels": [
+     "0",
+     "5",
+     "10",
+     "15",
+     "20",
+     "25",
+     "30",
+     "35",
+     "40",
+     "45",
+     "50",
+     "55"
+    ],
+    "indicator": 0,
+    "role": "Ours: 2.8 mm acrylic, Ø47.5, on the transfer tube 0.5 mm above the top plate. One turn an hour; the minutes pass the index at 3 o’clock."
+   },
+   {
+    "id": "hour_disc",
+    "name": "Hour disc",
+    "arbor": "hour",
+    "group": "discs",
+    "level": 7,
+    "shape": "disc",
+    "marks": 12,
+    "labels": [
+     "12",
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9",
+     "10",
+     "11"
+    ],
+    "indicator": 0,
+    "role": "Ours: 2.8 mm acrylic, Ø47.5, fixed on top of the hour wheel. One number passes the index at 3 o’clock each hour."
+   }
+  ],
+  "stages": {
+   "s_barrel": [
+    "sl_barrel_teeth",
+    "sl_center_pinion"
+   ],
+   "s_center": [
+    "sl_center_wheel",
+    "sl_third_pinion"
+   ],
+   "s_third": [
+    "sl_third_wheel",
+    "sl_fourth_pinion"
+   ],
+   "s_fourth": [
+    "sl_fourth_wheel",
+    "sl_escape_pinion"
+   ],
+   "s_minute": [
+    "cannon_pinion",
+    "minute_wheel"
+   ],
+   "s_hour": [
+    "minute_pinion",
+    "hour_wheel"
+   ]
+  },
+  "plate": {
+   "name": "Work surface",
+   "role": "Just the ground under the model; the movement’s real plates are the six drawn parts P1–P6. Yellow outlines: the AXIS case grown 2.5× with its top and bottom bow deepened to 4.25 mm (reference), and the Slava movement’s Ø55.8 footprint at its back and its front (estimated position: rotated so its balance points at the case’s center line)."
+  },
+  "defaults": {
+   "movementD": 150,
+   "minGap": 0.5,
+   "zMax": 40,
+   "view": {
+    "height": 34,
+    "mid": 15
+   },
+   "stages": {
+    "s_barrel": {
+     "m": 0.4,
+     "z": 12.0
+    },
+    "s_center": {
+     "m": 0.3,
+     "z": 10.8
+    },
+    "s_third": {
+     "m": 0.25,
+     "z": 9.6
+    },
+    "s_fourth": {
+     "m": 0.2,
+     "z": 8.5
+    },
+    "s_minute": {
+     "m": 1,
+     "z": 26.3
+    },
+    "s_hour": {
+     "m": 1,
+     "z": 29.6
+    }
+   },
+   "solo": {
+    "sl_escape_wheel": {
+     "m": 0.45,
+     "z": 7.4
+    },
+    "sl_fork_body": {
+     "m": 0.5,
+     "z": 6.4
+    },
+    "sl_balance_wheel": {
+     "m": 0.5,
+     "z": 5.0
+    }
+   },
+   "pos": {
+    "center": [
+     26.25,
+     0.0
+    ],
+    "sl_barrel": [
+     40.83989500128759,
+     -7.489657125089461
+    ],
+    "sl_third": [
+     30.066611652524212,
+     9.459041996619764
+    ],
+    "sl_fourth": [
+     21.07916470978397,
+     8.983860503473114
+    ],
+    "sl_escape": [
+     15.849990911008653,
+     4.956983129849509
+    ],
+    "sl_fork": [
+     12.56152232632968,
+     2.860325225569584
+    ],
+    "sl_balance": [
+     8.075292299461868,
+     7.105427357601002e-15
+    ],
+    "mwheel": [
+     -1.1047619047619044,
+     12.3173455392705
+    ],
+    "hour": [
+     -26.25,
+     0.0
+    ]
+   },
+   "hands": {
+    "minute_disc": {
+     "length": 23.75,
+     "z": 36.2,
+     "t": 2.8
+    },
+    "hour_disc": {
+     "length": 23.75,
+     "z": 36.2,
+     "t": 2.8
+    }
+   },
+   "locks": {
+    "minute_disc": true,
+    "hour_disc": true,
+    "sl_barrel_teeth": true,
+    "sl_center_wheel": true,
+    "sl_third_wheel": true,
+    "sl_fourth_wheel": true,
+    "sl_escape_wheel": true,
+    "sl_fork_body": true,
+    "sl_balance_wheel": true
+   }
+  }
+ }
+}

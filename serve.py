@@ -9,6 +9,8 @@ It serves sim/ like `python3 -m http.server`, and adds:
     PUT /autosave   the sim sends its scene after every change. It is written in one step
                     (never half a file), and a timed backup goes to scenes/autosave-backups/
                     (one every 10 minutes, the newest 30 kept).
+    PUT /autosave?backup=1   the same, plus a backup straight away: the sim sends this just before it
+                    switches to another project, so the scene you leave is always kept.
 
 Why: browser storage alone isn't safe. The Claude app's browser pane loses it when the app
 restarts, and a scene was lost that way on 2026-11-09. The public site (GitHub Pages) has no
@@ -33,11 +35,11 @@ KEEP_BACKUPS = 30
 MAX_BYTES = 8_000_000
 
 
-def backup_if_due():
+def backup_if_due(now=False):
     os.makedirs(BACKUPS, exist_ok=True)
     names = sorted(n for n in os.listdir(BACKUPS) if n.startswith('autosave-') and n.endswith('.json'))
     newest = os.path.getmtime(os.path.join(BACKUPS, names[-1])) if names else 0
-    if time.time() - newest >= BACKUP_EVERY_S:
+    if now or time.time() - newest >= BACKUP_EVERY_S:
         stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         shutil.copyfile(AUTOSAVE, os.path.join(BACKUPS, f'autosave-{stamp}.json'))
         names.append(f'autosave-{stamp}.json')
@@ -88,7 +90,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         with open(tmp, 'wb') as f:
             f.write(body)
         os.replace(tmp, AUTOSAVE)   # one step: the file is always a whole scene
-        backup_if_due()
+        backup_if_due(now='backup=1' in self.path.partition('?')[2].split('&'))
         self.send_response(204)
         self.end_headers()
 
