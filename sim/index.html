@@ -78,6 +78,9 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:0}
 select{background:var(--bg);color:var(--fg);border:1px solid var(--line-2);border-radius:5px;padding:5px 6px;font:12px var(--ui)}
 .toggle{display:flex;align-items:flex-start;gap:6px;color:var(--muted);font-size:12px}
 .toggle input{accent-color:var(--accent);margin-top:2px}
+.sel-labels{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap;row-gap:2px}
+.sel-labels b{color:var(--fg);font-weight:500}
+.sel-labels .h{flex-basis:100%;margin-left:19px;color:var(--dim);font-size:11px}
 dl{margin:0;display:grid;grid-template-columns:auto 1fr;row-gap:5px;column-gap:12px;font:12px var(--mono)}
 dt{color:var(--muted);font-family:var(--ui)}
 dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
@@ -188,7 +191,7 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
     <div class="quick" id="quick" hidden></div>
     <div class="overlay top">mm · Z up, dial side on top · <span id="gridLabel"></span></div>
     <div class="clock"><div class="t" id="dial">12:00:00</div><div class="s"><span class="beat" id="beat"></span><span id="beatTxt"></span></div></div>
-    <div class="overlay bottom" id="hint">hover to identify · click to select · click a label’s padlock to lock or unlock · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom</div>
+    <div class="overlay bottom" id="hint">hover to identify · click to select (its label shows, with a padlock to lock or unlock it) · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom</div>
   </div>
   <aside>
     <header>
@@ -253,7 +256,7 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
       <div class="field"><div class="head"><span>Focus</span></div>
         <select id="focus" aria-label="Focus on a transmission"></select></div>
       <div class="field"><div class="head"><span>Print scale</span><b id="scaleTxt"></b></div><input type="range" id="scale" min="1" max="6" step="0.5" value="1" aria-label="Print scale"></div>
-      <label class="toggle"><input type="checkbox" id="labelsToggle" checked> Labels</label>
+      <label class="toggle"><input type="checkbox" id="labelsToggle"> All labels</label>
       <label class="toggle"><input type="checkbox" id="edges" checked> Edge lines</label>
     </section>
 
@@ -1090,7 +1093,18 @@ let pickables = [];
 let selectedId = null, activeGear = null, hoveredId = null, hoverSource = null;
 let tool = 'select';       // 'select' | 'pin' | 'sketch': what a click in the view does
 let xrayOpacity = null;    // set while sketching so the parts go see-through
-let focus = 'all', edgesOn = true, labelsOn = true, explode = 0;
+let focus = 'all', edgesOn = true, labelsOn = false, explode = 0;
+// Labels: only the selected part's by default (a full set crowds the view); "All labels" brings every one back,
+// e.g. to find parts buried inside bigger ones. Remembered in this browser.
+const LABELS_KEY = 'bspk-studio.labelsAll';
+try { labelsOn = localStorage.getItem(LABELS_KEY) === '1'; } catch (e) {}
+function setLabelsAll(on) {
+  labelsOn = !!on;
+  try { localStorage.setItem(LABELS_KEY, labelsOn ? '1' : '0'); } catch (e) {}
+  const v = document.getElementById('labelsToggle');
+  if (v) v.checked = labelsOn;
+  for (const cb of document.querySelectorAll('[data-labels-all]')) cb.checked = labelsOn;
+}
 
 function makePart({ id, name, group, role, kind, level }) {
   const color = group === 'plate' ? LOOK.plate : LOOK.part;
@@ -2071,7 +2085,7 @@ window.addEventListener('keydown', e => {
 
 // ---------- tools: select, drop pins, sketch ----------
 const HINTS = {
-  select: 'hover to identify · click to select · click a label’s padlock to lock or unlock · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom',
+  select: 'hover to identify · click to select (its label shows, with a padlock to lock or unlock it) · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom',
   pin: 'click any part to drop a numbered pin on that spot · type a note for it in the Pins list · drag empty space to orbit · Esc to stop',
 };
 function setTool(t) {
@@ -2239,13 +2253,16 @@ function updateLabels() {
   const w = stage.clientWidth, h = stage.clientHeight, placed = [];
   for (const id of partOrder) {
     const p = parts[id], el = p.labelEl;
-    if (!labelsOn || !p.visible || (p.kind === 'drawn' && !p.bbox)) { el.hidden = true; continue; }
+    if ((!labelsOn && id !== selectedId) || !p.visible || (p.kind === 'drawn' && !p.bbox)) { el.hidden = true; continue; }
     if (p.kind === 'hand') p.spin.localToWorld(tmpV.copy(p.anchorSpin));
     else p.root.localToWorld(tmpV.copy(p.anchorLocal));
     tmpV.project(camera);
-    if (tmpV.z > 1 || Math.abs(tmpV.x) > 1.2 || Math.abs(tmpV.y) > 1.2) { el.hidden = true; continue; }
+    const sel = id === selectedId;   // the selected part's label stays in view, pinned to the edge, even when its anchor is off screen
+    if (tmpV.z > 1 || (!sel && (Math.abs(tmpV.x) > 1.2 || Math.abs(tmpV.y) > 1.2))) { el.hidden = true; continue; }
     el.hidden = false;
-    const ax = ((tmpV.x + 1) / 2) * w, ay = ((1 - tmpV.y) / 2) * h, lw = el._w || (el._w = el.offsetWidth);
+    const lw = el._w || (el._w = el.offsetWidth);
+    let ax = ((tmpV.x + 1) / 2) * w, ay = ((1 - tmpV.y) / 2) * h;
+    if (sel) { ax = Math.min(Math.max(ax, 4), w - lw - 10); ay = Math.min(Math.max(ay, LABEL_H), h - LABEL_H); }
     // Right of the anchor, else left of it, stepping a row up or down at a time until it doesn't overlap.
     const free = (x, y) => !placed.some(q => x < q.x + q.w + 4 && q.x < x + lw + 4 && Math.abs(y - q.y) < LABEL_H + 2);
     let spot = [ax + 6, ay];
@@ -2700,6 +2717,11 @@ function renderSelected() {
     ul.innerHTML = (mine.length ? mine.map(n => `<li>${n.text}: <b>${clashAmount(n)}</b></li>`) : near.map(n => `<li>${n.text}: <b>${f3(n.clear * sc)} mm</b></li>`)).join('');
     el.appendChild(ul);
   }
+  const lt = document.createElement('label');
+  lt.className = 'toggle sel-labels';
+  lt.innerHTML = `<input type="checkbox" data-labels-all ${labelsOn ? 'checked' : ''}><b>All labels</b><span class="h">Off: only the selected part’s label shows. On: every part’s, to find parts buried inside bigger ones.</span>`;
+  lt.querySelector('input').addEventListener('change', e => setLabelsAll(e.target.checked));
+  el.appendChild(lt);
 }
 document.getElementById('selected').addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
@@ -3416,7 +3438,8 @@ document.getElementById('stepped').addEventListener('change', e => { stepped = e
 document.getElementById('explode').addEventListener('input', e => setExplode(+e.target.value / 100));
 document.getElementById('scale').addEventListener('input', e => setScale(+e.target.value));
 document.getElementById('focus').addEventListener('change', e => setFocus(e.target.value));
-document.getElementById('labelsToggle').addEventListener('change', e => { labelsOn = e.target.checked; });
+document.getElementById('labelsToggle').checked = labelsOn;
+document.getElementById('labelsToggle').addEventListener('change', e => setLabelsAll(e.target.checked));
 document.getElementById('edges').addEventListener('change', e => { edgesOn = e.target.checked; refreshLook(); });
 document.getElementById('fit').addEventListener('click', fit);
 document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));

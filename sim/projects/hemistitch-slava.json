@@ -1,8 +1,174 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-11T00:00:00.000Z",
+ "savedAt": "2026-11-13T18:00:00.000Z",
  "state": {
+  "movementD": 150,
+  "minGap": 0.5,
+  "stages": {
+   "s_barrel": {
+    "gears": [
+     "sl_barrel_teeth",
+     "sl_center_pinion"
+    ],
+    "m": 0.33,
+    "z": 12
+   },
+   "s_center": {
+    "gears": [
+     "sl_center_wheel",
+     "sl_third_pinion"
+    ],
+    "m": 0.3,
+    "z": 10.8
+   },
+   "s_third": {
+    "gears": [
+     "sl_third_wheel",
+     "sl_fourth_pinion"
+    ],
+    "m": 0.25,
+    "z": 9.6
+   },
+   "s_fourth": {
+    "gears": [
+     "sl_fourth_wheel",
+     "sl_escape_pinion"
+    ],
+    "m": 0.2,
+    "z": 8.5
+   },
+   "s_minute": {
+    "gears": [
+     "cannon_pinion",
+     "minute_wheel"
+    ],
+    "m": 1,
+    "z": 26.3
+   },
+   "s_hour": {
+    "gears": [
+     "minute_pinion",
+     "hour_wheel"
+    ],
+    "m": 1,
+    "z": 29.7
+   }
+  },
+  "solo": {
+   "sl_escape_wheel": {
+    "m": 0.45,
+    "z": 7.4
+   },
+   "sl_fork_body": {
+    "m": 0.5,
+    "z": 6.4
+   },
+   "sl_balance_wheel": {
+    "m": 0.5,
+    "z": 5
+   }
+  },
+  "pos": {
+   "center": [
+    26.25,
+    6.217248937900877e-15
+   ],
+   "sl_barrel": [
+    38.286663376062265,
+    -6.178967128198806
+   ],
+   "sl_third": [
+    30.066611652524212,
+    9.459041996619764
+   ],
+   "sl_fourth": [
+    21.07916470978397,
+    8.983860503473114
+   ],
+   "sl_escape": [
+    15.849990911008653,
+    4.956983129849509
+   ],
+   "sl_fork": [
+    12.56152232632968,
+    2.860325225569584
+   ],
+   "sl_balance": [
+    8.075292299461868,
+    7.105427357601002e-15
+   ],
+   "mwheel": [
+    -1.104761904761908,
+    12.317345539270502
+   ],
+   "hour": [
+    -26.25,
+    -1.7763568394002505e-15
+   ]
+  },
+  "thick": {
+   "sl_barrel_teeth": 0.6,
+   "sl_center_pinion": 1,
+   "sl_center_wheel": 0.4,
+   "cannon_pinion": 2.8,
+   "sl_third_pinion": 0.8,
+   "sl_third_wheel": 0.4,
+   "sl_fourth_pinion": 0.8,
+   "sl_fourth_wheel": 0.3,
+   "sl_escape_pinion": 0.6,
+   "sl_escape_wheel": 0.4,
+   "sl_fork_body": 0.5,
+   "sl_balance_wheel": 0.8,
+   "minute_wheel": 2.8,
+   "minute_pinion": 2.8,
+   "hour_wheel": 2.8
+  },
+  "hands": {
+   "minute_disc": {
+    "length": 23.75,
+    "z": 33.0,
+    "t": 5.1
+   },
+   "hour_disc": {
+    "length": 23.75,
+    "z": 33.0,
+    "t": 5.1
+   }
+  },
+  "locks": {
+   "sl_barrel_teeth": true,
+   "sl_third_wheel": true,
+   "sl_fourth_wheel": true,
+   "sl_escape_wheel": true,
+   "sl_fork_body": true,
+   "sl_balance_wheel": true
+  },
+  "info": {
+   "D7": {
+    "name": "Right top plate (one piece with P6)",
+    "note": "Adam: “new additional bridge plate for easier access and assembly.. this one will boolean with the plate above it.” (typed 2026-11-13; it landed on the Work surface, moved here). Claude: cut it flat from 1/4\" faced to 3.3 and solvent-weld it under P6 (dowels line the two up), so both stay one-sided cuts on the Z1; in the sim it stays its own drawn part. Screws C4–C6 pass through it."
+   },
+   "D5": {
+    "name": "P5 crescent",
+    "note": "Claude: a bridge between the minute wheel and the right top plate, around the transfer pinion. A steady pin in P4 locates it, so it sits still while the top plate goes on; screw C7 (from P6’s top, through it and P4 into P3) then clamps it. 0.3 mm gap to the right top plate. Needs Adam: what it should carry, if anything."
+   },
+   "D8": {
+    "name": "Left bridge",
+    "note": "Claude: fills the left of the motion layer around the minute wheel (tips + 0.75). The hour rod passes through a slot at its edge: the minute wheel is too close for a bearing here, so the hour rod runs in bearings in P2 and P4 instead. Clamped by screws C1–C3, located by dowel 1. 0.3 mm gap to the right top plate."
+   },
+   "D6": {
+    "name": "P6 top plate",
+    "note": "Claude: recessed for both discs (0.5 under each, 0.7 round the rim) with openings the disc units drop through. The minute wheel arbor’s top pivot is a plain 3.05 hole between the recesses (no room for a bearing; it turns once in 4 hours)."
+   },
+   "hour": {
+    "note": "Hour wheel and hour disc are one piece, bonded through a Ø30 × 0.5 hub so the disc clears the minute pinion by 0.5: the unit drops in from the top and presses onto the hour rod like a hand. The rod runs in bearings in P2 and P4 (12.5 mm apart), with a collar above P4’s bearing for end shake."
+   },
+   "center": {
+    "note": "Transfer pinion (12 teeth, 2.8 thick, meshing with the minute wheel) and the minute disc are one piece, joined by a hub up through P6 (29.1–33.0, under Ø14.6 so it passes the opening; the sim has no hub part, so it shows a gap): it drops in from the top, through P6 and the crescent, onto the transfer tube that grips the Slava center arbor. Turning the disc sets the time."
+   }
+  },
+  "pins": [],
   "sketches": [
    {
     "id": "K1",
@@ -15,72 +181,402 @@
     "points": [
      {
       "u": 62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": 40.5,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": -26.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": -33.3211,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": -40.5,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": -33.3211,
+      "v": 0.0,
       "smooth": true
      },
      {
       "u": 62.5,
-      "v": -26.25,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -4.7344,
       "smooth": true
      }
     ]
@@ -278,72 +774,402 @@
     "points": [
      {
       "u": 62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": 40.5,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": -26.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": -33.3211,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": -40.5,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": -33.3211,
+      "v": 0.0,
       "smooth": true
      },
      {
       "u": 62.5,
-      "v": -26.25,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -4.7344,
       "smooth": true
      }
     ]
@@ -359,72 +1185,402 @@
     "points": [
      {
       "u": 62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": 40.5,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": -26.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": -33.3211,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": -40.5,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": -33.3211,
+      "v": 0.0,
       "smooth": true
      },
      {
       "u": 62.5,
-      "v": -26.25,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -4.7344,
       "smooth": true
      }
     ]
@@ -440,72 +1596,402 @@
     "points": [
      {
       "u": 62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": 40.5,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": -26.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": -33.3211,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": -40.5,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": -33.3211,
+      "v": 0.0,
       "smooth": true
      },
      {
       "u": 62.5,
-      "v": -26.25,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -4.7344,
       "smooth": true
      }
     ]
@@ -521,79 +2007,409 @@
     "points": [
      {
       "u": 62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": 40.5,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": -26.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": -33.3211,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": -40.5,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": -33.3211,
+      "v": 0.0,
       "smooth": true
      },
      {
       "u": 62.5,
-      "v": -26.25,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -4.7344,
       "smooth": true
      }
     ]
    },
    {
     "id": "K8",
-    "name": "P5 motion plate outline",
+    "name": "P5 crescent outline",
     "plane": {
      "axis": "z",
      "offset": 26.05
@@ -601,74 +2417,254 @@
     "closed": true,
     "points": [
      {
-      "u": 62.5,
-      "v": 26.25,
+      "u": 11.37,
+      "v": 40.3078,
+      "smooth": false
+     },
+     {
+      "u": 20.4479,
+      "v": 25.8519,
+      "smooth": false
+     },
+     {
+      "u": 22.0591,
+      "v": 22.8596,
       "smooth": true
      },
      {
-      "u": 59.5711,
-      "v": 33.3211,
+      "u": 23.2572,
+      "v": 19.6794,
       "smooth": true
      },
      {
-      "u": 52.5,
-      "v": 36.25,
+      "u": 24.0208,
+      "v": 16.3678,
       "smooth": true
      },
      {
-      "u": 0,
-      "v": 40.5,
+      "u": 24.3365,
+      "v": 12.9841,
       "smooth": true
      },
      {
-      "u": -52.5,
-      "v": 36.25,
+      "u": 24.1985,
+      "v": 9.5885,
       "smooth": true
      },
      {
-      "u": -59.5711,
-      "v": 33.3211,
+      "u": 23.6093,
+      "v": 6.2415,
       "smooth": true
      },
      {
-      "u": -62.5,
-      "v": 26.25,
+      "u": 22.5795,
+      "v": 3.0029,
       "smooth": true
      },
      {
-      "u": -62.5,
-      "v": -26.25,
+      "u": 21.1273,
+      "v": -0.0697,
       "smooth": true
      },
      {
-      "u": -59.5711,
-      "v": -33.3211,
+      "u": 19.2787,
+      "v": -2.9214,
       "smooth": true
      },
      {
-      "u": -52.5,
-      "v": -36.25,
+      "u": 17.0666,
+      "v": -5.5013,
       "smooth": true
      },
      {
-      "u": 0,
-      "v": -40.5,
+      "u": 14.5305,
+      "v": -7.7635,
       "smooth": true
      },
      {
-      "u": 52.5,
-      "v": -36.25,
+      "u": 11.7156,
+      "v": -9.6677,
       "smooth": true
      },
      {
-      "u": 59.5711,
-      "v": -33.3211,
+      "u": 8.6721,
+      "v": -11.1798,
       "smooth": true
      },
      {
-      "u": 62.5,
-      "v": -26.25,
+      "u": 5.4543,
+      "v": -12.2729,
+      "smooth": false
+     },
+     {
+      "u": 7.2081,
+      "v": -15.1152,
       "smooth": true
+     },
+     {
+      "u": 10.2591,
+      "v": -16.5436,
+      "smooth": true
+     },
+     {
+      "u": 13.5882,
+      "v": -17.2259,
+      "smooth": true
+     },
+     {
+      "u": 16.8912,
+      "v": -18.0183,
+      "smooth": true
+     },
+     {
+      "u": 20.049,
+      "v": -19.2725,
+      "smooth": true
+     },
+     {
+      "u": 23.2632,
+      "v": -20.3721,
+      "smooth": true
+     },
+     {
+      "u": 26.6002,
+      "v": -20.9913,
+      "smooth": true
+     },
+     {
+      "u": 29.991,
+      "v": -20.9246,
+      "smooth": true
+     },
+     {
+      "u": 33.2867,
+      "v": -20.1227,
+      "smooth": true
+     },
+     {
+      "u": 36.3564,
+      "v": -18.676,
+      "smooth": true
+     },
+     {
+      "u": 39.1105,
+      "v": -16.693,
+      "smooth": true
+     },
+     {
+      "u": 41.3984,
+      "v": -14.1897,
+      "smooth": true
+     },
+     {
+      "u": 43.0162,
+      "v": -11.2123,
+      "smooth": true
+     },
+     {
+      "u": 43.791,
+      "v": -7.9123,
+      "smooth": true
+     },
+     {
+      "u": 43.8393,
+      "v": -4.5188,
+      "smooth": true
+     },
+     {
+      "u": 43.3763,
+      "v": -1.1535,
+      "smooth": true
+     },
+     {
+      "u": 42.6171,
+      "v": 2.1589,
+      "smooth": true
+     },
+     {
+      "u": 41.7164,
+      "v": 5.4364,
+      "smooth": true
+     },
+     {
+      "u": 40.8114,
+      "v": 8.7126,
+      "smooth": true
+     },
+     {
+      "u": 40.0056,
+      "v": 12.0145,
+      "smooth": true
+     },
+     {
+      "u": 39.3333,
+      "v": 15.3462,
+      "smooth": true
+     },
+     {
+      "u": 38.7125,
+      "v": 18.688,
+      "smooth": true
+     },
+     {
+      "u": 37.9591,
+      "v": 22.0017,
+      "smooth": true
+     },
+     {
+      "u": 36.8954,
+      "v": 25.2277,
+      "smooth": true
+     },
+     {
+      "u": 35.3999,
+      "v": 28.2736,
+      "smooth": true
+     },
+     {
+      "u": 33.2344,
+      "v": 30.8839,
+      "smooth": true
+     },
+     {
+      "u": 30.7904,
+      "v": 33.2456,
+      "smooth": true
+     },
+     {
+      "u": 28.8191,
+      "v": 35.9893,
+      "smooth": true
+     },
+     {
+      "u": 28.2842,
+      "v": 39.3087,
+      "smooth": false
+     },
+     {
+      "u": 24.9057,
+      "v": 39.5768,
+      "smooth": true
+     },
+     {
+      "u": 21.5247,
+      "v": 39.8106,
+      "smooth": true
+     },
+     {
+      "u": 18.1415,
+      "v": 40.0104,
+      "smooth": true
+     },
+     {
+      "u": 14.7565,
+      "v": 40.1762,
+      "smooth": true
+     },
+     {
+      "u": 11.37,
+      "v": 40.3078,
+      "smooth": false
      }
     ]
    },
@@ -683,73 +2679,1196 @@
     "points": [
      {
       "u": 62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": 40.5,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": 36.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": 33.3211,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": 26.25,
-      "smooth": true
-     },
-     {
-      "u": -62.5,
-      "v": -26.25,
-      "smooth": true
-     },
-     {
-      "u": -59.5711,
-      "v": -33.3211,
-      "smooth": true
-     },
-     {
-      "u": -52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 0,
-      "v": -40.5,
-      "smooth": true
-     },
-     {
-      "u": 52.5,
-      "v": -36.25,
-      "smooth": true
-     },
-     {
-      "u": 59.5711,
-      "v": -33.3211,
+      "v": 0.0,
       "smooth": true
      },
      {
       "u": 62.5,
-      "v": -26.25,
+      "v": 4.7344,
       "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": 40.5,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": 40.4667,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": 40.3667,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": 40.2002,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": 39.9671,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": 39.6675,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": 39.3013,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": 38.8689,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": 38.37,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": 37.805,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": 37.1739,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": 36.4769,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": 35.4279,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": 32.608,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": 28.3894,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 0.0,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -4.7344,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": -62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": -60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": -56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": -51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": -47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": -42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": -37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": -33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": -28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": -23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": -18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": -14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": -9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": -4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 0.0,
+      "v": -40.5,
+      "smooth": true
+     },
+     {
+      "u": 4.7342,
+      "v": -40.4667,
+      "smooth": true
+     },
+     {
+      "u": 9.4675,
+      "v": -40.3667,
+      "smooth": true
+     },
+     {
+      "u": 14.1988,
+      "v": -40.2002,
+      "smooth": true
+     },
+     {
+      "u": 18.9274,
+      "v": -39.9671,
+      "smooth": true
+     },
+     {
+      "u": 23.6522,
+      "v": -39.6675,
+      "smooth": true
+     },
+     {
+      "u": 28.3724,
+      "v": -39.3013,
+      "smooth": true
+     },
+     {
+      "u": 33.0869,
+      "v": -38.8689,
+      "smooth": true
+     },
+     {
+      "u": 37.7948,
+      "v": -38.37,
+      "smooth": true
+     },
+     {
+      "u": 42.4953,
+      "v": -37.805,
+      "smooth": true
+     },
+     {
+      "u": 47.1874,
+      "v": -37.1739,
+      "smooth": true
+     },
+     {
+      "u": 51.8701,
+      "v": -36.4769,
+      "smooth": true
+     },
+     {
+      "u": 56.4706,
+      "v": -35.4279,
+      "smooth": true
+     },
+     {
+      "u": 60.2185,
+      "v": -32.608,
+      "smooth": true
+     },
+     {
+      "u": 62.2685,
+      "v": -28.3894,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -23.6718,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -18.9374,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -14.2031,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -9.4687,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -4.7344,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K10",
+    "name": "Right top plate outline",
+    "plane": {
+     "axis": "z",
+     "offset": 26.05
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 28.5838,
+      "v": 39.2834,
+      "smooth": false
+     },
+     {
+      "u": 29.1697,
+      "v": 35.9485,
+      "smooth": true
+     },
+     {
+      "u": 31.2236,
+      "v": 33.2282,
+      "smooth": true
+     },
+     {
+      "u": 33.6899,
+      "v": 30.8477,
+      "smooth": true
+     },
+     {
+      "u": 35.8246,
+      "v": 28.1752,
+      "smooth": true
+     },
+     {
+      "u": 37.2754,
+      "v": 25.0736,
+      "smooth": true
+     },
+     {
+      "u": 38.3215,
+      "v": 21.8113,
+      "smooth": true
+     },
+     {
+      "u": 39.0603,
+      "v": 18.4646,
+      "smooth": true
+     },
+     {
+      "u": 39.6856,
+      "v": 15.0941,
+      "smooth": true
+     },
+     {
+      "u": 40.3756,
+      "v": 11.7365,
+      "smooth": true
+     },
+     {
+      "u": 41.2025,
+      "v": 8.41,
+      "smooth": true
+     },
+     {
+      "u": 42.1209,
+      "v": 5.1073,
+      "smooth": true
+     },
+     {
+      "u": 43.0185,
+      "v": 1.7991,
+      "smooth": true
+     },
+     {
+      "u": 43.7569,
+      "v": -1.5477,
+      "smooth": true
+     },
+     {
+      "u": 44.1623,
+      "v": -4.9492,
+      "smooth": true
+     },
+     {
+      "u": 44.042,
+      "v": -8.3696,
+      "smooth": true
+     },
+     {
+      "u": 43.1497,
+      "v": -11.6692,
+      "smooth": true
+     },
+     {
+      "u": 41.447,
+      "v": -14.6322,
+      "smooth": true
+     },
+     {
+      "u": 39.086,
+      "v": -17.1072,
+      "smooth": true
+     },
+     {
+      "u": 36.2801,
+      "v": -19.0672,
+      "smooth": true
+     },
+     {
+      "u": 33.165,
+      "v": -20.485,
+      "smooth": true
+     },
+     {
+      "u": 29.8296,
+      "v": -21.2457,
+      "smooth": true
+     },
+     {
+      "u": 26.409,
+      "v": -21.278,
+      "smooth": true
+     },
+     {
+      "u": 23.0489,
+      "v": -20.6227,
+      "smooth": true
+     },
+     {
+      "u": 19.8116,
+      "v": -19.5012,
+      "smooth": true
+     },
+     {
+      "u": 16.6218,
+      "v": -18.251,
+      "smooth": true
+     },
+     {
+      "u": 13.2854,
+      "v": -17.4738,
+      "smooth": true
+     },
+     {
+      "u": 9.9341,
+      "v": -16.7604,
+      "smooth": true
+     },
+     {
+      "u": 6.8954,
+      "v": -15.2448,
+      "smooth": true
+     },
+     {
+      "u": 5.1631,
+      "v": -12.3488,
+      "smooth": false
+     },
+     {
+      "u": 2.5225,
+      "v": -12.8728,
+      "smooth": true
+     },
+     {
+      "u": -0.1586,
+      "v": -13.1151,
+      "smooth": true
+     },
+     {
+      "u": -2.8504,
+      "v": -13.0727,
+      "smooth": true
+     },
+     {
+      "u": -5.5226,
+      "v": -12.7463,
+      "smooth": false
+     },
+     {
+      "u": -7.3803,
+      "v": -40.419,
+      "smooth": false
+     },
+     {
+      "u": -3.9494,
+      "v": -40.4768,
+      "smooth": true
+     },
+     {
+      "u": -0.5182,
+      "v": -40.4996,
+      "smooth": true
+     },
+     {
+      "u": 2.9131,
+      "v": -40.4874,
+      "smooth": true
+     },
+     {
+      "u": 6.3441,
+      "v": -40.4402,
+      "smooth": true
+     },
+     {
+      "u": 9.7745,
+      "v": -40.3579,
+      "smooth": true
+     },
+     {
+      "u": 13.2038,
+      "v": -40.2407,
+      "smooth": true
+     },
+     {
+      "u": 16.6318,
+      "v": -40.0886,
+      "smooth": true
+     },
+     {
+      "u": 20.058,
+      "v": -39.9014,
+      "smooth": true
+     },
+     {
+      "u": 23.4821,
+      "v": -39.6794,
+      "smooth": true
+     },
+     {
+      "u": 26.9038,
+      "v": -39.4224,
+      "smooth": true
+     },
+     {
+      "u": 30.3227,
+      "v": -39.1305,
+      "smooth": true
+     },
+     {
+      "u": 33.7385,
+      "v": -38.8038,
+      "smooth": true
+     },
+     {
+      "u": 37.1507,
+      "v": -38.4422,
+      "smooth": true
+     },
+     {
+      "u": 40.559,
+      "v": -38.0459,
+      "smooth": true
+     },
+     {
+      "u": 43.9632,
+      "v": -37.6148,
+      "smooth": true
+     },
+     {
+      "u": 47.3628,
+      "v": -37.149,
+      "smooth": true
+     },
+     {
+      "u": 50.7574,
+      "v": -36.6486,
+      "smooth": true
+     },
+     {
+      "u": 54.1467,
+      "v": -36.1132,
+      "smooth": true
+     },
+     {
+      "u": 57.3691,
+      "v": -34.984,
+      "smooth": true
+     },
+     {
+      "u": 60.0237,
+      "v": -32.8366,
+      "smooth": true
+     },
+     {
+      "u": 61.8012,
+      "v": -29.9213,
+      "smooth": true
+     },
+     {
+      "u": 62.4941,
+      "v": -26.5779,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -23.1466,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -19.7153,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -16.2839,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -12.8526,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -9.4212,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -5.9899,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": -2.5585,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 0.8728,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 4.3041,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 7.7355,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 11.1668,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 14.5982,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 18.0295,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 21.4609,
+      "smooth": true
+     },
+     {
+      "u": 62.5,
+      "v": 24.8922,
+      "smooth": true
+     },
+     {
+      "u": 62.2852,
+      "v": 28.3087,
+      "smooth": true
+     },
+     {
+      "u": 61.0223,
+      "v": 31.481,
+      "smooth": true
+     },
+     {
+      "u": 58.7653,
+      "v": 34.0431,
+      "smooth": true
+     },
+     {
+      "u": 55.7782,
+      "v": 35.697,
+      "smooth": true
+     },
+     {
+      "u": 52.4232,
+      "v": 36.39,
+      "smooth": true
+     },
+     {
+      "u": 49.0311,
+      "v": 36.9075,
+      "smooth": true
+     },
+     {
+      "u": 45.6339,
+      "v": 37.3903,
+      "smooth": true
+     },
+     {
+      "u": 42.232,
+      "v": 37.8385,
+      "smooth": true
+     },
+     {
+      "u": 38.8256,
+      "v": 38.2518,
+      "smooth": true
+     },
+     {
+      "u": 35.4153,
+      "v": 38.6305,
+      "smooth": true
+     },
+     {
+      "u": 32.0012,
+      "v": 38.9744,
+      "smooth": true
+     }
+    ]
+   },
+   {
+    "id": "K11",
+    "name": "Left bridge outline",
+    "plane": {
+     "axis": "z",
+     "offset": 26.05
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": -16.8037,
+      "v": 40.08,
+      "smooth": false
+     },
+     {
+      "u": -20.2335,
+      "v": 39.8909,
+      "smooth": true
+     },
+     {
+      "u": -23.6612,
+      "v": 39.6669,
+      "smooth": true
+     },
+     {
+      "u": -27.0864,
+      "v": 39.4077,
+      "smooth": true
+     },
+     {
+      "u": -30.5088,
+      "v": 39.1136,
+      "smooth": true
+     },
+     {
+      "u": -33.9281,
+      "v": 38.7846,
+      "smooth": true
+     },
+     {
+      "u": -37.3438,
+      "v": 38.4207,
+      "smooth": true
+     },
+     {
+      "u": -40.7555,
+      "v": 38.022,
+      "smooth": true
+     },
+     {
+      "u": -44.1631,
+      "v": 37.5884,
+      "smooth": true
+     },
+     {
+      "u": -47.566,
+      "v": 37.12,
+      "smooth": true
+     },
+     {
+      "u": -50.964,
+      "v": 36.6169,
+      "smooth": true
+     },
+     {
+      "u": -54.356,
+      "v": 36.0756,
+      "smooth": true
+     },
+     {
+      "u": -57.5569,
+      "v": 34.8767,
+      "smooth": true
+     },
+     {
+      "u": -60.1667,
+      "v": 32.6694,
+      "smooth": true
+     },
+     {
+      "u": -61.8811,
+      "v": 29.7123,
+      "smooth": true
+     },
+     {
+      "u": -62.4989,
+      "v": 26.3505,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 22.9155,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 19.4805,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 16.0454,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 12.6104,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 9.1754,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 5.7403,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": 2.3053,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -1.1297,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -4.5648,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -7.9998,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -11.4348,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -14.8699,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -18.3049,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -21.7399,
+      "smooth": true
+     },
+     {
+      "u": -62.5,
+      "v": -25.1749,
+      "smooth": true
+     },
+     {
+      "u": -62.2225,
+      "v": -28.5881,
+      "smooth": true
+     },
+     {
+      "u": -60.8667,
+      "v": -31.7258,
+      "smooth": true
+     },
+     {
+      "u": -58.5339,
+      "v": -34.2241,
+      "smooth": true
+     },
+     {
+      "u": -55.4957,
+      "v": -35.7901,
+      "smooth": true
+     },
+     {
+      "u": -52.1257,
+      "v": -36.4369,
+      "smooth": true
+     },
+     {
+      "u": -48.7295,
+      "v": -36.9518,
+      "smooth": true
+     },
+     {
+      "u": -45.3282,
+      "v": -37.432,
+      "smooth": true
+     },
+     {
+      "u": -41.9222,
+      "v": -37.8775,
+      "smooth": true
+     },
+     {
+      "u": -38.5118,
+      "v": -38.2882,
+      "smooth": true
+     },
+     {
+      "u": -35.0974,
+      "v": -38.664,
+      "smooth": true
+     },
+     {
+      "u": -31.6794,
+      "v": -39.005,
+      "smooth": true
+     },
+     {
+      "u": -28.258,
+      "v": -39.3109,
+      "smooth": true
+     },
+     {
+      "u": -24.8337,
+      "v": -39.5821,
+      "smooth": true
+     },
+     {
+      "u": -21.4068,
+      "v": -39.8182,
+      "smooth": true
+     },
+     {
+      "u": -17.9777,
+      "v": -40.0192,
+      "smooth": true
+     },
+     {
+      "u": -14.5467,
+      "v": -40.1853,
+      "smooth": true
+     },
+     {
+      "u": -11.1142,
+      "v": -40.3163,
+      "smooth": true
+     },
+     {
+      "u": -7.6805,
+      "v": -40.4123,
+      "smooth": false
+     },
+     {
+      "u": -5.8196,
+      "v": -12.6921,
+      "smooth": false
+     },
+     {
+      "u": -8.9765,
+      "v": -11.8847,
+      "smooth": true
+     },
+     {
+      "u": -12.0043,
+      "v": -10.6805,
+      "smooth": true
+     },
+     {
+      "u": -14.8535,
+      "v": -9.0994,
+      "smooth": true
+     },
+     {
+      "u": -17.4773,
+      "v": -7.1671,
+      "smooth": true
+     },
+     {
+      "u": -19.8326,
+      "v": -4.9154,
+      "smooth": true
+     },
+     {
+      "u": -21.881,
+      "v": -2.3813,
+      "smooth": true
+     },
+     {
+      "u": -23.5888,
+      "v": 0.3938,
+      "smooth": true
+     },
+     {
+      "u": -24.928,
+      "v": 3.3644,
+      "smooth": true
+     },
+     {
+      "u": -25.8767,
+      "v": 6.4817,
+      "smooth": true
+     },
+     {
+      "u": -26.4193,
+      "v": 9.6947,
+      "smooth": true
+     },
+     {
+      "u": -26.5469,
+      "v": 12.9507,
+      "smooth": true
+     },
+     {
+      "u": -26.2574,
+      "v": 16.1963,
+      "smooth": true
+     },
+     {
+      "u": -25.5556,
+      "v": 19.3783,
+      "smooth": true
+     },
+     {
+      "u": -24.453,
+      "v": 22.4446,
+      "smooth": false
+     },
+     {
+      "u": -16.8037,
+      "v": 40.08,
+      "smooth": false
+     }
+    ]
+   },
+   {
+    "id": "K12",
+    "name": "Left bridge: hour rod slot (opens into the minute wheel space)",
+    "plane": {
+     "axis": "z",
+     "offset": 26.05
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": -25.3746,
+      "v": -1.7871,
+      "smooth": false
+     },
+     {
+      "u": -21.7824,
+      "v": -0.0275,
+      "smooth": false
+     },
+     {
+      "u": -23.5332,
+      "v": 3.5467,
+      "smooth": false
+     },
+     {
+      "u": -27.1254,
+      "v": 1.7871,
+      "smooth": false
      }
     ]
    }
@@ -789,22 +3908,22 @@
       "csk": null,
       "axis": "sl_barrel",
       "at": [
-       40.83989500128759,
-       -7.489657125089461
+       38.286663376062265,
+       -6.178967128198806
       ],
       "d": 8
      },
      {
       "id": "h3",
       "kind": "hole",
-      "name": "Winding key access · alarm (estimated)",
+      "name": "Winding key access · alarm (estimated, kept 2 mm off the window)",
       "from": "front",
       "depth": null,
       "seat": null,
       "csk": null,
       "at": [
-       18.25,
-       11.3
+       20.454,
+       13.748
       ],
       "d": 8
      },
@@ -961,9 +4080,9 @@
      {
       "id": "h2",
       "kind": "pilot",
-      "name": "Screw A1 · pilot",
+      "name": "Screw A1 · pilot (through)",
       "from": "front",
-      "depth": 6.5,
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -975,9 +4094,9 @@
      {
       "id": "h3",
       "kind": "pilot",
-      "name": "Screw A2 · pilot",
+      "name": "Screw A2 · pilot (through)",
       "from": "front",
-      "depth": 6.5,
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -989,9 +4108,9 @@
      {
       "id": "h4",
       "kind": "pilot",
-      "name": "Screw A3 · pilot",
+      "name": "Screw A3 · pilot (through)",
       "from": "front",
-      "depth": 6.5,
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1003,9 +4122,9 @@
      {
       "id": "h5",
       "kind": "pilot",
-      "name": "Screw A4 · pilot",
+      "name": "Screw A4 · pilot (through)",
       "from": "front",
-      "depth": 6.5,
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1017,9 +4136,9 @@
      {
       "id": "h6",
       "kind": "pilot",
-      "name": "Screw A5 · pilot",
+      "name": "Screw A5 · pilot (through)",
       "from": "front",
-      "depth": 6.5,
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1031,9 +4150,9 @@
      {
       "id": "h7",
       "kind": "pilot",
-      "name": "Screw A6 · pilot",
+      "name": "Screw A6 · pilot (through)",
       "from": "front",
-      "depth": 6.5,
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1045,9 +4164,9 @@
      {
       "id": "h8",
       "kind": "pilot",
-      "name": "Screw B1 · pilot",
-      "from": "back",
-      "depth": 6.5,
+      "name": "Screw B1 · pilot (through)",
+      "from": "front",
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1059,9 +4178,9 @@
      {
       "id": "h9",
       "kind": "pilot",
-      "name": "Screw B2 · pilot",
-      "from": "back",
-      "depth": 6.5,
+      "name": "Screw B2 · pilot (through)",
+      "from": "front",
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1073,9 +4192,9 @@
      {
       "id": "h10",
       "kind": "pilot",
-      "name": "Screw B3 · pilot",
-      "from": "back",
-      "depth": 6.5,
+      "name": "Screw B3 · pilot (through)",
+      "from": "front",
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1087,9 +4206,9 @@
      {
       "id": "h11",
       "kind": "pilot",
-      "name": "Screw B4 · pilot",
-      "from": "back",
-      "depth": 6.5,
+      "name": "Screw B4 · pilot (through)",
+      "from": "front",
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
@@ -1101,28 +4220,28 @@
      {
       "id": "h12",
       "kind": "pilot",
-      "name": "Screw B5 · pilot",
-      "from": "back",
-      "depth": 6.5,
+      "name": "Screw B5 · pilot (through)",
+      "from": "front",
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
        40,
-       33
+       31.5
       ],
       "d": 2.5
      },
      {
       "id": "h13",
       "kind": "pilot",
-      "name": "Screw B6 · pilot",
-      "from": "back",
-      "depth": 6.5,
+      "name": "Screw B6 · pilot (through)",
+      "from": "front",
+      "depth": null,
       "seat": null,
       "csk": null,
       "at": [
        40,
-       -33
+       -31.5
       ],
       "d": 2.5
      },
@@ -1153,6 +4272,24 @@
        -28
       ],
       "d": 3.0
+     },
+     {
+      "id": "h16",
+      "kind": "bearing",
+      "name": "Bearing · hour rod (lowest; the hour disc unit drops in from the top)",
+      "from": "back",
+      "depth": 2.5,
+      "seat": {
+       "d": 7.2,
+       "depth": 0.6
+      },
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       -0.0
+      ],
+      "d": 6.0
      }
     ]
    },
@@ -1256,7 +4393,7 @@
       },
       "at": [
        40,
-       33
+       31.5
       ],
       "d": 3.4
      },
@@ -1272,7 +4409,7 @@
       },
       "at": [
        40,
-       -33
+       -31.5
       ],
       "d": 3.4
      },
@@ -1387,6 +4524,35 @@
        -28
       ],
       "d": 3.0
+     },
+     {
+      "id": "h16",
+      "kind": "clear",
+      "name": "Hour rod clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       -0.0
+      ],
+      "d": 3.5
+     },
+     {
+      "id": "h17",
+      "kind": "pilot",
+      "name": "Screw C7 · pilot (holds the crescent)",
+      "from": "back",
+      "depth": 6.5,
+      "seat": null,
+      "csk": null,
+      "at": [
+       23,
+       34
+      ],
+      "d": 2.5
      }
     ]
    },
@@ -1579,12 +4745,55 @@
        -28
       ],
       "d": 3.0
+     },
+     {
+      "id": "h13",
+      "kind": "clear",
+      "name": "Hour rod clearance (the rod runs on down to P2)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       -0.0
+      ],
+      "d": 3.5
+     },
+     {
+      "id": "h14",
+      "kind": "hole",
+      "name": "Screw C7 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       23,
+       34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h15",
+      "kind": "dowel",
+      "name": "Steady pin for the crescent (3 mm rod, 5 long, pressed in)",
+      "from": "back",
+      "depth": 2.0,
+      "seat": null,
+      "csk": null,
+      "at": [
+       34,
+       -12
+      ],
+      "d": 3.0
      }
     ]
    },
    {
     "id": "D5",
-    "name": "P5 motion plate",
+    "name": "P5 crescent",
     "sketch": "K8",
     "thickness": 3.3,
     "grow": "plus",
@@ -1594,22 +4803,7 @@
      {
       "id": "h1",
       "kind": "hole",
-      "name": "Minute wheel pocket (48 teeth + 0.5)",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "axis": "mwheel",
-      "at": [
-       -1.1047619047619044,
-       12.3173455392705
-      ],
-      "d": 50.4
-     },
-     {
-      "id": "h2",
-      "kind": "hole",
-      "name": "Transfer gear pocket (12 teeth + 0.5)",
+      "name": "Transfer pinion opening (12 teeth, tips + 0.75): the minute disc unit drops through",
       "from": "front",
       "depth": null,
       "seat": null,
@@ -1619,134 +4813,35 @@
        26.25,
        0.0
       ],
-      "d": 15.6
+      "d": 16.1
+     },
+     {
+      "id": "h2",
+      "kind": "hole",
+      "name": "Screw C7 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       23,
+       34
+      ],
+      "d": 3.4
      },
      {
       "id": "h3",
-      "kind": "clear",
-      "name": "Hour arbor clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "axis": "hour",
-      "at": [
-       -26.25,
-       0.0
-      ],
-      "d": 4.0
-     },
-     {
-      "id": "h4",
-      "kind": "hole",
-      "name": "Screw C1 · clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "at": [
-       -55.5,
-       29
-      ],
-      "d": 3.4
-     },
-     {
-      "id": "h5",
-      "kind": "hole",
-      "name": "Screw C2 · clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "at": [
-       -55.5,
-       -29
-      ],
-      "d": 3.4
-     },
-     {
-      "id": "h6",
-      "kind": "hole",
-      "name": "Screw C3 · clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "at": [
-       -20,
-       -34
-      ],
-      "d": 3.4
-     },
-     {
-      "id": "h7",
-      "kind": "hole",
-      "name": "Screw C4 · clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "at": [
-       20,
-       -34
-      ],
-      "d": 3.4
-     },
-     {
-      "id": "h8",
-      "kind": "hole",
-      "name": "Screw C5 · clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "at": [
-       55.5,
-       29
-      ],
-      "d": 3.4
-     },
-     {
-      "id": "h9",
-      "kind": "hole",
-      "name": "Screw C6 · clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "at": [
-       55.5,
-       -29
-      ],
-      "d": 3.4
-     },
-     {
-      "id": "h10",
       "kind": "dowel",
-      "name": "Dowel 1",
+      "name": "Steady pin hole (slides over the pin in P4)",
       "from": "front",
       "depth": null,
       "seat": null,
       "csk": null,
       "at": [
-       -46,
-       22
+       34,
+       -12
       ],
-      "d": 3.0
-     },
-     {
-      "id": "h11",
-      "kind": "dowel",
-      "name": "Dowel 2",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "at": [
-       48,
-       -28
-      ],
-      "d": 3.0
+      "d": 3.05
      }
     ]
    },
@@ -1762,93 +4857,54 @@
      {
       "id": "h1",
       "kind": "hole",
-      "name": "Hour wheel pocket (42 teeth + 0.5)",
+      "name": "Hour wheel opening (42 teeth, tips + 0.75): the hour disc unit drops in here",
       "from": "front",
-      "depth": 3.3,
+      "depth": null,
       "seat": null,
       "csk": null,
       "axis": "hour",
       "at": [
        -26.25,
-       0.0
+       -0.0
       ],
-      "d": 44.4
+      "d": 44.9
      },
      {
       "id": "h2",
       "kind": "hole",
-      "name": "Minute pinion pocket (14 leaves + 0.5)",
-      "from": "front",
-      "depth": 3.3,
+      "name": "Hour disc recess (Ø47.5 + 0.7 all round, 0.5 under the disc)",
+      "from": "back",
+      "depth": 3.2,
       "seat": null,
       "csk": null,
-      "axis": "mwheel",
+      "axis": "hour",
       "at": [
-       -1.1047619047619044,
-       12.3173455392705
+       -26.25,
+       -0.0
       ],
-      "d": 17.6
+      "d": 48.9
      },
      {
       "id": "h3",
-      "kind": "bearing",
-      "name": "Bearing · transfer tube (upper)",
-      "from": "back",
-      "depth": 2.5,
-      "seat": {
-       "d": 7.2,
-       "depth": 0.6
-      },
+      "kind": "hole",
+      "name": "Transfer pinion opening (tips + 0.75)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
       "csk": null,
       "axis": "center",
       "at": [
        26.25,
        0.0
       ],
-      "d": 6.0
+      "d": 16.1
      },
      {
       "id": "h4",
-      "kind": "bearing",
-      "name": "Bearing · minute wheel arbor (upper)",
+      "kind": "hole",
+      "name": "Minute disc recess (Ø47.5 + 0.7 all round, 0.5 under the disc)",
       "from": "back",
-      "depth": 2.5,
-      "seat": {
-       "d": 7.2,
-       "depth": 0.6
-      },
-      "csk": null,
-      "axis": "mwheel",
-      "at": [
-       -1.1047619047619044,
-       12.3173455392705
-      ],
-      "d": 6.0
-     },
-     {
-      "id": "h5",
-      "kind": "bearing",
-      "name": "Bearing · hour arbor (upper)",
-      "from": "back",
-      "depth": 2.5,
-      "seat": {
-       "d": 7.2,
-       "depth": 0.6
-      },
-      "csk": null,
-      "axis": "hour",
-      "at": [
-       -26.25,
-       0.0
-      ],
-      "d": 6.0
-     },
-     {
-      "id": "h6",
-      "kind": "clear",
-      "name": "Transfer tube clearance",
-      "from": "front",
-      "depth": null,
+      "depth": 3.2,
       "seat": null,
       "csk": null,
       "axis": "center",
@@ -1856,40 +4912,40 @@
        26.25,
        0.0
       ],
-      "d": 3.5
+      "d": 48.9
      },
      {
-      "id": "h7",
-      "kind": "clear",
-      "name": "Minute wheel arbor clearance",
+      "id": "h5",
+      "kind": "hole",
+      "name": "Minute pinion pocket (14 leaves, tips + 0.75, 0.5 over it)",
+      "from": "front",
+      "depth": 3.65,
+      "seat": null,
+      "csk": null,
+      "axis": "mwheel",
+      "at": [
+       -1.1048,
+       12.3173
+      ],
+      "d": 18.1
+     },
+     {
+      "id": "h6",
+      "kind": "hole",
+      "name": "Minute wheel arbor bushing (plain hole: no room for a bearing between the disc recesses)",
       "from": "front",
       "depth": null,
       "seat": null,
       "csk": null,
       "axis": "mwheel",
       "at": [
-       -1.1047619047619044,
-       12.3173455392705
+       -1.1048,
+       12.3173
       ],
-      "d": 3.5
+      "d": 3.05
      },
      {
-      "id": "h8",
-      "kind": "clear",
-      "name": "Hour arbor clearance",
-      "from": "front",
-      "depth": null,
-      "seat": null,
-      "csk": null,
-      "axis": "hour",
-      "at": [
-       -26.25,
-       0.0
-      ],
-      "d": 3.5
-     },
-     {
-      "id": "h9",
+      "id": "h7",
       "kind": "screw",
       "name": "Screw C1 · M3 countersunk",
       "from": "back",
@@ -1905,7 +4961,7 @@
       "d": 3.4
      },
      {
-      "id": "h10",
+      "id": "h8",
       "kind": "screw",
       "name": "Screw C2 · M3 countersunk",
       "from": "back",
@@ -1921,7 +4977,7 @@
       "d": 3.4
      },
      {
-      "id": "h11",
+      "id": "h9",
       "kind": "screw",
       "name": "Screw C3 · M3 countersunk",
       "from": "back",
@@ -1937,7 +4993,7 @@
       "d": 3.4
      },
      {
-      "id": "h12",
+      "id": "h10",
       "kind": "screw",
       "name": "Screw C4 · M3 countersunk",
       "from": "back",
@@ -1953,7 +5009,7 @@
       "d": 3.4
      },
      {
-      "id": "h13",
+      "id": "h11",
       "kind": "screw",
       "name": "Screw C5 · M3 countersunk",
       "from": "back",
@@ -1969,7 +5025,7 @@
       "d": 3.4
      },
      {
-      "id": "h14",
+      "id": "h12",
       "kind": "screw",
       "name": "Screw C6 · M3 countersunk",
       "from": "back",
@@ -1985,7 +5041,7 @@
       "d": 3.4
      },
      {
-      "id": "h15",
+      "id": "h13",
       "kind": "dowel",
       "name": "Dowel 1",
       "from": "front",
@@ -1999,7 +5055,90 @@
       "d": 3.0
      },
      {
-      "id": "h16",
+      "id": "h14",
+      "kind": "dowel",
+      "name": "Dowel 2",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       48,
+       -28
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h15",
+      "kind": "screw",
+      "name": "Screw C7 · M3 countersunk (holds the crescent)",
+      "from": "back",
+      "depth": null,
+      "seat": null,
+      "csk": {
+       "d": 6.3
+      },
+      "at": [
+       23,
+       34
+      ],
+      "d": 3.4
+     }
+    ]
+   },
+   {
+    "id": "D7",
+    "name": "Right top plate",
+    "sketch": "K10",
+    "thickness": 3.3,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "hole",
+      "name": "Screw C4 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h2",
+      "kind": "hole",
+      "name": "Screw C5 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h3",
+      "kind": "hole",
+      "name": "Screw C6 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h4",
       "kind": "dowel",
       "name": "Dowel 2",
       "from": "front",
@@ -2013,8 +5152,101 @@
       "d": 3.0
      }
     ]
+   },
+   {
+    "id": "D8",
+    "name": "Left bridge",
+    "sketch": "K11",
+    "thickness": 3.3,
+    "grow": "plus",
+    "back": null,
+    "edges": null,
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "hole",
+      "name": "Screw C1 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h2",
+      "kind": "hole",
+      "name": "Screw C2 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -55.5,
+       -29
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h3",
+      "kind": "hole",
+      "name": "Screw C3 · clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -20,
+       -34
+      ],
+      "d": 3.4
+     },
+     {
+      "id": "h4",
+      "kind": "dowel",
+      "name": "Dowel 1",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "at": [
+       -46,
+       22
+      ],
+      "d": 3.0
+     },
+     {
+      "id": "h5",
+      "kind": "clear",
+      "name": "Hour rod clearance",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "axis": "hour",
+      "at": [
+       -26.25,
+       -0.0
+      ],
+      "d": 4.0
+     },
+     {
+      "id": "h6",
+      "kind": "pocket",
+      "name": "Hour rod slot into the minute wheel space (no sliver)",
+      "from": "front",
+      "depth": null,
+      "seat": null,
+      "csk": null,
+      "sketch": "K12"
+     }
+    ]
    }
-  ]
+  ],
+  "version": 2
  },
  "project": {
   "format": "bspk-studio-project",
@@ -2104,7 +5336,7 @@
     "level": 0,
     "staticArbor": true,
     "drumH": 4.0,
-    "role": "Bought (Slava). The mainspring (2.9 × 0.2 × 611 mm) in a closed barrel, inside about Ø20.8; at least 36 hours per wind. Drives the center pinion. Tooth count and drum size are estimates.",
+    "role": "Bought (Slava). The mainspring (2.9 × 0.2 × 611 mm) in a closed barrel, inside about Ø20.8; at least 36 hours per wind. Drives the center pinion. Position, tooth count and size are estimates (about 13.5 mm from the center arbor, so its teeth stay inside the movement’s Ø55.8); measure the real one.",
     "gears": [
      {
       "id": "sl_barrel_teeth",
@@ -2391,7 +5623,7 @@
    },
    "stages": {
     "s_barrel": {
-     "m": 0.4,
+     "m": 0.33,
      "z": 12.0
     },
     "s_center": {
@@ -2435,8 +5667,8 @@
      0.0
     ],
     "sl_barrel": [
-     40.83989500128759,
-     -7.489657125089461
+     38.286663376062265,
+     -6.178967128198806
     ],
     "sl_third": [
      30.066611652524212,
