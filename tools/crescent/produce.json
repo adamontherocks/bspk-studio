@@ -1,0 +1,1310 @@
+{
+ "parts": [
+  {
+   "name": "Main plate",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.05
+  },
+  {
+   "name": "Motion-works plate (3/8\"; one secondary plate: the old barrel, right and bottom bridges and the right rim plate)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.05
+  },
+  {
+   "name": "Crescent and balance bridge (the minute track; the balance's upper bearing)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.05
+  },
+  {
+   "name": "Crescent rim plate (3/8\", under the crescent)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.05
+  },
+  {
+   "name": "Crown stem (\u00d84 steel, horizontal; the worm is cut on its inner end; it lies in a groove in the main plate under a stem cap)",
+   "side": true
+  },
+  {
+   "name": "Worm (cut on the stem's inner end, one steel part: one start, right-hand, module 1, \u00d86 pitch, 8 long)",
+   "side": true
+  },
+  {
+   "name": "Crown (\u00d824 \u00d7 12, 30 flutes; 1 mm off a flat square to the stem)",
+   "side": true
+  },
+  {
+   "name": "Snail (minute cam, cut for the \u00d81.5 feeler pin)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Retrograde lever (rack, feeler arm, pawl blade)",
+   "reach": [
+    {
+     "z": 0.6,
+     "area": 0.518,
+     "at": [
+      21.57,
+      7.11
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.089,
+     "at": [
+      21.53,
+      11.57
+     ]
+    }
+   ],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Feeler pin (\u00d81.5 steel, rides the snail)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Pawl pin (\u00d81 steel, kicks the hour ratchet)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Hour ratchet (kicked by the pawl)",
+   "reach": [],
+   "walls": [
+    {
+     "z": 0.8,
+     "area": 0.256,
+     "width": 0.56,
+     "at": [
+      41.4,
+      -25.67
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.235,
+     "width": 0.51,
+     "at": [
+      36.08,
+      -24.51
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.242,
+     "width": 0.52,
+     "at": [
+      46.58,
+      -24.07
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.242,
+     "width": 0.52,
+     "at": [
+      32.08,
+      -20.85
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.231,
+     "width": 0.5,
+     "at": [
+      50.26,
+      -20.07
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.242,
+     "width": 0.52,
+     "at": [
+      30.46,
+      -15.65
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.251,
+     "width": 0.54,
+     "at": [
+      51.42,
+      -14.75
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.231,
+     "width": 0.51,
+     "at": [
+      31.62,
+      -10.35
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.236,
+     "width": 0.52,
+     "at": [
+      49.8,
+      -9.57
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.247,
+     "width": 0.54,
+     "at": [
+      35.32,
+      -6.35
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.23,
+     "width": 0.51,
+     "at": [
+      45.8,
+      -5.89
+     ]
+    },
+    {
+     "z": 0.8,
+     "area": 0.25,
+     "width": 0.52,
+     "at": [
+      40.5,
+      -4.73
+     ]
+    }
+   ],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Hour star",
+   "reach": [],
+   "walls": [
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      33.86,
+      -27.49
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      48.04,
+      -27.49
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      28.66,
+      -22.29
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      53.24,
+      -22.29
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      28.66,
+      -8.11
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      53.24,
+      -8.11
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      33.86,
+      -2.91
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      48.04,
+      -2.91
+     ]
+    }
+   ],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Jumper (hour star detent)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Barrel ratchet",
+   "reach": [
+    {
+     "z": 0.6,
+     "area": 0.122,
+     "at": [
+      5.29,
+      27.69
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.123,
+     "at": [
+      3.03,
+      27.69
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.112,
+     "at": [
+      7.47,
+      28.17
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.11,
+     "at": [
+      0.81,
+      28.17
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.119,
+     "at": [
+      9.55,
+      29.09
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.118,
+     "at": [
+      -1.25,
+      29.07
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.112,
+     "at": [
+      11.37,
+      30.41
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.126,
+     "at": [
+      -3.09,
+      30.39
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.117,
+     "at": [
+      -4.59,
+      32.07
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.106,
+     "at": [
+      12.87,
+      32.09
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.124,
+     "at": [
+      -5.73,
+      34.01
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.124,
+     "at": [
+      14.01,
+      34.05
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.121,
+     "at": [
+      -6.43,
+      36.17
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.122,
+     "at": [
+      14.69,
+      36.19
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.12,
+     "at": [
+      -6.67,
+      38.41
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.112,
+     "at": [
+      14.93,
+      38.43
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.124,
+     "at": [
+      -6.43,
+      40.65
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.118,
+     "at": [
+      14.69,
+      40.69
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.114,
+     "at": [
+      -5.73,
+      42.81
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.122,
+     "at": [
+      13.99,
+      42.83
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.114,
+     "at": [
+      -4.61,
+      44.77
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.114,
+     "at": [
+      12.87,
+      44.77
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.12,
+     "at": [
+      -3.11,
+      46.43
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.115,
+     "at": [
+      11.35,
+      46.45
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.121,
+     "at": [
+      9.53,
+      47.79
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.124,
+     "at": [
+      -1.29,
+      47.77
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.126,
+     "at": [
+      7.45,
+      48.71
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.119,
+     "at": [
+      0.79,
+      48.69
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.114,
+     "at": [
+      5.25,
+      49.17
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.122,
+     "at": [
+      2.99,
+      49.17
+     ]
+    }
+   ],
+   "walls": [
+    {
+     "z": 0.6,
+     "area": 0.129,
+     "width": 0.42,
+     "at": [
+      4.89,
+      26.75
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.121,
+     "width": 0.4,
+     "at": [
+      7.29,
+      27.15
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      9.57,
+      28.07
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.128,
+     "width": 0.43,
+     "at": [
+      -2.13,
+      28.55
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.13,
+     "width": 0.43,
+     "at": [
+      -4.05,
+      30.07
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.126,
+     "width": 0.41,
+     "at": [
+      13.31,
+      31.17
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.121,
+     "width": 0.4,
+     "at": [
+      -5.61,
+      31.93
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.128,
+     "width": 0.42,
+     "at": [
+      -6.75,
+      34.11
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.42,
+     "at": [
+      15.47,
+      35.53
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.131,
+     "width": 0.44,
+     "at": [
+      -7.39,
+      36.47
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.127,
+     "width": 0.41,
+     "at": [
+      15.83,
+      37.95
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.12,
+     "width": 0.42,
+     "at": [
+      -7.57,
+      38.91
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.123,
+     "width": 0.43,
+     "at": [
+      15.67,
+      40.39
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.129,
+     "width": 0.43,
+     "at": [
+      -7.19,
+      41.33
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.124,
+     "width": 0.41,
+     "at": [
+      -6.35,
+      43.63
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.122,
+     "width": 0.39,
+     "at": [
+      13.89,
+      44.91
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.12,
+     "width": 0.4,
+     "at": [
+      -5.05,
+      45.69
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.124,
+     "width": 0.41,
+     "at": [
+      12.31,
+      46.79
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.128,
+     "width": 0.41,
+     "at": [
+      -3.33,
+      47.43
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.41,
+     "at": [
+      8.21,
+      49.41
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.125,
+     "width": 0.43,
+     "at": [
+      5.83,
+      50.01
+     ]
+    },
+    {
+     "z": 0.6,
+     "area": 0.122,
+     "width": 0.4,
+     "at": [
+      3.39,
+      50.11
+     ]
+    }
+   ],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Click",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Barrel cover (mainspring cut through)",
+   "reach": [
+    {
+     "z": 0.5,
+     "area": 0.123,
+     "at": [
+      -2.47,
+      54.14
+     ]
+    },
+    {
+     "z": 0.5,
+     "area": 0.13,
+     "at": [
+      -2.79,
+      54.94
+     ]
+    }
+   ],
+   "walls": [
+    {
+     "z": 0.5,
+     "area": 12.914,
+     "width": 0.79,
+     "at": [
+      8.75,
+      54.8
+     ]
+    }
+   ],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Escape wheel (15 ramp teeth, short teeth with round tops r 0.8 like the fork's noses, valleys at r 7.8 rounded r 1.2; friction-driven on its arbor: the slip clutch)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Pallet fork (two noses; its 4 mm shaft stops short of the balance staff and carries the impulse pin)",
+   "reach": [
+    {
+     "z": 1.2,
+     "area": 0.166,
+     "at": [
+      -8.83,
+      -14.1
+     ]
+    },
+    {
+     "z": 1.2,
+     "area": 0.165,
+     "at": [
+      -6.35,
+      -2.4
+     ]
+    }
+   ],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Roller (egg-shaped, pressed on the balance staff; 2 mm of wall round the closed slot the impulse pin runs in)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Impulse pin (\u00d81.5 steel, pressed in the fork's shaft, runs in the roller's slot)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Seconds bridge (two screws; the seconds wheel's upper bearing)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Hand cock (a rim band on three screws; the hand arbor's and hour star's upper bearings)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.05
+  },
+  {
+   "name": "Worm cap (over the worm; flush in its seat, clamped by the motion-works plate)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Stem cap (a flat bar on the stem in its groove, flush with the plate, clamped by the motion-works plate)",
+   "reach": [],
+   "walls": [],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  },
+  {
+   "name": "Part 33",
+   "reach": [],
+   "walls": [
+    {
+     "z": 0.5,
+     "area": 0.188,
+     "width": 0.49,
+     "at": [
+      -6.28,
+      -3.8
+     ]
+    },
+    {
+     "z": 0.5,
+     "area": 0.16,
+     "width": 0.46,
+     "at": [
+      -0.74,
+      -1.92
+     ]
+    }
+   ],
+   "floors_min": null,
+   "small_holes": [],
+   "h": 0.02
+  }
+ ],
+ "gears": [
+  {
+   "gear": "Barrel teeth",
+   "mate": "Centre pinion",
+   "left_r": 19.88,
+   "mate_tip_reaches_r": 19.7,
+   "clear": -0.18,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.811,
+   "root_space_mm": 1.077
+  },
+  {
+   "gear": "Centre pinion",
+   "mate": "Barrel teeth",
+   "left_r": 5.528,
+   "mate_tip_reaches_r": 5.3,
+   "clear": -0.228,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.436,
+   "root_space_mm": 0.988
+  },
+  {
+   "gear": "Centre wheel",
+   "mate": "Third pinion",
+   "left_r": 22.835,
+   "mate_tip_reaches_r": 22.7,
+   "clear": -0.135,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.815,
+   "root_space_mm": 1.004
+  },
+  {
+   "gear": "Third pinion",
+   "mate": "Centre wheel",
+   "left_r": 5.528,
+   "mate_tip_reaches_r": 5.3,
+   "clear": -0.228,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.436,
+   "root_space_mm": 0.988
+  },
+  {
+   "gear": "Third wheel",
+   "mate": "Intermediate pinion",
+   "left_r": 21.35,
+   "mate_tip_reaches_r": 21.2,
+   "clear": -0.15,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.813,
+   "root_space_mm": 1.041
+  },
+  {
+   "gear": "Intermediate pinion",
+   "mate": "Third wheel",
+   "left_r": 5.528,
+   "mate_tip_reaches_r": 5.3,
+   "clear": -0.228,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.436,
+   "root_space_mm": 0.988
+  },
+  {
+   "gear": "Intermediate wheel",
+   "mate": "Seconds pinion",
+   "left_r": 22.835,
+   "mate_tip_reaches_r": 22.7,
+   "clear": -0.135,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.815,
+   "root_space_mm": 1.004
+  },
+  {
+   "gear": "Seconds pinion",
+   "mate": "Intermediate wheel",
+   "left_r": 5.528,
+   "mate_tip_reaches_r": 5.3,
+   "clear": -0.228,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.436,
+   "root_space_mm": 0.988
+  },
+  {
+   "gear": "Seconds wheel",
+   "mate": "Escape pinion",
+   "left_r": 16.912,
+   "mate_tip_reaches_r": 16.7,
+   "clear": -0.212,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.807,
+   "root_space_mm": 1.145
+  },
+  {
+   "gear": "Escape pinion",
+   "mate": "Seconds wheel",
+   "left_r": 5.528,
+   "mate_tip_reaches_r": 5.3,
+   "clear": -0.228,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.436,
+   "root_space_mm": 0.988
+  },
+  {
+   "gear": "Hand pinion (12, meshes the rack)",
+   "mate": "rack sector",
+   "left_r": 5.528,
+   "mate_tip_reaches_r": 5.352,
+   "clear": -0.176,
+   "tips_dig_into_leftover_mm": 0.0,
+   "tip_land_mm": 0.436,
+   "root_space_mm": 0.988
+  }
+ ],
+ "mill": [
+  {
+   "name": "Main plate",
+   "face": "top",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 12.7
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Motion-works plate (3/8\"; one secondary plate: the old barrel, right and bottom bridges and the right rim plate)",
+   "face": "top",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 5.12,
+    "1/8\"": 9.53
+   },
+   "flute_at": {
+    "2 mm": [
+     47.6,
+     15.6,
+     5.12
+    ]
+   },
+   "towers": []
+  },
+  {
+   "name": "Crescent and balance bridge (the minute track; the balance's upper bearing)",
+   "face": "bottom",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 2.8
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Crescent rim plate (3/8\", under the crescent)",
+   "face": "bottom",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Snail (minute cam, cut for the \u00d81.5 feeler pin)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Retrograde lever (rack, feeler arm, pawl blade)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Feeler pin (\u00d81.5 steel, rides the snail)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Pawl pin (\u00d81 steel, kicks the hour ratchet)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Hour ratchet (kicked by the pawl)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Hour star",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Jumper (hour star detent)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Barrel ratchet",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Click",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Barrel cover (mainspring cut through)",
+   "face": "either",
+   "flute": {
+    "1 mm": 1.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {
+    "1 mm": [
+     4.8,
+     38.8,
+     1.0
+    ]
+   },
+   "towers": []
+  },
+  {
+   "name": "Escape wheel (15 ramp teeth, short teeth with round tops r 0.8 like the fork's noses, valleys at r 7.8 rounded r 1.2; friction-driven on its arbor: the slip clutch)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Pallet fork (two noses; its 4 mm shaft stops short of the balance staff and carries the impulse pin)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Roller (egg-shaped, pressed on the balance staff; 2 mm of wall round the closed slot the impulse pin runs in)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 3.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {
+    "1.5 mm": [
+     -20.2,
+     3.7,
+     3.0
+    ]
+   },
+   "towers": []
+  },
+  {
+   "name": "Impulse pin (\u00d81.5 steel, pressed in the fork's shaft, runs in the roller's slot)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Seconds bridge (two screws; the seconds wheel's upper bearing)",
+   "face": "bottom",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Hand cock (a rim band on three screws; the hand arbor's and hour star's upper bearings)",
+   "face": "bottom",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Worm cap (over the worm; flush in its seat, clamped by the motion-works plate)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Stem cap (a flat bar on the stem in its groove, flush with the plate, clamped by the motion-works plate)",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  },
+  {
+   "name": "Part 33",
+   "face": "either",
+   "flute": {
+    "1 mm": 0.0,
+    "1.5 mm": 0.0,
+    "2 mm": 0.0,
+    "1/8\"": 0.0
+   },
+   "flute_at": {},
+   "towers": []
+  }
+ ]
+}

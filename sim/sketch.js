@@ -1150,7 +1150,7 @@
     panelKey = key;
     section.innerHTML = '';
     const head = document.createElement('div');
-    head.innerHTML = `<div class="eyebrow">Sketch · 2D</div>`;
+    head.innerHTML = window.Fold ? Fold.head('sketches', 'Sketch · 2D', S.sketches.length ? `· ${S.sketches.length}` : '') : `<div class="eyebrow">Sketch · 2D</div>`;
     section.appendChild(head);
     const btn = document.createElement('div');
     btn.className = 'row';
@@ -1209,6 +1209,8 @@
     if (!S.sketches.length) return;
     const ul = document.createElement('ul');
     ul.className = 'pins';
+    ul.dataset.foldList = 'sketches';
+    if (window.Fold && Fold.is('sketches')) ul.classList.add('folded');
     ul.innerHTML = S.sketches.map(x => `<li data-k="${x.id}" class="${x.id === st.current && sketching() ? 'on' : ''}">
       <div class="pin-top"><b style="color:var(--sketch)">${x.id}</b><span class="where">${esc(x.name)} · ${AXES[x.plane.axis].label} at ${AXES[x.plane.axis].n} ${f2(x.plane.offset * scale)} · ${x.points.length} dots${x.closed ? ', closed' : ''}</span>
       ${ownerOf(x) ? `<span class="where">→ ${esc(nameOf(ownerOf(x).id))}</span>` : cutUser(x) ? `<span class="where">→ pocket in ${esc(nameOf(cutUser(x).id))}</span>` : x.closed && x.points.length >= 3 ? '<button class="mini" data-a="mkpart">Make part</button>' : ''}

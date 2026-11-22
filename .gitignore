@@ -11,6 +11,7 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Scene autosaves from serve.py stay on this machine (the repo is public)
-scenes/autosave.json
-scenes/autosave-backups/
+# Scene files stay on this machine (the repo is public): serve.py's autosaves and backups, and the named scenes saved before loads
+scenes/
+# Claude's staging file for loading a scene into Adam's tab
+sim/projects/_X-load.json
