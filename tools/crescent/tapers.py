@@ -20,6 +20,7 @@ from shapely.geometry import MultiLineString
 EPS, SPLIT = 0.003, 0.3      # the sim's own: a segment is shared within EPS (3 points on it), a split within SPLIT
 MEET, OPEN = 0.006, 0.25     # a run's end "meets" the other wall under MEET, "opens out" over OPEN
 STEADY = 0.85                # a taper's gap rises (or falls) along at least this share of its steps
+WOBBLE = 5e-4               # a gap may step back this much between samples and still count as rising (the sim's grid is 0.1 µm)
 SWELL = 0.1                  # walls that part and rejoin are a shoulder only if they open to this; under it, one wall drifting in two copies
 
 def _segs(m):
@@ -64,14 +65,20 @@ def classify(gaps):
     g0, g1 = gaps[0], gaps[-1]
     ends = tuple('meets' if g < MEET else 'opens' if g > OPEN else 'stops' for g in (g0, g1))
     d = np.diff(gaps)
-    up = (d >= -2e-5).mean() if len(d) else 1.0; down = (d <= 2e-5).mean() if len(d) else 1.0
+    up = (d >= -WOBBLE).mean() if len(d) else 1.0; down = (d <= WOBBLE).mean() if len(d) else 1.0
     inner = gaps[1:-1].min() if len(gaps) > 2 else min(g0, g1)
     if ends == ('meets', 'opens') and up >= STEADY: kind = 'taper'
     elif ends == ('opens', 'meets') and down >= STEADY: kind = 'taper'
     elif ends == ('meets', 'meets') and gaps.max() >= SWELL: kind = 'shoulder'
     elif ends == ('opens', 'opens') and inner > MEET: kind = 'dip'     # comes within 0.3 mm of the other wall and leaves again
     elif inner < MEET and min(g0, g1) > MEET: kind = 'cross'          # the two walls cross at a shallow angle
-    else: kind = 'copy'                                                 # runs alongside, or ends in a jump
+    else:
+        # the walls meet somewhere and open out somewhere, and between those points the gap climbs steadily: a corner or a taper
+        # whose ends the run doesn't show (a short stretch where a step meets an outline at an angle)
+        i0, i1 = int(np.argmin(gaps)), int(np.argmax(gaps)); kind = 'copy'           # else: runs alongside, or ends in a jump
+        if gaps[i0] < MEET and gaps[i1] > OPEN and abs(i1 - i0) >= 2:
+            part = gaps[i0:i1 + 1] if i1 > i0 else gaps[i1:i0 + 1][::-1]
+            if (np.diff(part) >= -WOBBLE).mean() >= STEADY: kind = 'taper'
     return kind, ends
 
 def runs(J, pid='D3'):

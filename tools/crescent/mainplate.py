@@ -12,11 +12,12 @@
 import json, sys, os, math
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from pk2 import P, F, union, diff, inter, offset, simplify, dots_sharp, spline_poly
+from pk2 import P, F, union, diff, inter, offset, close, simplify, dots_sharp, spline_poly
 import fair as FA, smooth as SM, onewall as OW, plate_clean as PC
 
 R_RIM = 66.0
 SNAP = (0.30, 0.60)         # an edge point within 0.30 mm of the rim goes onto it, one 0.60 mm off stays, between it moves part way
+RUN_MIN, RUN_BLEND = 1.0, 2.0   # snap_rim: a rim stretch is at least RUN_MIN long; its ends blend over RUN_BLEND (0.6 put an S into a plate's corner)
 ALONG = (10.0, 25.0)        # ... and only where the edge runs along the rim: within 10 deg of it in full, fading out by 25 deg
 RIM_SNAP = (0.10, 0.15)     # rebuild(): a pocket wall within 0.10 mm of the rim goes onto it (part way to 0.15)
 CIRCLE_SNAP = (0.03, 0.045) # ... and within 30 µm of a round cut onto that cut (part way to 45 µm)
@@ -69,31 +70,93 @@ def merge_caps(J, log, worm='D30', stem='D31'):
     cols = J.get('project', {}).get('decor', {}).get('colors', {})
     cols.pop(worm, None)
     if isinstance(J.get('parts'), list): J['parts'] = [x for x in J['parts'] if x.get('id') != worm]
-    # the main plate's worm seat (floor 9.90) takes the two corner fillets
+    # the main plate's worm seat (floor 9.90) makes room for the cap's two corner fillets
     d1 = next(x for x in st['drawn'] if x['id'] == 'D1'); SK = {k['id']: k for k in st['sketches']}
     seat = next(c for c in d1['cuts'] if c.get('kind') == 'pocket' and abs(c.get('depth', 0) - 2.8) < 1e-6 and 'worm cap' in (c.get('name') or ''))
     kk = SK[seat['sketch']]
-    reg = union([P(_poly(kk))], [P(np.array(g.exterior.coords[:-1])) for g in getattr(fillets, 'geoms', [fillets]) if g.area > 1e-6])
-    reg = offset(offset(reg, 0.002), -0.002)
-    kk['points'] = dots_sharp(F(max(reg, key=lambda q: abs(__import__('pyclipper').Area(q)))))
+    # the plate's own inside corners where the stem groove meets the seat, rounded r 0.5 (the cap's bar lies 0.05 inside the groove's
+    # walls, so its fillets copied into the seat stopped 0.05 short of the groove wall and left a step and slivers there); the seat
+    # also reaches 0.3 into the groove near the joint, so none of its edges lies along the groove's
+    groove = next(c for c in d1['cuts'] if c.get('kind') == 'pocket' and 'Groove for the stem' in (c.get('name') or ''))
+    S_ = union([P(_poly(kk))]); G_ = union([P(_poly(SK[groove['sketch']]))])
+    joint = inter(offset(S_, 0.8), offset(G_, 0.8))
+    corners = inter(diff(close(union(S_, G_), 0.5), union(S_, G_)), joint)
+    reg = union(S_, corners, inter(G_, offset(S_, 0.3)))
+    big = F(max(reg, key=lambda q: abs(__import__('pyclipper').Area(q))))
+    kk['points'] = dots_sharp(simplify(np.vstack([big, big[:1]]), 0.0002)[:-1])
     seat['name'] = 'Seat for the worm end of the worm and stem cap (floor 9.90)'
     log.append(f'caps: {worm} folded into {stem} ({merged.area:.2f} mm², gap of {gap:.2f} mm bridged inside the stem groove; '
-               f'worm end 2.25 mm thinner from underneath; corner fillets {fillets.area:.3f} mm² added to the worm seat)')
+               f'worm end 2.25 mm thinner from underneath; the seat\'s inside corners at the stem groove rounded r 0.5 for the cap\'s fillets)')
 
 # ---------- P97-P100: the rim ----------
 def snap_rim(Q):
-    """an outline's points that run along the rim, onto r 66 (graded, so an edge leaves the rim in a curve)"""
-    Qd = OW.densify(Q, 0.3); r = np.hypot(Qd[:, 0], Qd[:, 1]); d = R_RIM - r
+    """an outline's rim stretches onto r 66: a stretch is a run of points within SNAP[1] of the rim and running along it (within
+    ALONG[1]), at least RUN_MIN long and touching the rim somewhere (within 0.1); inside a run every point goes onto the rim, over the
+    last RUN_BLEND at each end it goes part way (smoothstep along the edge), so a plate's corner at the rim keeps its shape (a
+    point-by-point weight flickered at corners and left spikes)"""
+    Qd = OW.densify(Q, 0.1); n = len(Qd); r = np.hypot(Qd[:, 0], Qd[:, 1]); d = R_RIM - r
     t = np.roll(Qd, -1, 0) - np.roll(Qd, 1, 0); t = t / np.maximum(np.hypot(t[:, 0], t[:, 1]), 1e-12)[:, None]
     ang = np.degrees(np.arcsin(np.clip(np.abs((t * Qd).sum(1) / np.maximum(r, 1e-9)), 0, 1)))
-    f = SM.smoothstep(np.clip((SNAP[1] - np.abs(d)) / (SNAP[1] - SNAP[0]), 0, 1))
-    g = SM.smoothstep(np.clip((ALONG[1] - ang) / (ALONG[1] - ALONG[0]), 0, 1))
-    w = f * g
+    seg = np.hypot(*(np.roll(Qd, -1, 0) - Qd).T)
+    cand = (np.abs(d) < SNAP[1]) & (ang < ALONG[1])
+    w = np.zeros(n)
+    if cand.all(): runs = [np.arange(n)]
+    elif not cand.any(): runs = []
+    else:
+        s0 = int(np.argmin(cand)); order = np.roll(np.arange(n), -s0); runs, cur = [], []
+        for i in order:
+            if cand[i]: cur.append(i)
+            elif cur: runs.append(np.array(cur)); cur = []
+        if cur: runs.append(np.array(cur))
+    for run in runs:
+        L = seg[run].sum()
+        if L < RUN_MIN or np.abs(d[run]).min() > 0.1: continue
+        s = np.concatenate([[0.0], np.cumsum(seg[run][:-1])]); e = np.minimum(s, s[-1] - s)
+        w[run] = SM.smoothstep(np.clip(e / RUN_BLEND, 0, 1)) if len(run) < n else 1.0
     if not (w > 0).any(): return Q, 0.0
     Qn = Qd * ((r + w * d) / r)[:, None]
     return Qn, float(np.abs(w * d).max())
 
-def true_rim(J, log, pids=('D6', 'D5', 'D2', 'D3')):
+def snap_to(Q, idx):
+    """an outline's points that run along a rim polyline (OW.seg_index of it), onto it: graded by distance (SNAP) and only where
+    the edge runs along the rim (ALONG), so corners and gaps at the rim stay"""
+    Qd = OW.densify(Q, 0.3)
+    p, d, u = OW.project(Qd, idx, seg=True)
+    t = np.roll(Qd, -1, 0) - np.roll(Qd, 1, 0); t = t / np.maximum(np.hypot(t[:, 0], t[:, 1]), 1e-12)[:, None]
+    ang = np.degrees(np.arccos(np.clip(np.abs((t * u).sum(1)), 0, 1)))          # angle between the edge and the rim there
+    f = SM.smoothstep(np.clip((SNAP[1] - d) / (SNAP[1] - SNAP[0]), 0, 1))
+    g = SM.smoothstep(np.clip((ALONG[1] - ang) / (ALONG[1] - ALONG[0]), 0, 1))
+    w = f * g
+    if not (w > 0).any(): return Q, 0.0
+    return Qd + (p - Qd) * w[:, None], float((w * d).max())
+
+def onto_main_rim(J, log, pids=('D6', 'D5', 'D2', 'D3')):
+    """the other plates' rims onto the main plate's own rim as drawn (its outline untouched: changing it breaks its clean pockets),
+    which takes out their dents (P97-P100) and makes every rim one wall with the main plate's"""
+    d1, k1 = _sketch(J, 'D1')
+    idx = OW.seg_index([P(_poly(k1))])
+    out = []
+    for pid in pids:
+        d, k = _sketch(J, pid)
+        Q = _poly(k); Qn, mv = snap_to(Q, idx)
+        if mv <= 0: continue
+        k['points'] = dots_sharp(simplify(np.vstack([Qn, Qn[:1]]), 0.0002)[:-1])
+        out.append(f'{pid} {mv * 1000:.0f} µm')
+    log.append("rims onto the main plate's rim as drawn, largest move: " + ', '.join(out))
+
+def snap_rims(J, pids=('D6', 'D5', 'D2', 'D3'), log=None):
+    """the other plates' rim stretches onto r 66 (snap_rim); the main plate is left alone"""
+    out = []
+    for pid in pids:
+        d, k = _sketch(J, pid)
+        Q = _poly(k); Qn, mv = snap_rim(Q)
+        if mv <= 0: continue
+        k['points'] = dots_sharp(simplify(np.vstack([Qn, Qn[:1]]), 0.0002)[:-1])
+        out.append(f'{pid} {mv * 1000:.0f} µm')
+    if log is not None: log.append('rims onto r 66, largest move: ' + ', '.join(out))
+    return out
+
+def true_rim(J, log, pids=('D6', 'D5', 'D2', 'D3'), carry=True):
     d1, k1 = _sketch(J, 'D1')
     n = 4 * math.ceil(math.pi * R_RIM / 0.6)
     k1['points'] = dots_sharp(np.array([[R_RIM * math.cos(2 * math.pi * i / n), R_RIM * math.sin(2 * math.pi * i / n)] for i in range(n)]))
@@ -104,16 +167,10 @@ def true_rim(J, log, pids=('D6', 'D5', 'D2', 'D3')):
         if c.get('kind') != 'pocket' or c.get('sketch') not in SK: continue
         kk = SK[c['sketch']]; Q = _poly(kk); r = np.hypot(Q[:, 0], Q[:, 1])
         m = r > R_RIM - 0.15
-        if not m.any() or kk.get('smooth'): continue
+        if not carry or not m.any() or kk.get('smooth'): continue
         Q = Q.copy(); Q[m] *= ((np.maximum(r[m], R_RIM) + 0.25) / r[m])[:, None]
         kk['points'] = dots_sharp(Q); carried += 1
-    out = []
-    for pid in pids:
-        d, k = _sketch(J, pid)
-        Q = _poly(k); Qn, mv = snap_rim(Q)
-        if mv <= 0: continue
-        k['points'] = dots_sharp(simplify(np.vstack([Qn, Qn[:1]]), 0.0002)[:-1])
-        out.append(f'{pid} {mv * 1000:.0f} µm')
+    out = snap_rims(J, pids)
     log.append(f'rim: main plate a true r {R_RIM:g} circle ({n} sides of 0.3 mm), {carried} of its pockets carried out past it; rims snapped onto it, largest move: ' + ', '.join(out))
 
 # ---------- the main plate's pockets round its fixed cuts ----------

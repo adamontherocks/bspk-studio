@@ -46,7 +46,7 @@ def swept_discs(J, zlo, zhi, gap=0.6):
 def is_patch(c): return any((c.get('name') or '').startswith(p) for p in PATCH)
 def ring_sim(c, r):
     """the sim's circle (index.html cutLayers ring()): 72 sides"""
-    n = 72   # (finer circles for r > 3.4 written and tested 2026-11-22, held back until the main plate's rebuild is verified: n = max(72, 4 * ceil(pi * r / 0.6)))
+    n = max(72, 4 * math.ceil(math.pi * r / 0.6))
     return [(c[0] + r * math.cos(2 * math.pi * i / n), c[1] + r * math.sin(2 * math.pi * i / n)) for i in range(n)]
 def is_drilled(c): return c['kind'] in DRILLED and c.get('d') and c['d'] <= 3.2
 def cut_paths(c, SK):

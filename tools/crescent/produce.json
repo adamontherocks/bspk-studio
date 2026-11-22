@@ -856,15 +856,7 @@
    "h": 0.05
   },
   {
-   "name": "Worm cap (over the worm; flush in its seat, clamped by the motion-works plate)",
-   "reach": [],
-   "walls": [],
-   "floors_min": null,
-   "small_holes": [],
-   "h": 0.02
-  },
-  {
-   "name": "Stem cap (a flat bar on the stem in its groove, flush with the plate, clamped by the motion-works plate)",
+   "name": "Worm and stem cap (one part: a flat bar on the stem in its groove and a square over the worm, flush with the plate, clamped by the motion-works plate; the worm end milled 2.25 mm thinner from underneath to sit on the worm seat)",
    "reach": [],
    "walls": [],
    "floors_min": null,
@@ -1019,7 +1011,7 @@
     "1 mm": 0.0,
     "1.5 mm": 0.0,
     "2 mm": 0.0,
-    "1/8\"": 12.7
+    "1/8\"": 11.4
    },
    "flute_at": {},
    "towers": []
@@ -1271,25 +1263,13 @@
    "towers": []
   },
   {
-   "name": "Worm cap (over the worm; flush in its seat, clamped by the motion-works plate)",
-   "face": "either",
+   "name": "Worm and stem cap (one part: a flat bar on the stem in its groove and a square over the worm, flush with the plate, clamped by the motion-works plate; the worm end milled 2.25 mm thinner from underneath to sit on the worm seat)",
+   "face": "bottom",
    "flute": {
     "1 mm": 0.0,
     "1.5 mm": 0.0,
     "2 mm": 0.0,
-    "1/8\"": 0.0
-   },
-   "flute_at": {},
-   "towers": []
-  },
-  {
-   "name": "Stem cap (a flat bar on the stem in its groove, flush with the plate, clamped by the motion-works plate)",
-   "face": "either",
-   "flute": {
-    "1 mm": 0.0,
-    "1.5 mm": 0.0,
-    "2 mm": 0.0,
-    "1/8\"": 0.0
+    "1/8\"": 2.25
    },
    "flute_at": {},
    "towers": []
