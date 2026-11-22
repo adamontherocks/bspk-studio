@@ -244,11 +244,11 @@
     const res = materialRaw(d, k, zLocal); CACHE.mat.set(ck, res); return res;
   }
   function materialRaw(d, k, zLocal) {
-    const C = ClipperLib, outline = outlinePoints(k).slice(0, -1).map(p => [p[0], p[1]]);
-    const layers = isFlat(d, k) ? (d.cuts || []).flatMap(c => cutLayers(c, k, d.thickness)) : [];
+    const C = ClipperLib;   // the resolved part when it is current (plateLayers), else as drawn
+    const { outline, layers } = isFlat(d, k) ? plateLayers(d, k) : { outline: outlinePoints(k).slice(0, -1).map(p => [p[0], p[1]]), layers: [] };
     const cl = new C.Clipper(), out = new C.Paths();
     cl.AddPath(toClip(outline), C.PolyType.ptSubject, true);
-    const act = layers.filter(l => l.iv[0] <= zLocal && l.iv[1] >= zLocal).map(l => sameWay(toClip(l.path)));   // all one way round (see sameWay)
+    const act = layers.filter(l => l.iv[0] <= zLocal && l.iv[1] >= zLocal).map(l => (l.path.keep ? toClip(l.path) : sameWay(toClip(l.path))));   // cuts all one way round (see sameWay); tier rings keep theirs
     if (act.length) cl.AddPaths(act, C.PolyType.ptClip, true);
     cl.Execute(C.ClipType.ctDifference, out, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
     return out;

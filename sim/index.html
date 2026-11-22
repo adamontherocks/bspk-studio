@@ -1435,7 +1435,7 @@ function buildTwisted(part, d, k) {
   part.anchorLocal.set(b.max.x, (b.min.y + b.max.y) / 2, b.max.z);
 }
 function buildDrawn(part, d, k) {
-  if (k && k.closed && k.points.length >= 3 && d.cuts && d.cuts.length && isFlat(d, k) && window.ClipperLib) return buildPlate(part, d, k);
+  if (k && k.closed && k.points.length >= 3 && ((d.cuts && d.cuts.length) || d.resolved) && isFlat(d, k) && window.ClipperLib) return buildPlate(part, d, k);
   clearPart(part);
   part.bbox = null;
   if (!k || !k.closed || k.points.length < 3) return;   // an open outline has no body until it's closed again
@@ -1541,6 +1541,37 @@ const CUT_KINDS = {
   pocket:  { label: 'Pocket from a sketch' },
 };
 const isFlat = (d, k) => !!k && !d.back && !k.points.some(q => q.w) && !(d.edges || []).some(e => e && e.length);
+// ---------- machining: the designer's intent and the resolved plate (VISION.md §7, the resolver path) ----------
+// A flat part keeps two things: its INTENT (outline and cuts as drawn: what you edit) and, once resolved, the part as the machine will
+// cut it (d.resolved: an outline and one region per floor, made by tools/plates/resolve.py through serve.py). The view and the checks
+// use the resolved part while it was made from the intent as it is now; change the intent and the part shows as drawn again, marked
+// "changed since resolved", until it is resolved again. Resolving always starts from the intent, never from an earlier result.
+const DRILLED = new Set(['hole', 'bearing', 'clear', 'screw', 'pilot', 'rod', 'dowel']), DRILL_MAX = 3.2;
+const ownCut = c => DRILLED.has(c.kind) && c.d > 0 && c.d <= DRILL_MAX;      // a drilled hole: its own true circle, not part of the tiers
+const millable = (d, k) => !!k && k.closed && k.points.length >= 3 && k.plane.axis === 'z' && isFlat(d, k) && !d.twist && !d.place;
+function hashText(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(36); }
+function intentKey(d, k) {   // everything the resolver reads
+  const cuts = (d.cuts || []).map(c => [c.kind, c.from, c.depth, c.d, c.axis && S.pos[c.axis] ? S.pos[c.axis] : c.at, c.seat,
+    c.kind === 'pocket' ? (S.sketches.find(x => x.id === c.sketch) || {}).points : null]);
+  return hashText(JSON.stringify([k && k.points, k && k.plane, d.thickness, d.mill || null, d.minWall == null ? null : d.minWall, d.cutter || null, cuts, PROJECT.shop || null]));
+}
+function resolvedOf(d, k) {   // the resolved part, if it was made from the intent as it is now (one written outside the sim gets its key here)
+  const r = d.resolved;
+  if (!r || !k) return null;
+  if (r.key == null) r.key = intentKey(d, k);
+  return r.key === intentKey(d, k) ? r : null;
+}
+const machineState = (d, k) => (!d.resolved ? 'none' : resolvedOf(d, k) ? 'fresh' : 'stale');
+// What a flat part is made of: its outline and its cuts as layers through its depth (cutLayers), from the resolved part when it is
+// current. Tier rings keep their own turning (outer anticlockwise, islands clockwise), so plateSection mustn't turn them round.
+function plateLayers(d, k) {
+  const T = d.thickness, res = resolvedOf(d, k);
+  if (!res) return { res: null, outline: outlinePoints(k).slice(0, -1).map(p => [p[0], p[1]]), layers: (d.cuts || []).flatMap(c => cutLayers(c, k, T)) };
+  const iv = depth => (res.face === 'back' ? [T - Math.min(T, depth), T] : [0, Math.min(T, depth)]);
+  const layers = res.tiers.flatMap(t => t.paths.map(path => { path.keep = true; return { iv: iv(t.depth), path }; }));
+  for (const c of d.cuts || []) if (ownCut(c) || c.from !== res.face) layers.push(...cutLayers(c, k, T));
+  return { res, outline: res.outline, layers };
+}
 const cutLabel = c => c.name || (CUT_KINDS[c.kind] ? CUT_KINDS[c.kind].label : 'Cut');
 // Where a circle cut sits on its part's plane: on its axis if it follows one (and the plane faces that axis), else where you put it.
 function cutCenter(c, k) {
@@ -1576,7 +1607,7 @@ const sameWay = path => (ClipperLib.Clipper.Orientation(path) ? path : path.slic
 function plateSection(outline, cutPaths) {
   const C = ClipperLib, cl = new C.Clipper(), tree = new C.PolyTree();
   cl.AddPath(toClip(outline), C.PolyType.ptSubject, true);
-  if (cutPaths.length) cl.AddPaths(cutPaths.map(p => sameWay(toClip(p))), C.PolyType.ptClip, true);
+  if (cutPaths.length) cl.AddPaths(cutPaths.map(p => (p.keep ? toClip(p) : sameWay(toClip(p)))), C.PolyType.ptClip, true);
   cl.Execute(C.ClipType.ctDifference, tree, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
   const shapes = [], loops = [], V = c => c.map(p => new THREE.Vector2(p.X / CLIP, p.Y / CLIP));
   const walk = node => {
@@ -1652,8 +1683,7 @@ function buildPlate(part, d, k) {
   clearPart(part);
   part.bbox = null;
   const T = d.thickness, [f0, f1] = faceOffsets(d, k), dir = Math.sign(f1 - f0) || 1, ax = k.plane.axis;
-  const outline = outlinePoints(k).slice(0, -1).map(p => [p[0], p[1]]);
-  const layers = (d.cuts || []).flatMap(c => cutLayers(c, k, T));
+  const { outline, layers } = plateLayers(d, k);
   const cutsAt = [0, T, ...layers.flatMap(l => l.iv)].map(s => Math.min(T, Math.max(0, s))).sort((a, b) => a - b)
     .filter((s, i, a) => i === 0 || s - a[i - 1] > 1e-6);
   const eu = new THREE.Vector3(...planeToModel(ax, 0, 1, 0)), ev = new THREE.Vector3(...planeToModel(ax, 0, 0, 1));
@@ -1871,7 +1901,7 @@ function syncDrawn() {
     }
     const p = parts[d.id], k = sketchOf(d);
     const cutKey = (d.cuts || []).map(c => [c, c.axis && S.pos[c.axis], c.kind === 'pocket' && (S.sketches.find(x => x.id === c.sketch) || {}).points]);
-    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey, d.twist, d.twistAt, d.place]);
+    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey, d.twist, d.twistAt, d.place, d.mill, d.minWall, d.cutter, d.resolved ? d.resolved.at + '|' + d.resolved.key : '']);
     if (p.key !== key) { buildDrawn(p, d, k); applyPlace(p, d); p.key = key; rebuilt = true; }
   }
   return rebuilt;
@@ -3141,6 +3171,7 @@ function renderSelected() {
     if (k) el.appendChild(control({ label: `Plane position · ${n}`, unit: 'mm', min: -60 * sc, max: 60 * sc, step: 0.05, value: k.plane.offset * sc,
       onInput: v => { beginEdit(); k.plane.offset = +(v / sc).toFixed(4); requestSolve(); },
       onCommit: (v0, v1) => commit({ key: `dp:${p.id}`, from: v0, to: v1, adapt: false, make: (x, y) => `${nameOf(p.id)} plane ${n} ${f2(x)} → ${f2(y)} mm` }) }));
+    if (millable(d, k)) el.appendChild(machiningCard(p.id, d, k));
     el.appendChild(subHead(`Holes and pockets · cut straight in along ${n}`));
     if (!k || !isFlat(d, k)) el.appendChild(para('pin', 'Holes and pockets need a flat part: no back outline of its own, no dot depths and no joining-edge dots.'));
     else if (!window.ClipperLib) el.appendChild(para('pin', 'Holes and pockets need the Clipper library, which didn’t load (no internet?). They’re kept and show again once it loads.'));
@@ -3342,6 +3373,72 @@ function renderPartsList() {
   renderLabelLocks();
 }
 
+// ---------- resolve and export (serve.py runs tools/plates on this machine; the public site has no server) ----------
+const RESOLVING = new Set();
+const shortName = id => nameOf(id).split(' (')[0];
+const whenText = iso => { const t = new Date(iso); return isNaN(t) ? '' : t.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+function machiningCard(pid, d, k) {
+  const el = document.createElement('div'), st = machineState(d, k), r = d.resolved, busy = RESOLVING.has(pid);
+  el.appendChild(subHead('Machining · resolve to what the machine will cut'));
+  el.appendChild(para('pin', busy ? 'Resolving… (a big plate takes up to a minute or two)'
+    : st === 'fresh' ? `<b>Resolved</b> ${whenText(r.at)}: the view and the checks show it as the machine will cut it. ${esc(r.log)}`
+    : st === 'stale' ? `<b>Changed since it was resolved</b> (${whenText(r.at)}): the view shows it as drawn. Resolve again to see what the machine will cut.`
+    : 'Not resolved yet: the view shows it as drawn.'));
+  if (!DISK.on) { el.appendChild(para('pin', 'Resolve and export run on this machine: open the sim from serve.py (python3 serve.py).')); return el; }
+  el.appendChild(control({ label: 'Take down walls thinner than (0: hairlines only)', unit: 'mm', min: 0, max: 5, step: 0.1, value: d.minWall || 0,
+    onInput: v => { beginEdit(); d.minWall = Math.max(0, +(+v).toFixed(2)); },
+    onCommit: (v0, v1) => commit({ key: `mw:${pid}`, from: v0, to: v1, adapt: false, make: (x, y) => `${shortName(pid)}: take down walls thinner than ${f2(y)} mm (was ${f2(x)})` }) }));
+  const shopCut = (PROJECT.shop && PROJECT.shop.cutter) || 1;
+  el.appendChild(control({ label: `Smallest end mill Ø (the project's: ${shopCut} mm)`, unit: 'mm', min: 0.2, max: 6.35, step: 0.05, value: d.cutter || shopCut,
+    onInput: v => { beginEdit(); d.cutter = Math.abs(+v - shopCut) < 1e-9 ? undefined : Math.max(0.2, +(+v).toFixed(3)); },
+    onCommit: (v0, v1) => commit({ key: `ct:${pid}`, from: v0, to: v1, adapt: false, make: (x, y) => `${shortName(pid)}: smallest end mill Ø${f2(y)} mm (was Ø${f2(x)})` }) }));
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `<button data-a="resolve"${busy ? ' disabled' : ''}>${st === 'fresh' ? 'Resolve again' : 'Resolve'}</button>` +
+    `<button data-a="export"${st === 'fresh' && !busy ? '' : ' disabled title="Resolve it first"'}>Export STEP</button>`;
+  row.addEventListener('click', e => {
+    if (e.target.dataset.a === 'resolve') resolveParts([pid]);
+    if (e.target.dataset.a === 'export') exportPart(pid, e.target);
+  });
+  el.appendChild(row);
+  return el;
+}
+async function resolveParts(pids) {
+  pids = pids.filter(pid => !RESOLVING.has(pid) && drawnOf(pid));
+  if (!pids.length) return;
+  if (!DISK.on) { showText('Resolve needs this machine', 'Resolve runs the plate resolver on this machine: open the sim from serve.py (python3 serve.py), not the public site.'); return; }
+  const keys = {};
+  for (const pid of pids) { const d = drawnOf(pid); keys[pid] = intentKey(d, sketchOf(d)); RESOLVING.add(pid); }
+  renderSelected(); renderChecks();
+  let res = null, err = '';
+  try {
+    const r = await fetch('resolve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: sceneFile(), pids }) });
+    if (r.ok) res = await r.json(); else err = `${r.status}: ${await r.text()}`;
+  } catch (e) { err = String(e); }
+  for (const pid of pids) RESOLVING.delete(pid);
+  if (!res) { renderSelected(); renderChecks(); showText('Resolve failed', err || 'No answer from serve.py. Is it the new serve.py (with /resolve)?'); return; }
+  const done = [], failed = [];
+  cancelPending();
+  for (const pid of pids) {
+    const d = drawnOf(pid), r = res[pid];
+    if (!d || !r) continue;
+    if (r.error) { failed.push(`${shortName(pid)}: ${r.error}`); continue; }
+    d.resolved = { ...r, key: keys[pid] };
+    done.push(pid);
+  }
+  if (done.length) commit({ text: `Resolved for the machine: ${done.map(pid => `${shortName(pid)} (${drawnOf(pid).resolved.log})`).join('; ')}`, adapt: false });
+  else { renderSelected(); renderChecks(); }
+  if (failed.length) showText('Some parts did not resolve', failed.join('\n'));
+}
+async function exportPart(pid, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Exporting…'; }
+  let j = null;
+  try { const r = await fetch('export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: sceneFile(), pid }) }); j = await r.json(); }
+  catch (e) { j = { error: String(e) }; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Export STEP'; }
+  showText(j.error ? 'Export failed' : `${shortName(pid)} exported`, j.error || `Saved on this machine:\n${j.path}\n\n${j.log || ''}`);
+}
+
 function renderChecks() {
   const s = scale, items = [];
   for (const r of A.rates) items.push([r.ok ? 'ok' : 'err', `<b>${r.label}</b>: 1 rev / ${periodText(r.w)}, ${dirText(r.w)}`]);
@@ -3359,6 +3456,17 @@ function renderChecks() {
   items.push(split.length
     ? ['warn', `<b>Walls drawn twice</b>: one wall drawn as two copies across heights, running side by side or crossing, up to 0.3 mm apart (magenta lines in the view)<div class="mono">${split.map(([n, L]) => `${esc(n.split(' (')[0])}: ${f1(L)} mm`).join('<br>')}</div>${tTxt}`]
     : ['ok', `<b>Walls</b>: no wall is drawn twice across heights${tTxt}`]);
+  const mill = S.drawn.filter(d => millable(d, sketchOf(d)) && (d.cuts || []).length);   // every flat part with cuts goes to the machine
+  if (mill.length) {
+    const stale = mill.filter(d => machineState(d, sketchOf(d)) === 'stale'), none = mill.filter(d => !d.resolved), busy = mill.filter(d => RESOLVING.has(d.id));
+    const todo = [...stale, ...none].filter(d => !RESOLVING.has(d.id));
+    const few = ds => (ds.length > 6 ? `${ds.length} parts (${ds.slice(0, 4).map(d => esc(shortName(d.id))).join(', ')}, …)` : ds.map(d => esc(shortName(d.id))).join(', '));
+    items.push(todo.length || busy.length
+      ? ['warn', `<b>Machining</b>: ${[stale.length ? `changed since resolved: ${few(stale)}` : '', none.length ? `not resolved yet: ${few(none)}` : '',
+          busy.length ? `resolving now: ${few(busy)}` : ''].filter(Boolean).join('; ')}. ${busy.length && !todo.length ? 'They show as drawn until it finishes.' : 'These show as drawn, not as the machine will cut them.'}` +
+        (DISK.on && todo.length ? `<div class="row" style="margin-top:6px"><button id="resolveAll">Resolve ${todo.length > 1 ? `these ${todo.length}` : 'it'}</button></div>` : '')]
+      : ['ok', `<b>Machining</b>: all ${mill.length} parts with cuts are resolved: the view and the checks show what the machine will cut`]);
+  }
   items.push(['info', `<b>Furthest reach</b>: ${A.envelope.name} at r ${f2(A.envelope.r * s)} mm; the plate edge is at r ${f2(S.movementD / 2 * s)} mm` +
     (over > 0 ? `, so it hangs ${f2(over * s)} mm past the plate (not flagged: the plate isn’t a boundary)` : '')]);
   const minM = PROJECT.rules && PROJECT.rules.minModule;
@@ -3388,6 +3496,8 @@ function renderChecks() {
       Options: cycloidal teeth, profile-shifted pinions, or more pinion leaves.`]);
   }
   document.getElementById('checks').innerHTML = items.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+  const ra = document.getElementById('resolveAll');
+  if (ra) ra.addEventListener('click', () => resolveParts(S.drawn.filter(d => millable(d, sketchOf(d)) && (d.cuts || []).length && machineState(d, sketchOf(d)) !== 'fresh').map(d => d.id)));
   const rb = document.getElementById('runChecks');
   if (rb) rb.addEventListener('click', () => {
     rb.disabled = true; rb.textContent = 'Checking… (a few seconds)';
@@ -3503,7 +3613,13 @@ function normalizeState(st) {
           from: c.from === 'back' ? 'back' : 'front', depth: num(c.depth) && c.depth > 0 ? c.depth : null,
           seat: c.seat && num(c.seat.d) && num(c.seat.depth) && c.seat.d > 0 && c.seat.depth > 0 ? { d: c.seat.d, depth: c.seat.depth } : null,
           csk: c.csk && num(c.csk.d) && c.csk.d > 0 ? { d: c.csk.d } : null }));
+      const okRing = p => Array.isArray(p) && p.length >= 3 && p.every(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1]));
+      const rv = d.resolved, resolved = rv && okRing(rv.outline) && Array.isArray(rv.tiers)
+        ? { outline: rv.outline, tiers: rv.tiers.filter(t => t && num(t.depth) && t.depth > 0 && Array.isArray(t.paths)).map(t => ({ depth: t.depth, paths: t.paths.filter(okRing) })),
+            face: rv.face === 'front' ? 'front' : 'back', key: typeof rv.key === 'string' ? rv.key : null, at: typeof rv.at === 'string' ? rv.at : '',
+            log: typeof rv.log === 'string' ? rv.log : '', ...(rv.shop && typeof rv.shop === 'object' ? { shop: { cutter: +rv.shop.cutter || 0, minWall: +rv.shop.minWall || 0 } } : {}) } : null;
       return { id: String(d.id), name: typeof d.name === 'string' && d.name ? d.name : String(d.id), sketch: String(d.sketch), thickness: d.thickness,
+               ...(resolved ? { resolved } : {}), ...(num(d.minWall) && d.minWall >= 0 ? { minWall: d.minWall } : {}), ...(num(d.cutter) && d.cutter > 0 ? { cutter: d.cutter } : {}),
                grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges, ...(cuts.length ? { cuts } : {}), ...(d.mill === 'front' || d.mill === 'back' ? { mill: d.mill } : {}),
                ...(num(d.twist) && d.twist && Math.abs(d.twist) <= 36000 ? { twist: d.twist } : {}), ...(okXY(d.twistAt) ? { twistAt: d.twistAt.slice() } : {}),
                ...(d.place && Array.isArray(d.place.pivot) && d.place.pivot.length === 3 && d.place.pivot.every(num) && Array.isArray(d.place.axis) && d.place.axis.length === 3

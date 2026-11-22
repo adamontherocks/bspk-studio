@@ -11,6 +11,8 @@ It serves sim/ like `python3 -m http.server`, and adds:
                     (one every 10 minutes, the newest 30 kept).
     PUT /autosave?backup=1   the same, plus a backup straight away: the sim sends this just before it
                     switches to another project, so the scene you leave is always kept.
+    POST /resolve   {scene, pids}: resolve those parts for the machine (tools/plates/resolve.py); answers {pid: resolved}
+    POST /export    {scene, pid}: the resolved part as STEP, STL and DXF in exports/<project>/ (tools/plates/export_step.py)
 
 Why: browser storage alone isn't safe. The Claude app's browser pane loses it when the app
 restarts, and a scene was lost that way on 2026-11-09. The public site (GitHub Pages) has no
@@ -21,6 +23,7 @@ import http.server
 import json
 import os
 import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -32,7 +35,10 @@ AUTOSAVE = os.path.join(SCENES, 'autosave.json')
 BACKUPS = os.path.join(SCENES, 'autosave-backups')
 BACKUP_EVERY_S = 600
 KEEP_BACKUPS = 30
-MAX_BYTES = 8_000_000
+MAX_BYTES = 40_000_000
+TOOLS = os.path.join(HERE, 'tools', 'plates')
+EXPORTS = os.path.join(HERE, 'exports')
+VENV_PY = os.path.join(HERE, '.venv', 'bin', 'python')
 
 
 def backup_if_due(now=False):
@@ -66,6 +72,36 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         with open(AUTOSAVE, 'rb') as f:
             body = f.read()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        route = self.path.split('?')[0]
+        if route not in ('/resolve', '/export'):
+            return self.send_error(404)
+        n = int(self.headers.get('Content-Length') or 0)
+        if n <= 0 or n > MAX_BYTES:
+            return self.send_error(413, 'empty or too large')
+        try:
+            req = json.loads(self.rfile.read(n))
+        except ValueError:
+            return self.send_error(400, 'not JSON')
+        if route == '/resolve':
+            req = {'op': 'resolve', 'scene': req.get('scene'), 'pids': req.get('pids') or []}
+            py = sys.executable
+        else:
+            proj = (req.get('scene') or {}).get('project') or {}
+            name = ''.join(ch if ch.isalnum() else '-' for ch in str(proj.get('name') or 'project').lower()).strip('-') or 'project'
+            req = {'op': 'export', 'scene': req.get('scene'), 'pid': req.get('pid'), 'outdir': os.path.join(EXPORTS, name)}
+            py = sys.executable          # (export_step plans the slabs here, then builds the solid in .venv's CadQuery)
+        try:
+            run = subprocess.run([py, os.path.join(TOOLS, 'api.py')], input=json.dumps(req).encode(), capture_output=True, timeout=900)
+            body = run.stdout if run.returncode == 0 and run.stdout else json.dumps({'error': (run.stderr.decode(errors='replace')[-2000:] or 'no answer')}).encode()
+        except subprocess.TimeoutExpired:
+            body = json.dumps({'error': 'took longer than 15 minutes'}).encode()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', str(len(body)))
