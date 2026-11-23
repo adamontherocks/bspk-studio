@@ -441,3 +441,11 @@ if __name__ == '__main__':
     s3, info = beta2_aligned()
     json.dump(s3, open(os.path.join(OUT, 'beta2-aligned.json'), 'w'), indent=1)
     print('beta2-aligned:', json.dumps(info, default=str))
+    import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import haute
+    s4, rep, _ = haute.build(s3, info, {'rrect': rrect, 'sketch': sketch, 'poly_dots': poly_dots, 'FITS_DELRIN': FITS_DELRIN})
+    if rep['problems']:
+        print('beta2-haute NOT written:', *rep['problems'], sep='\n  ')
+    else:
+        json.dump(s4, open(os.path.join(OUT, 'beta2-haute.json'), 'w'), indent=1)
+    print('beta2-haute:', json.dumps({k: v for k, v in rep.items() if k != 'problems'}, default=str))

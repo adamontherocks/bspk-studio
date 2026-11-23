@@ -732,9 +732,11 @@ function derive(st, lite = false) {
 
 // Rods (rules.rod = { d, from }): each arbor turns on a rod running from `from` (the bottom of its bearings) up to the top of its
 // highest part, so it is in the way of other arbors' gears in every layer it passes. Without the rule an axis is a line (the beta).
-const ROD = PROJECT.rules && PROJECT.rules.rod && +PROJECT.rules.rod.d > 0 ? { d: +PROJECT.rules.rod.d, from: +PROJECT.rules.rod.from || 0 } : null;
+// rules.rod.top = { arbor: z } runs an arbor's rod on up to z (into a bridge that holds its top pivot).
+const ROD = PROJECT.rules && PROJECT.rules.rod && +PROJECT.rules.rod.d > 0 ? { d: +PROJECT.rules.rod.d, from: +PROJECT.rules.rod.from || 0, top: PROJECT.rules.rod.top || {} } : null;
 function rodTop(st, D, a) {
-  return Math.max(...a.gears.map(g => D.gears[g.id].z1), ...HAND_DEFS.filter(h => h.arbor === a.id).map(h => st.hands[h.id].z + st.hands[h.id].t));
+  return Math.max(...a.gears.map(g => D.gears[g.id].z1), ...HAND_DEFS.filter(h => h.arbor === a.id).map(h => st.hands[h.id].z + st.hands[h.id].t),
+                  ROD && Number.isFinite(+ROD.top[a.id]) && ROD.top[a.id] !== null ? +ROD.top[a.id] : -Infinity);
 }
 // ---------- checks: speeds, meshes, collisions, envelope, tooth interference ----------
 // Every element is a disc or cylinder about Z, so a clash = plan overlap + height overlap.
@@ -4181,6 +4183,7 @@ const NEW_FITS = {
 const BUILT_IN = [
   { id: 'beta2', name: 'Beta 2 (hand-set Hemistitch)', file: 'projects/beta2.json' },
   { id: 'beta2-aligned', name: 'Beta 2 · intermediates on the centre line', file: 'projects/beta2-aligned.json' },
+  { id: 'beta2-haute', name: 'Beta 2 · haute (plates and bridges)', file: 'projects/beta2-haute.json' },
   { id: 'air-size-study', name: 'Air size study', file: 'projects/air-size-study.json' },
   { id: 'hemistitch-slava', name: 'Hemistitch + Slava donor', file: 'projects/hemistitch-slava.json' },
   { id: 'hemistitch-prototype', name: 'Hemistitch prototype', file: 'projects/hemistitch-prototype.json' },
