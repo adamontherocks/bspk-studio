@@ -1,13 +1,17 @@
 # Export a resolved part for the machine (generic; VISION.md §7, R7).
 # Writes, into OUTDIR:
-#   <pid>-<name>.step / .stl   the solid, exactly what the sim shows for the resolved part: built as one slab per floor band (the plate's
-#                              material there, from the tiers) glued into one solid, then the drilled holes cut as true circles (seats as
+#   <pid>-<name>.step / .stl   the solid, what the sim shows for the resolved part: one slab per floor band (the plate's material
+#                              there, from the tiers) glued into one solid, then the drilled holes cut as true circles (seats as
 #                              counterbores, countersinks as true 90° cones). World coordinates, so parts line up when brought together.
+#                              The walls are true arcs and straight lines through the resolved dots (fit.py: every dot within 2 µm),
+#                              a wall shared by two floors fitted alike, so the floors meet exactly and glue into one solid.
 #   <pid>-<name>.dxf           for 2.5D CAM (Makera Studio): the outline on layer OUTLINE, each tier's rings on layer DEPTH_<mm from the
 #                              milled face>, each drilled hole a true circle on layer DRILL_<Ø>_DEPTH_<mm> (THROUGH for through cuts).
-# Two steps, two Pythons: the slabs are cut with pyclipper (system python, like the resolver); the solid is made with CadQuery (.venv).
-# Cutting each tier out of a block instead took over 10 minutes for one plate: the tiers share their walls exactly (one wall across
-# heights), and solid booleans on coincident faces crawl. Stacked slabs only touch, and are glued.
+#                              Exactly the resolved dots.
+# Two steps, two Pythons: the slabs are cut and fitted with pyclipper and numpy (system python, like the resolver); the solid is made
+# with CadQuery (.venv). What did not work (2026-11-22): cutting each tier out of a block (over 10 minutes for one plate: the tiers
+# share their walls, and solid booleans on coincident faces crawl); slabs with walls as the raw dots (12,000 edges a face: over an
+# hour); spline fitting (an invalid solid on a plain pill outline).
 #   python3 export_step.py SCENE.json PID OUTDIR
 import json, os, re, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
@@ -15,6 +19,9 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 VENV_PY = os.path.join(ROOT, '.venv', 'bin', 'python')
 DRILLED = {'hole', 'bearing', 'clear', 'screw', 'pilot', 'rod', 'dowel'}
 DRILL_MAX = 3.2
+
+SPECK_A = 1e-4      # mm²: a ring smaller than this is a speck, dropped (the resolver keeps tier rings from the same size)
+SPECK_FLOOR = 1e-3  # mm²: a piece of floor smaller than this (about 30 × 30 µm) where two floors' walls meet is a speck, not a ledge
 
 def slug(s): return re.sub(r'[^a-z0-9]+', '-', s.lower()).strip('-')[:40] or 'part'
 def face_z(d, k):
@@ -33,13 +40,28 @@ def plan(J, pid):
     if not res: raise ValueError(f'{pid} is not resolved: resolve it first, so the file is what the machine will cut')
     T = d['thickness']; zf, zb = face_z(d, k); face = res.get('face', 'back')
     mz = zb if face == 'back' else zf; sgn = -1 if mz == max(zf, zb) else 1        # from the milled face into the part
-    outline = union([P(res['outline'])])
+    # shared walls: each tier ring was thinned on its own, so two tiers carry the same wall with different dots; give them the same
+    # dots first, so the floor bands cut from them meet exactly and their walls are fitted alike (fit.unify)
+    from fit import unify, fit_faces, TOL
+    flat = unify([res['outline']] + [r for t in res['tiers'] for r in t['paths']])
+    tiers_u, i = [], 1
+    for t in res['tiers']: tiers_u.append({'depth': t['depth'], 'paths': flat[i:i + len(t['paths'])]}); i += len(t['paths'])
+    outline = union([P(flat[0])])
     cuts = sorted({min(T, t['depth']) for t in res['tiers']})
     bounds = sorted(set([0.0] + cuts + [T]))
-    slabs = []
+    mats = []
     for s0, s1 in zip(bounds, bounds[1:]):
-        air = [P(r) for t in res['tiers'] if t['depth'] >= s1 - 1e-6 for r in t['paths']]
-        mat = diff(outline, union(air)) if air else outline
+        air = [P(r) for t in tiers_u if t['depth'] >= s1 - 1e-6 for r in t['paths']]
+        mats.append(diff(outline, union(air)) if air else outline)
+    # floor specks: where a taper ends, two floors' walls can part for a few µm and meet again, leaving a speck of floor (µm²) between
+    # them. Each goes to the band above, so its wall follows the band below there; from the far face up, so none is left behind.
+    specks = 0
+    for i in range(len(mats) - 2, -1, -1):
+        if not mats[i]: continue
+        sp = [q for q in diff(mats[i + 1], mats[i]) if pc.Orientation(q) and abs(pc.Area(q)) < SPECK_FLOOR * 1e8]
+        if sp: mats[i] = union(mats[i], sp); specks += len(sp)
+    slabs = []
+    for (s0, s1), mat in zip(zip(bounds, bounds[1:]), mats):
         if not mat: continue
         za, zb_ = mz + sgn * s0, mz + sgn * s1
         slabs.append({'z0': min(za, zb_), 'z1': max(za, zb_), 'rings': [[[round(x, 4), round(y, 4)] for x, y in F(p)] for p in mat]})
@@ -55,23 +77,34 @@ def plan(J, pid):
         c = pc.Pyclipper(); c.StrictlySimple = True; c.AddPaths(paths, pc.PT_SUBJECT, True)
         return c.Execute(pc.CT_UNION, pc.PFT_NONZERO, pc.PFT_NONZERO)
     def grouped(paths):              # rings -> faces: each outer ring with the islands inside it
-        rings = strictly_simple(paths); outs = [r for r in rings if pc.Orientation(r)]; isl = [r for r in rings if not pc.Orientation(r)]
+        rings = [r for r in strictly_simple(paths) if abs(pc.Area(r)) >= SPECK_A * 1e8]     # (µm specks where two walls nearly meet: not features)
+        outs = [r for r in rings if pc.Orientation(r)]; isl = [r for r in rings if not pc.Orientation(r)]
         groups = {i: [] for i in range(len(outs))}
         for h in isl:
             inside = [i for i, o in enumerate(outs) if pc.PointInPolygon(h[0], o) == 1]
             if inside: groups[min(inside, key=lambda i: abs(pc.Area(outs[i])))].append(h)
         return [{'outer': F(o).round(4).tolist(), 'holes': [F(h).round(4).tolist() for h in groups[i]]} for i, o in enumerate(outs)]
-    faces = [dict(f, depth=min(T, t['depth'])) for t in res['tiers'] for f in grouped([P(r) for r in t['paths']])]
     for sl in slabs: sl['faces'] = grouped([P(r) for r in sl['rings']])
     volume = sum(sum(pc.Area(p) for p in [P(r) for r in s_['rings']]) / 1e8 * (s_['z1'] - s_['z0']) for s_ in slabs)
-    return {'T': T, 'slabs': slabs, 'faces': faces, 'holes': holes, 'outline': res['outline'], 'tiers': res['tiers'], 'name': d.get('name') or pid,
-            'z': [min(zf, zb), max(zf, zb)], 'mill_z': mz, 'into': sgn, 'volume_exact': volume}
+    # the walls as true arcs and straight lines (every dot within fit.TOL), stretches shared by two bands fitted alike
+    allf = [f for sl in slabs for f in sl['faces']]
+    fitted, fit_stats = fit_faces(allf)
+    for f, fr in zip(allf, fitted): f['fit'] = fr
+    return {'T': T, 'slabs': slabs, 'holes': holes, 'outline': res['outline'], 'tiers': res['tiers'], 'name': d.get('name') or pid,
+            'z': [min(zf, zb), max(zf, zb)], 'mill_z': mz, 'into': sgn, 'volume_exact': volume, 'fit': dict(fit_stats, specks=specks, tol=TOL)}
 
 def face_of(cq, f):
-    """a face from the resolved part's exact dots, as straight lines (curve fitting was tried 2026-11-22: it gave an invalid solid
-    on a plain pill outline, so it is out until walls are fitted as true arcs and lines)"""
-    poly = lambda r: cq.Wire.makePolygon([cq.Vector(x, y, 0) for x, y in r], close=True)
-    return cq.Face.makeFromWires(poly(f['outer']), [poly(h) for h in f['holes']]), len(f['outer']) + sum(len(h) for h in f['holes']), 0
+    """a face from the fitted walls (true arcs and straight lines through the resolved part's own dots)"""
+    def wire(fr):
+        p = cq.Vector(fr['start'][0], fr['start'][1], 0); edges = []
+        for sg in fr['segs']:
+            if sg[0] == 'L': q = cq.Vector(sg[1][0], sg[1][1], 0); edges.append(cq.Edge.makeLine(p, q))
+            else:
+                m, q = cq.Vector(sg[1][0], sg[1][1], 0), cq.Vector(sg[2][0], sg[2][1], 0); edges.append(cq.Edge.makeThreePointArc(p, m, q))
+            p = q
+        return cq.Wire.assembleEdges(edges)
+    fr = f['fit']
+    return cq.Face.makeFromWires(wire(fr['outer']), [wire(h) for h in fr['holes']]), len(fr['outer']['segs']) + sum(len(h['segs']) for h in fr['holes']), 0
 
 def build_dxf(job, base):
     """the 2.5D CAM file (Makera Studio): every floor exactly as resolved, one layer per depth; drilled holes as true circles"""
@@ -89,16 +122,18 @@ def build_dxf(job, base):
     return {'dxf': base + '.dxf', 'layers': sorted({e.dxf.layer for e in msp})}
 
 def build(job, base, single):
-    """the solid (CadQuery): one solid per floor band (the plate's material there), fused into one body when `single`, else kept
-    as stacked bodies; then the drilled holes; STEP and STL. (Cutting the tiers out of a block crawled: they share walls.)"""
-    import cadquery as cq, math
-    t0 = time.time(); n_edges = 0; fallback = 0; solids = []
+    """the solid (CadQuery): one solid per floor band, glued into one body when `single`, else kept as stacked bodies; the drilled
+    holes in one cut; STEP and STL. Then the STEP is read back and checked: a solid can be valid in memory and not once written (µm
+    edges that cross at the file's tolerance: D3, 2026-11-22)."""
+    import cadquery as cq
+    t0 = time.time(); n = 0; solids = []
     for sl in job['slabs']:
         for f in sl['faces']:
-            face, k, fb = face_of(cq, f); n_edges += k; fallback += fb
+            face, k, _ = face_of(cq, f); n += k
             solids.append(cq.Solid.extrudeLinear(face, cq.Vector(0, 0, sl['z1'] - sl['z0'])).translate(cq.Vector(0, 0, sl['z0'])))
     if single and len(solids) > 1: body = solids[0].fuse(*solids[1:], glue=True)
     else: body = cq.Compound.makeCompound(solids) if len(solids) > 1 else solids[0]
+    V0 = body.Volume(); tools = []
     for h in job['holes']:
         s, x, y = h['dir'], h['at'][0], h['at'][1]; D = h['depth'] + (0.01 if h['through'] else 0)
         cut = cq.Solid.makeCylinder(h['d'] / 2, D + 0.005, cq.Vector(x, y, h['z'] - s * 0.005), cq.Vector(0, 0, s))
@@ -107,24 +142,31 @@ def build(job, base, single):
         if h.get('csk') and h['csk'].get('d', 0) > h['d']:
             c = (h['csk']['d'] - h['d']) / 2
             cut = cut.fuse(cq.Solid.makeCone(h['csk']['d'] / 2 + 0.005, h['d'] / 2, c + 0.005, cq.Vector(x, y, h['z'] - s * 0.005), cq.Vector(0, 0, s)))
-        body = body.cut(cut)
+        tools.append(cut)
+    if tools: body = body.cut(*tools)          # all holes in one cut (one at a time rebuilt the whole plate each time: 15 holes, 66 s)
     cq.exporters.export(cq.Workplane('XY').add(body), base + '.step')
     cq.exporters.export(cq.Workplane('XY').add(body), base + '.stl', tolerance=0.005, angularTolerance=0.05)
-    bb = body.BoundingBox(); ok = body.isValid(); V = body.Volume(); nb = len(body.Solids())
-    Vh = sum(math.pi * h['d'] ** 2 / 4 * h['depth'] for h in job['holes'])       # (approximate: seats, cones and overlaps not counted)
+    mem = body.isValid(); back = cq.importers.importStep(base + '.step').vals()
+    ok = mem and bool(back) and all(v.isValid() for v in back)
+    bb = body.BoundingBox(); V = body.Volume(); nb = len(body.Solids()); F = job['fit']
+    dv = (V0 - job['volume_exact']) / job['volume_exact'] * 100
     return {'path': base + '.step', 'stl': base + '.stl', 'volume_mm3': round(V, 2), 'valid': ok, 'bodies': nb,
-            'log': (f"one solid" if nb == 1 else f"{nb} stacked bodies, one per floor band (join them in Fusion for one body; CAM reads them from the top as one part)")
-                   + f"; {len(job['tiers'])} tiers, {len(job['holes'])} drilled holes, walls as {n_edges} exact segments"
-                   + (f", {fallback} face{'s' if fallback > 1 else ''} as exact straight lines" if fallback else '')
-                   + f"; {bb.xlen:.2f} × {bb.ylen:.2f} × {bb.zlen:.3f} mm; volume {V:.1f} mm³ (the tiers give about {job['volume_exact'] - Vh:.1f}); "
-                   + f"{'valid' if ok else 'NOT valid'}; {time.time() - t0:.1f} s"}
+            'log': ("one solid" if nb == 1 else f"{nb} stacked bodies, one per floor band (join them in Fusion for one body; CAM reads them from the top as one part)")
+                   + f"; {len(job['tiers'])} tiers, {len(job['holes'])} drilled holes; walls as {n:,} true arcs and straight lines ({F['arcs']:,} arcs), every resolved dot within {F['tol'] * 1000:g} µm"
+                   + (f" ({F['exact_faces']} face{'s' if F['exact_faces'] > 1 else ''} with µm spikes kept as exact segments there)" if F.get('exact_faces') else '')
+                   + (f" ({F['mended']} face{'s' if F['mended'] > 1 else ''} where the resolved wall crosses itself by less than the 0.1 µm grid, uncrossed)" if F.get('mended') else '')
+                   + (f", {F['specks']} µm specks of floor where tapers end taken into the wall" if F.get('specks') else '')
+                   + f"; {bb.xlen:.2f} × {bb.ylen:.2f} mm, {job['T']:g} thick; volume {V:,.1f} mm³ (before the drilled holes {V0:,.1f}; the resolved tiers give {job['volume_exact']:,.1f}, {dv:+.3f}%); "
+                   + ("valid, checked by reading the file back" if ok else "NOT valid" + (" once written and read back" if mem else ""))
+                   + f"; {time.time() - t0:.1f} s"}
 
-SOLID_SEGS = 15000   # more wall segments than this: the solid isn't tried (the bridges have 200-2,200 and build in a second or two)
-SOLID_S = 120        # seconds allowed for the solid (STEP/STL). A big plate's walls are thousands of exact segments, which the solid modeller
-                     # crawls through (the motion-works plate ran over an hour); fitting them as true arcs and lines is the next step for those.
+SOLID_PIECES = 20000  # fitted wall pieces: more than this, the solid isn't tried (the main plate has about 800, the motion-works plate 3,200)
+SOLID_S = 120         # seconds allowed for each try at the solid (STEP/STL); both big plates build in under 5
 
 def export(J, pid, outdir):
-    """both steps: plan here (system python), build in .venv (CadQuery)"""
+    """both steps: plan here (system python), build in .venv (CadQuery). The solid is tried as one glued body first; if that isn't
+    valid read back from the file, as stacked bodies (each band its own solid)."""
+    t0 = time.time()
     job = plan(J, pid)
     os.makedirs(outdir, exist_ok=True)
     base = os.path.join(outdir, f"{pid}-{slug(job['name'])}")
@@ -133,19 +175,27 @@ def export(J, pid, outdir):
     if run.returncode != 0: return {'error': run.stderr.decode(errors='replace')[-2000:]}
     out = json.loads(run.stdout); out['path'] = out['dxf']
     note = f"DXF for 2.5D CAM (Makera Studio): every floor exactly as resolved, one layer per depth ({', '.join(out['layers'])})."
-    segs = sum(len(r) for sl in job['slabs'] for r in sl['rings'])
-    if segs > SOLID_SEGS:
-        out['log'] = note + f"\nSTEP and STL: not made. Its walls are {segs:,} exact segments, too many for the solid modeller in reasonable time; fitting them as true arcs and lines is the next step."
+    pieces = job['fit']['pieces']
+    if pieces > SOLID_PIECES:
+        out['log'] = note + f"\nSTEP and STL: not made. Even as arcs and lines its walls are {pieces:,} pieces, too many for the solid modeller in reasonable time."
         return out
-    try:
-        run = subprocess.run([VENV_PY, __file__, '--build', base, 'single' if len(job['slabs']) == 1 else 'stack'], input=data, capture_output=True, timeout=SOLID_S)
-        if run.returncode == 0:
-            sol = json.loads(run.stdout); out.update(step=sol['path'], stl=sol['stl'], valid=sol['valid'], volume_mm3=sol['volume_mm3'])
-            note += f"\nSTEP and STL: {sol['log']}."
-        else: note += '\nSTEP and STL: the solid modeller failed: ' + run.stderr.decode(errors='replace')[-300:]
-    except subprocess.TimeoutExpired:
-        note += f"\nSTEP and STL: not made. The solid took over {SOLID_S} s (its walls are thousands of exact segments; fitting them as true arcs and lines is the next step)."
-    out['log'] = note
+    tried = []
+    for mode in (['single'] if len(job['slabs']) == 1 else ['single', 'stack']):
+        try:
+            run = subprocess.run([VENV_PY, __file__, '--build', base, mode], input=data, capture_output=True, timeout=SOLID_S)
+        except subprocess.TimeoutExpired:
+            tried.append(f"{'one body' if mode == 'single' else 'stacked bodies'}: over {SOLID_S} s"); continue
+        if run.returncode != 0:
+            tried.append(f"{'one body' if mode == 'single' else 'stacked bodies'}: the solid modeller failed ({run.stderr.decode(errors='replace')[-200:].strip()})"); continue
+        sol = json.loads(run.stdout)
+        if sol['valid'] or mode == 'stack':
+            out.update(step=sol['path'], stl=sol['stl'], valid=sol['valid'], volume_mm3=sol['volume_mm3'])
+            note += f"\nSTEP and STL: {sol['log']}." + (f" (Tried first: {'; '.join(tried)}.)" if tried else '')
+            break
+        tried.append("one body: not valid read back from the file")
+    else:
+        note += f"\nSTEP and STL: not made ({'; '.join(tried)})."
+    out['log'] = note + f"\nAll in {time.time() - t0:.1f} s."
     return out
 
 if __name__ == '__main__':
