@@ -307,6 +307,9 @@ def beta2_aligned():
     dz_mb = 0.3                                        # the minute pinion rides 0.3 above B's wheel, so the minute disc can sit on it ...
     dz_em = 0.3                                        # ... and E's wheel, centred low on it, stays 0.3 under the disc
     z_disc = z_bw + dz_mb + TT                         # both discs at the minute pinion's top
+    # the worm rises out of the plates: at 3 o'clock nothing is on the two lower layers (the minute pinion and E's wheel are on top), so its
+    # axis goes as high as clears the top layer by 0.3. That puts the crown at the movement's mid-height, not hanging under the back.
+    zw = z_bw - 0.3 - (worm_rp + m)
     HX, HY = v['HX'], v['HY']                          # the plates: centred on the discs (from the layout search)
     edge = HX
     wa, wb = E[0] - 2.5, E[0] + 2.5                    # the worm's span along the stem
@@ -349,31 +352,45 @@ def beta2_aligned():
          'role': 'Ø19 black delrin, V-carved and filled; sits right on the minute pinion.'},
     ]
     outline = rrect(0.0, 0.0, 2 * HX, 2 * HY, 4.0)
-    win = box(wa - 0.3, -3.55, wb + 0.3, 3.55)                            # the worm, with 0.3 round it (both plates)
-    chan = box(x0 - 0.2, -0.975, edge + 0.5, 0.975)                       # the journals' channel in the lower plate (Ø1.8 + 0.15)
+    win = box(wa - 0.3, -3.55, wb + 0.3, 3.55)                            # the worm, with 0.3 round it (both plates: see through it)
+    chan = box(x0 - 0.2, -0.975, edge + 0.5, 0.975)                       # the journals' channel in the upper plate's top (Ø1.8 + 0.15)
+    # the stem bridge: two feet over the journals (a channel in their underside holds the journals' top halves) and a rail along the
+    # bottom joining them; open over the worm (it stands above the bridge) and clear of E's worm wheel above the stem
+    bx0, bx1, by0, by1 = x0, edge - 0.6, -6.0, E[1] - R_ew - 0.3
+    feet = unary_union([box(bx0, by0, wa - 0.35, by1), box(wb + 0.35, by0, bx1, by1)])
+    bridge = unary_union([feet, box(bx0, by0, bx1, -3.85)]).buffer(-0.6).buffer(0.6, 16)
+    bscrews = [(bx0 + 1.4, -4.9), (bx1 - 1.4, -4.9)]
     sk = [sketch('K1', 'Lower plate outline', 'z', -2 * TS, outline), sketch('K2', 'Upper plate outline', 'z', -TS, outline),
           sketch('K3', 'Worm window (lower plate)', 'z', -2 * TS, poly_dots(win)),
-          sketch('K4', 'Crown arbor worm wheel pocket (lower plate)', 'z', -2 * TS, poly_dots(Point(E).buffer(R_ew + 0.3, 64))),
-          sketch('K5', 'Stem channel (lower plate)', 'z', -2 * TS, poly_dots(chan)),
-          sketch('K6', 'Worm window (upper plate)', 'z', -TS, poly_dots(win))]
+          sketch('K4', 'Crown arbor worm wheel pocket (upper plate)', 'z', -TS, poly_dots(Point(E).buffer(R_ew + 0.3, 64))),
+          sketch('K5', 'Stem channel (upper plate)', 'z', -TS, poly_dots(chan)),
+          sketch('K6', 'Worm window (upper plate)', 'z', -TS, poly_dots(win)),
+          sketch('K7', 'Stem bridge outline', 'z', 0.0, poly_dots(bridge)),
+          sketch('K8', 'Stem bridge: journal channel in its underside', 'z', 0.0, poly_dots(box(bx0 - 0.5, -0.975, bx1 + 0.5, 0.975))),
+          sketch('K9', 'Stem bridge: the worm rises through it', 'z', 0.0, poly_dots(box(wa - 0.3, -3.55, wb + 0.3, by1 + 1.0)))]
     pos = {'minute': list(M_), 'b': list(B), 'a1': list(A1), 'a2': list(A2), 'hour': list(H_), 'e': list(E)}
     bearing = lambda i, a: {'id': f'h{i}', 'kind': 'bearing', 'name': f'Bearing · {a}', 'fit': 'bearing', 'at': pos[a], 'd': 5.98, 'axis': a, 'from': 'back', 'depth': None, 'seat': {'d': 7.3, 'depth': 0.65}}
     plain = lambda i, a: {'id': f'h{i}', 'kind': 'rod', 'name': f'Plain hole · {a}', 'fit': 'rod_free', 'at': pos[a], 'd': 3.08, 'axis': a, 'from': 'back', 'depth': None}
     lower = ([bearing(i + 1, a) for i, a in enumerate(['a1', 'a2', 'hour'])] + [plain(4, 'minute'), plain(5, 'e'), bearing(9, 'b')]
-             + [{'id': 'h6', 'kind': 'pocket', 'name': 'Worm window (shows it from the back)', 'sketch': 'K3', 'from': 'back', 'depth': None},
-                {'id': 'h7', 'kind': 'pocket', 'name': 'Crown arbor worm wheel pocket', 'sketch': 'K4', 'from': 'back', 'depth': round(-TS - (zw - TT / 2 - 0.3), 4)},
-                {'id': 'h8', 'kind': 'pocket', 'name': 'Stem channel (the upper plate closes it)', 'sketch': 'K5', 'from': 'back', 'depth': round(-TS - (zw - jr - 0.05), 4)}]
+             + [{'id': 'h6', 'kind': 'pocket', 'name': 'Window under the worm (see through the movement)', 'sketch': 'K3', 'from': 'back', 'depth': None}]
              + [{'id': f'h{10 + i}', 'kind': 'pilot', 'name': 'M2 thread (plate screw)', 'fit': 'm2_tap', 'at': list(sc), 'd': 1.6, 'from': 'back', 'depth': None} for i, sc in enumerate(screws)])
     upper = ([bearing(i + 1, a) for i, a in enumerate(['a1', 'a2', 'hour'])] + [plain(4, 'minute'), plain(5, 'e'), bearing(9, 'b')]
-             + [{'id': 'h6', 'kind': 'pocket', 'name': 'Worm window', 'sketch': 'K6', 'from': 'back', 'depth': None}]
+             + [{'id': 'h6', 'kind': 'pocket', 'name': 'Worm window', 'sketch': 'K6', 'from': 'back', 'depth': None},
+                {'id': 'h7', 'kind': 'pocket', 'name': 'Crown arbor worm wheel pocket', 'sketch': 'K4', 'from': 'back', 'depth': round(max(0.0, -(zw - TT / 2)) + 0.3, 4)},
+                {'id': 'h8', 'kind': 'pocket', 'name': 'Stem channel (the stem bridge closes it)', 'sketch': 'K5', 'from': 'back', 'depth': round(-(zw - jr) + 0.05, 4)}]
+             + [{'id': f'h{20 + i}', 'kind': 'pilot', 'name': 'M2 thread (stem bridge)', 'fit': 'm2_tap', 'at': list(sc), 'd': 1.6, 'from': 'back', 'depth': None} for i, sc in enumerate(bscrews)]
              + [{'id': f'h{10 + i}', 'kind': 'clear', 'name': 'M2 through, head in a counterbore', 'fit': 'm2_cb', 'at': list(sc), 'd': 2.3, 'from': 'back', 'depth': None, 'seat': {'d': 4.2, 'depth': 1.4}} for i, sc in enumerate(screws)])
     prof = [(x0, 0), (x0, jr - 0.2), (x0 + 0.2, jr), (wa, jr), (wa, 2.95), (wa + 0.3, 3.25), (wb - 0.3, 3.25), (wb, 2.95), (wb, jr),
             (xc, jr), (xc, 3.85), (xc + 0.4, 4.25), (xc + 3.6, 4.25), (xc + 4.0, 3.85), (xc + 4.0, 0)]
     sk.append({'id': 'K10', 'name': 'Crown, stem and worm (half profile, turned about z = %g)' % zw, 'plane': {'axis': 'y', 'offset': 0.0}, 'closed': True,
                'points': [{'u': round(u, 4), 'v': round(zw + r_, 4), 'smooth': False} for u, r_ in prof]})
+    bcuts = ([{'id': 'h1', 'kind': 'pocket', 'name': 'Journal channel: its feet hold the stem down', 'sketch': 'K8', 'from': 'front', 'depth': round(zw + jr + 0.05, 4)},
+              {'id': 'h2', 'kind': 'pocket', 'name': 'The worm rises through it (a window onto the worm)', 'sketch': 'K9', 'from': 'front', 'depth': None}]
+             + [{'id': f'h{10 + i}', 'kind': 'clear', 'name': 'M2 through (pan head on the top face)', 'fit': 'm2_clear', 'at': list(sc), 'd': 2.3, 'from': 'front', 'depth': None} for i, sc in enumerate(bscrews)])
     drawn = [
         {'id': 'D1', 'name': 'Lower plate (1/8" black delrin; bottom bearings flange-up, the worm\'s window, E\'s worm wheel pocket, the stem channel, M2 threads)', 'sketch': 'K1', 'thickness': TS, 'grow': 'plus', 'mill': 'back', 'cuts': lower},
         {'id': 'D2', 'name': 'Upper plate (1/8" black delrin; top bearings with their flanges showing like jewels, the worm window, counterbored plate screws)', 'sketch': 'K2', 'thickness': TS, 'grow': 'plus', 'mill': 'back', 'cuts': upper},
+        {'id': 'D3', 'name': 'Stem bridge (1/8" black delrin, milled from underneath; its feet hold the stem\'s journals down, the worm rises through it, pan-head screws)', 'sketch': 'K7', 'thickness': TS, 'grow': 'plus', 'mill': 'front', 'cuts': bcuts},
         {'id': 'D4', 'name': 'Crown, stem and worm (one piece of 3/8" black delrin rod, cut on the 4th axis)', 'sketch': 'K10', 'thickness': 0.1, 'grow': 'plus',
          'turn': {'v': zw}, 'stock': 9.525,
          'worm': {'from': round(wa, 4), 'to': round(wb, 4), 'module': m, 'starts': 1, 'hand': 'right', 'pa': 20, 'backlash': 0.3},
@@ -393,7 +410,7 @@ def beta2_aligned():
                    'Layout from a search over every rod, bearing, gear layer, the worm and the stem, scored on the box centred on the discs.'],
         'groups': {'display': 'Discs', 'train': 'Train', 'crown': 'Crown works', 'drawn': 'Plates and stem'},
         'focus': [{'id': 'train', 'label': 'Crown → E → minute → transfer → first and second intermediate → hour', 'parts': ['e', 'minute', 'b', 'a1', 'a2', 'hour', 'D4']},
-                  {'id': 'crown', 'label': 'Crown works: stem, worm, E', 'parts': ['e', 'minute', 'D4']}],
+                  {'id': 'crown', 'label': 'Crown works: stem, worm, E, stem bridge', 'parts': ['e', 'minute', 'D3', 'D4']}],
         'rules': {'minModule': 0.6, 'fixedModule': True, 'why': 'module 0.6: the 0.5 mm end mill has room in every tooth space', 'arms': ARMS, 'rod': {'d': 3.0, 'from': -2 * TS}},
         'shop': {'machine': 'Makera Carvera Air', 'cutter': 0.5, 'note': 'black delrin throughout; fits are delrin placeholders until the press-fit test'},
         'rate': {'arbor': 'minute', 'period': 3600, 'dir': -1},
@@ -410,7 +427,7 @@ def beta2_aligned():
                      'locks': {g['id']: True for a in arbors for g in a['gears']} | {'hour_disc': True, 'minute_disc': True}},
     }
     state = {'pos': pos, 'sketches': sk, 'drawn': drawn, 'fits': FITS_DELRIN}
-    info = {'id': v['id'], 'B': B, 'A1': A1, 'A2': A2, 'E': E, 'turns': turns, 'heights': dict(a1w=L1, a2w=z_a2w, hw=z_hw, disc=z_disc, top=top_z), 'size': (2 * HX, 2 * HY, top_z + 2 * TS)}
+    info = {'id': v['id'], 'B': B, 'A1': A1, 'A2': A2, 'E': E, 'turns': turns, 'worm_axis': zw, 'crown_z': (zw - 4.25, zw + 4.25), 'heights': dict(a1w=L1, a2w=z_a2w, hw=z_hw, disc=z_disc, top=top_z), 'size': (2 * HX, 2 * HY, top_z + 2 * TS)}
     return scene(project, state), info
 
 if __name__ == '__main__':

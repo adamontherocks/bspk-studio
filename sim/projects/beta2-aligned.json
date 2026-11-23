@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-23T15:45:01",
+ "savedAt": "2026-11-23T15:50:59",
  "state": {
   "pos": {
    "minute": [
@@ -1165,10 +1165,10 @@
    },
    {
     "id": "K4",
-    "name": "Crown arbor worm wheel pocket (lower plate)",
+    "name": "Crown arbor worm wheel pocket (upper plate)",
     "plane": {
      "axis": "z",
-     "offset": -6.35
+     "offset": -3.175
     },
     "closed": true,
     "points": [
@@ -2456,10 +2456,10 @@
    },
    {
     "id": "K5",
-    "name": "Stem channel (lower plate)",
+    "name": "Stem channel (upper plate)",
     "plane": {
      "axis": "z",
-     "offset": -6.35
+     "offset": -3.175
     },
     "closed": true,
     "points": [
@@ -2517,8 +2517,521 @@
     ]
    },
    {
+    "id": "K7",
+    "name": "Stem bridge outline",
+    "plane": {
+     "axis": "z",
+     "offset": 0.0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 12.3463,
+      "v": -5.4,
+      "smooth": false
+     },
+     {
+      "u": 12.3491,
+      "v": -5.4588,
+      "smooth": false
+     },
+     {
+      "u": 12.3578,
+      "v": -5.5171,
+      "smooth": false
+     },
+     {
+      "u": 12.3721,
+      "v": -5.5742,
+      "smooth": false
+     },
+     {
+      "u": 12.3919,
+      "v": -5.6296,
+      "smooth": false
+     },
+     {
+      "u": 12.4171,
+      "v": -5.6828,
+      "smooth": false
+     },
+     {
+      "u": 12.4474,
+      "v": -5.7333,
+      "smooth": false
+     },
+     {
+      "u": 12.4824,
+      "v": -5.7806,
+      "smooth": false
+     },
+     {
+      "u": 12.522,
+      "v": -5.8243,
+      "smooth": false
+     },
+     {
+      "u": 12.5656,
+      "v": -5.8638,
+      "smooth": false
+     },
+     {
+      "u": 12.6129,
+      "v": -5.8989,
+      "smooth": false
+     },
+     {
+      "u": 12.6634,
+      "v": -5.9292,
+      "smooth": false
+     },
+     {
+      "u": 12.7166,
+      "v": -5.9543,
+      "smooth": false
+     },
+     {
+      "u": 12.7721,
+      "v": -5.9742,
+      "smooth": false
+     },
+     {
+      "u": 12.8292,
+      "v": -5.9885,
+      "smooth": false
+     },
+     {
+      "u": 12.8874,
+      "v": -5.9971,
+      "smooth": false
+     },
+     {
+      "u": 12.9463,
+      "v": -6.0,
+      "smooth": false
+     },
+     {
+      "u": 21.55,
+      "v": -6.0,
+      "smooth": false
+     },
+     {
+      "u": 21.6088,
+      "v": -5.9971,
+      "smooth": false
+     },
+     {
+      "u": 21.6671,
+      "v": -5.9885,
+      "smooth": false
+     },
+     {
+      "u": 21.7242,
+      "v": -5.9742,
+      "smooth": false
+     },
+     {
+      "u": 21.7796,
+      "v": -5.9543,
+      "smooth": false
+     },
+     {
+      "u": 21.8328,
+      "v": -5.9292,
+      "smooth": false
+     },
+     {
+      "u": 21.8833,
+      "v": -5.8989,
+      "smooth": false
+     },
+     {
+      "u": 21.9306,
+      "v": -5.8638,
+      "smooth": false
+     },
+     {
+      "u": 21.9743,
+      "v": -5.8243,
+      "smooth": false
+     },
+     {
+      "u": 22.0138,
+      "v": -5.7806,
+      "smooth": false
+     },
+     {
+      "u": 22.0489,
+      "v": -5.7333,
+      "smooth": false
+     },
+     {
+      "u": 22.0792,
+      "v": -5.6828,
+      "smooth": false
+     },
+     {
+      "u": 22.1043,
+      "v": -5.6296,
+      "smooth": false
+     },
+     {
+      "u": 22.1242,
+      "v": -5.5742,
+      "smooth": false
+     },
+     {
+      "u": 22.1385,
+      "v": -5.5171,
+      "smooth": false
+     },
+     {
+      "u": 22.1471,
+      "v": -5.4588,
+      "smooth": false
+     },
+     {
+      "u": 22.15,
+      "v": -5.4,
+      "smooth": false
+     },
+     {
+      "u": 22.15,
+      "v": 1.15,
+      "smooth": false
+     },
+     {
+      "u": 22.1471,
+      "v": 1.2088,
+      "smooth": false
+     },
+     {
+      "u": 22.1385,
+      "v": 1.2671,
+      "smooth": false
+     },
+     {
+      "u": 22.1242,
+      "v": 1.3242,
+      "smooth": false
+     },
+     {
+      "u": 22.1043,
+      "v": 1.3796,
+      "smooth": false
+     },
+     {
+      "u": 22.0792,
+      "v": 1.4328,
+      "smooth": false
+     },
+     {
+      "u": 22.0489,
+      "v": 1.4833,
+      "smooth": false
+     },
+     {
+      "u": 22.0138,
+      "v": 1.5306,
+      "smooth": false
+     },
+     {
+      "u": 21.9743,
+      "v": 1.5743,
+      "smooth": false
+     },
+     {
+      "u": 21.9306,
+      "v": 1.6138,
+      "smooth": false
+     },
+     {
+      "u": 21.8833,
+      "v": 1.6489,
+      "smooth": false
+     },
+     {
+      "u": 21.8328,
+      "v": 1.6792,
+      "smooth": false
+     },
+     {
+      "u": 21.7796,
+      "v": 1.7043,
+      "smooth": false
+     },
+     {
+      "u": 21.7242,
+      "v": 1.7242,
+      "smooth": false
+     },
+     {
+      "u": 21.6671,
+      "v": 1.7385,
+      "smooth": false
+     },
+     {
+      "u": 21.6088,
+      "v": 1.7471,
+      "smooth": false
+     },
+     {
+      "u": 21.55,
+      "v": 1.75,
+      "smooth": false
+     },
+     {
+      "u": 19.1963,
+      "v": 1.75,
+      "smooth": false
+     },
+     {
+      "u": 19.1374,
+      "v": 1.7471,
+      "smooth": false
+     },
+     {
+      "u": 19.0792,
+      "v": 1.7385,
+      "smooth": false
+     },
+     {
+      "u": 19.0221,
+      "v": 1.7242,
+      "smooth": false
+     },
+     {
+      "u": 18.9666,
+      "v": 1.7043,
+      "smooth": false
+     },
+     {
+      "u": 18.9134,
+      "v": 1.6792,
+      "smooth": false
+     },
+     {
+      "u": 18.8629,
+      "v": 1.6489,
+      "smooth": false
+     },
+     {
+      "u": 18.8156,
+      "v": 1.6138,
+      "smooth": false
+     },
+     {
+      "u": 18.772,
+      "v": 1.5743,
+      "smooth": false
+     },
+     {
+      "u": 18.7324,
+      "v": 1.5306,
+      "smooth": false
+     },
+     {
+      "u": 18.6974,
+      "v": 1.4833,
+      "smooth": false
+     },
+     {
+      "u": 18.6671,
+      "v": 1.4328,
+      "smooth": false
+     },
+     {
+      "u": 18.6419,
+      "v": 1.3796,
+      "smooth": false
+     },
+     {
+      "u": 18.6221,
+      "v": 1.3242,
+      "smooth": false
+     },
+     {
+      "u": 18.6078,
+      "v": 1.2671,
+      "smooth": false
+     },
+     {
+      "u": 18.5991,
+      "v": 1.2088,
+      "smooth": false
+     },
+     {
+      "u": 18.5963,
+      "v": 1.15,
+      "smooth": false
+     },
+     {
+      "u": 18.5963,
+      "v": -3.8353,
+      "smooth": false
+     },
+     {
+      "u": 18.5956,
+      "v": -3.8493,
+      "smooth": false
+     },
+     {
+      "u": 18.5815,
+      "v": -3.85,
+      "smooth": false
+     },
+     {
+      "u": 12.9463,
+      "v": -3.85,
+      "smooth": false
+     },
+     {
+      "u": 12.8874,
+      "v": -3.8529,
+      "smooth": false
+     },
+     {
+      "u": 12.8292,
+      "v": -3.8615,
+      "smooth": false
+     },
+     {
+      "u": 12.7721,
+      "v": -3.8758,
+      "smooth": false
+     },
+     {
+      "u": 12.7166,
+      "v": -3.8957,
+      "smooth": false
+     },
+     {
+      "u": 12.6634,
+      "v": -3.9208,
+      "smooth": false
+     },
+     {
+      "u": 12.6129,
+      "v": -3.9511,
+      "smooth": false
+     },
+     {
+      "u": 12.5656,
+      "v": -3.9862,
+      "smooth": false
+     },
+     {
+      "u": 12.522,
+      "v": -4.0257,
+      "smooth": false
+     },
+     {
+      "u": 12.4824,
+      "v": -4.0694,
+      "smooth": false
+     },
+     {
+      "u": 12.4474,
+      "v": -4.1167,
+      "smooth": false
+     },
+     {
+      "u": 12.4171,
+      "v": -4.1672,
+      "smooth": false
+     },
+     {
+      "u": 12.3919,
+      "v": -4.2204,
+      "smooth": false
+     },
+     {
+      "u": 12.3721,
+      "v": -4.2758,
+      "smooth": false
+     },
+     {
+      "u": 12.3578,
+      "v": -4.3329,
+      "smooth": false
+     },
+     {
+      "u": 12.3491,
+      "v": -4.3912,
+      "smooth": false
+     },
+     {
+      "u": 12.3463,
+      "v": -4.45,
+      "smooth": false
+     }
+    ]
+   },
+   {
+    "id": "K8",
+    "name": "Stem bridge: journal channel in its underside",
+    "plane": {
+     "axis": "z",
+     "offset": 0.0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 22.65,
+      "v": -0.975,
+      "smooth": false
+     },
+     {
+      "u": 22.65,
+      "v": 0.975,
+      "smooth": false
+     },
+     {
+      "u": 11.8463,
+      "v": 0.975,
+      "smooth": false
+     },
+     {
+      "u": 11.8463,
+      "v": -0.975,
+      "smooth": false
+     }
+    ]
+   },
+   {
+    "id": "K9",
+    "name": "Stem bridge: the worm rises through it",
+    "plane": {
+     "axis": "z",
+     "offset": 0.0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 18.5463,
+      "v": -3.55,
+      "smooth": false
+     },
+     {
+      "u": 18.5463,
+      "v": 2.75,
+      "smooth": false
+     },
+     {
+      "u": 12.9463,
+      "v": 2.75,
+      "smooth": false
+     },
+     {
+      "u": 12.9463,
+      "v": -3.55,
+      "smooth": false
+     }
+    ]
+   },
+   {
     "id": "K10",
-    "name": "Crown, stem and worm (half profile, turned about z = -4.2)",
+    "name": "Crown, stem and worm (half profile, turned about z = 0.425)",
     "plane": {
      "axis": "y",
      "offset": 0.0
@@ -2527,77 +3040,77 @@
     "points": [
      {
       "u": 12.3463,
-      "v": -4.2,
+      "v": 0.425,
       "smooth": false
      },
      {
       "u": 12.3463,
-      "v": -3.5,
+      "v": 1.125,
       "smooth": false
      },
      {
       "u": 12.5463,
-      "v": -3.3,
+      "v": 1.325,
       "smooth": false
      },
      {
       "u": 13.2463,
-      "v": -3.3,
+      "v": 1.325,
       "smooth": false
      },
      {
       "u": 13.2463,
-      "v": -1.25,
+      "v": 3.375,
       "smooth": false
      },
      {
       "u": 13.5463,
-      "v": -0.95,
+      "v": 3.675,
       "smooth": false
      },
      {
       "u": 17.9463,
-      "v": -0.95,
+      "v": 3.675,
       "smooth": false
      },
      {
       "u": 18.2463,
-      "v": -1.25,
+      "v": 3.375,
       "smooth": false
      },
      {
       "u": 18.2463,
-      "v": -3.3,
+      "v": 1.325,
       "smooth": false
      },
      {
       "u": 24.75,
-      "v": -3.3,
+      "v": 1.325,
       "smooth": false
      },
      {
       "u": 24.75,
-      "v": -0.35,
+      "v": 4.275,
       "smooth": false
      },
      {
       "u": 25.15,
-      "v": 0.05,
+      "v": 4.675,
       "smooth": false
      },
      {
       "u": 28.35,
-      "v": 0.05,
+      "v": 4.675,
       "smooth": false
      },
      {
       "u": 28.75,
-      "v": -0.35,
+      "v": 4.275,
       "smooth": false
      },
      {
       "u": 28.75,
-      "v": -4.2,
+      "v": 0.425,
       "smooth": false
      }
     ]
@@ -2715,26 +3228,10 @@
      {
       "id": "h6",
       "kind": "pocket",
-      "name": "Worm window (shows it from the back)",
+      "name": "Window under the worm (see through the movement)",
       "sketch": "K3",
       "from": "back",
       "depth": null
-     },
-     {
-      "id": "h7",
-      "kind": "pocket",
-      "name": "Crown arbor worm wheel pocket",
-      "sketch": "K4",
-      "from": "back",
-      "depth": 2.1188
-     },
-     {
-      "id": "h8",
-      "kind": "pocket",
-      "name": "Stem channel (the upper plate closes it)",
-      "sketch": "K5",
-      "from": "back",
-      "depth": 1.975
      },
      {
       "id": "h10",
@@ -2907,6 +3404,48 @@
       "depth": null
      },
      {
+      "id": "h7",
+      "kind": "pocket",
+      "name": "Crown arbor worm wheel pocket",
+      "sketch": "K4",
+      "from": "back",
+      "depth": 0.6688
+     },
+     {
+      "id": "h8",
+      "kind": "pocket",
+      "name": "Stem channel (the stem bridge closes it)",
+      "sketch": "K5",
+      "from": "back",
+      "depth": 0.525
+     },
+     {
+      "id": "h20",
+      "kind": "pilot",
+      "name": "M2 thread (stem bridge)",
+      "fit": "m2_tap",
+      "at": [
+       13.74625102291316,
+       -4.9
+      ],
+      "d": 1.6,
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h21",
+      "kind": "pilot",
+      "name": "M2 thread (stem bridge)",
+      "fit": "m2_tap",
+      "at": [
+       20.75,
+       -4.9
+      ],
+      "d": 1.6,
+      "from": "back",
+      "depth": null
+     },
+     {
       "id": "h10",
       "kind": "clear",
       "name": "M2 through, head in a counterbore",
@@ -2977,13 +3516,65 @@
     ]
    },
    {
+    "id": "D3",
+    "name": "Stem bridge (1/8\" black delrin, milled from underneath; its feet hold the stem's journals down, the worm rises through it, pan-head screws)",
+    "sketch": "K7",
+    "thickness": 3.175,
+    "grow": "plus",
+    "mill": "front",
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "pocket",
+      "name": "Journal channel: its feet hold the stem down",
+      "sketch": "K8",
+      "from": "front",
+      "depth": 1.375
+     },
+     {
+      "id": "h2",
+      "kind": "pocket",
+      "name": "The worm rises through it (a window onto the worm)",
+      "sketch": "K9",
+      "from": "front",
+      "depth": null
+     },
+     {
+      "id": "h10",
+      "kind": "clear",
+      "name": "M2 through (pan head on the top face)",
+      "fit": "m2_clear",
+      "at": [
+       13.74625102291316,
+       -4.9
+      ],
+      "d": 2.3,
+      "from": "front",
+      "depth": null
+     },
+     {
+      "id": "h11",
+      "kind": "clear",
+      "name": "M2 through (pan head on the top face)",
+      "fit": "m2_clear",
+      "at": [
+       20.75,
+       -4.9
+      ],
+      "d": 2.3,
+      "from": "front",
+      "depth": null
+     }
+    ]
+   },
+   {
     "id": "D4",
     "name": "Crown, stem and worm (one piece of 3/8\" black delrin rod, cut on the 4th axis)",
     "sketch": "K10",
     "thickness": 0.1,
     "grow": "plus",
     "turn": {
-     "v": -4.2
+     "v": 0.4249999999999998
     },
     "stock": 9.525,
     "worm": {
@@ -3074,10 +3665,11 @@
    },
    {
     "id": "crown",
-    "label": "Crown works: stem, worm, E",
+    "label": "Crown works: stem, worm, E, stem bridge",
     "parts": [
      "e",
      "minute",
+     "D3",
      "D4"
     ]
    }
@@ -3388,7 +3980,7 @@
    "solo": {
     "e_worm": {
      "m": 0.6,
-     "z": -4.99375
+     "z": -0.36875
     }
    },
    "pos": {
