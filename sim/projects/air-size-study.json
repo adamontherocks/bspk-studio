@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-23T13:36:26",
+ "savedAt": "2026-11-23T15:03:10",
  "state": {
   "pos": {
    "p6": [
@@ -1978,7 +1978,7 @@
   "drawn": [
    {
     "id": "D1",
-    "name": "Base plate (1/8\" acrylic; a bearing under each arbor, flange up; M2 threads)",
+    "name": "Base plate (1/8\" black delrin; a bearing under each arbor, flange up; M2 threads)",
     "sketch": "K1",
     "thickness": 3.175,
     "grow": "plus",
@@ -1993,7 +1993,7 @@
        -9.72,
        21.13
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "p6",
       "from": "back",
       "depth": null,
@@ -2011,7 +2011,7 @@
        3.48,
        21.13
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "w6",
       "from": "back",
       "depth": null,
@@ -2029,7 +2029,7 @@
        -8.85,
        -1.04
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "p5",
       "from": "back",
       "depth": null,
@@ -2047,7 +2047,7 @@
        3.15,
        -1.04
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "w5",
       "from": "back",
       "depth": null,
@@ -2065,7 +2065,7 @@
        -8.88,
        -22.17
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "p4",
       "from": "back",
       "depth": null,
@@ -2083,7 +2083,7 @@
        3.12,
        -22.17
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "w4",
       "from": "back",
       "depth": null,
@@ -2148,7 +2148,7 @@
    },
    {
     "id": "D2",
-    "name": "Frame (1/8\" acrylic; the space the gears turn in)",
+    "name": "Frame (1/8\" black delrin; the space the gears turn in)",
     "sketch": "K2",
     "thickness": 3.175,
     "grow": "plus",
@@ -2171,7 +2171,7 @@
        -18.05,
        -35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "back",
       "depth": null
      },
@@ -2184,7 +2184,7 @@
        -18.05,
        35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "back",
       "depth": null
      },
@@ -2197,7 +2197,7 @@
        18.05,
        -35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "back",
       "depth": null
      },
@@ -2210,7 +2210,7 @@
        18.05,
        35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "back",
       "depth": null
      }
@@ -2218,7 +2218,7 @@
    },
    {
     "id": "D3",
-    "name": "Top plate (1/8\" acrylic, milled from underneath; a bearing over each arbor, flange down)",
+    "name": "Top plate (1/8\" black delrin, milled from underneath; a bearing over each arbor, flange down)",
     "sketch": "K4",
     "thickness": 3.175,
     "grow": "plus",
@@ -2233,7 +2233,7 @@
        -9.72,
        21.13
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "p6",
       "from": "front",
       "depth": null,
@@ -2251,7 +2251,7 @@
        3.48,
        21.13
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "w6",
       "from": "front",
       "depth": null,
@@ -2269,7 +2269,7 @@
        -8.85,
        -1.04
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "p5",
       "from": "front",
       "depth": null,
@@ -2287,7 +2287,7 @@
        3.15,
        -1.04
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "w5",
       "from": "front",
       "depth": null,
@@ -2305,7 +2305,7 @@
        -8.88,
        -22.17
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "p4",
       "from": "front",
       "depth": null,
@@ -2323,7 +2323,7 @@
        3.12,
        -22.17
       ],
-      "d": 6.0,
+      "d": 5.98,
       "axis": "w4",
       "from": "front",
       "depth": null,
@@ -2341,7 +2341,7 @@
        -18.05,
        -35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "front",
       "depth": null
      },
@@ -2354,7 +2354,7 @@
        -18.05,
        35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "front",
       "depth": null
      },
@@ -2367,7 +2367,7 @@
        18.05,
        -35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "front",
       "depth": null
      },
@@ -2380,7 +2380,7 @@
        18.05,
        35.7
       ],
-      "d": 2.2,
+      "d": 2.3,
       "from": "front",
       "depth": null
      }
@@ -2389,32 +2389,40 @@
   ],
   "fits": {
    "rod_press": {
-    "d": 2.95,
+    "d": 2.96,
     "seat": null,
-    "note": "3 mm brass rod pressed into a gear (placeholder until the press-fit test)"
+    "note": "3 mm brass rod pressed into a delrin gear (placeholder until the press-fit test, cut in delrin)"
    },
    "rod_free": {
-    "d": 3.1,
+    "d": 3.08,
     "seat": null,
-    "note": "3 mm rod turning freely (placeholder)"
+    "note": "3 mm rod turning in a plain delrin hole (placeholder)"
    },
    "bearing": {
-    "d": 6.0,
+    "d": 5.98,
     "seat": {
      "d": 7.3,
      "depth": 0.65
     },
-    "note": "3 x 6 x 2.5 flanged bearing pressed in, its 7.2 x 0.6 flange in the seat (placeholder)"
+    "note": "3 x 6 x 2.5 flanged bearing pressed into delrin, flange in the seat (placeholder)"
    },
    "m2_clear": {
-    "d": 2.2,
+    "d": 2.3,
     "seat": null,
     "note": "M2 screw passing through"
+   },
+   "m2_cb": {
+    "d": 2.3,
+    "seat": {
+     "d": 4.2,
+     "depth": 1.4
+    },
+    "note": "M2 screw through, its cheese head sunk in a counterbore"
    },
    "m2_tap": {
     "d": 1.6,
     "seat": null,
-    "note": "M2 screw threading into acrylic (placeholder)"
+    "note": "M2 tapped thread in delrin"
    }
   },
   "gearCut": {
@@ -2427,7 +2435,7 @@
   "id": "air-size-study",
   "name": "Air size study",
   "title": "Air size study \u00b7 how small the teeth go",
-  "blurb": "Three gear pairs, 3:1 each, at module 0.6, 0.5, 0.4, cut in 1/16\" delrin with a 0.5 mm end mill on the Air, between three 1/8\" acrylic plates (41.6 x 76.9 mm). Each pinion has the fewest teeth that leave 1 mm of wall round its 3 mm rod. Cut it, spin each pair by hand, and the smallest pair that runs clean sets Beta 2's tooth size. Every hole names a fit, so the press-fit test's sizes drop in once.",
+  "blurb": "Three gear pairs, 3:1 each, at module 0.6, 0.5, 0.4, cut in 1/16\" delrin with a 0.5 mm end mill on the Air, between three 1/8\" black delrin plates (41.6 x 76.9 mm). Each pinion has the fewest teeth that leave 1 mm of wall round its 3 mm rod. Cut it, spin each pair by hand, and the smallest pair that runs clean sets Beta 2's tooth size. Every hole names a fit, so the press-fit test's sizes drop in once.",
   "source": [
    "Claude, 2026-11-23, from Adam's Beta 2 brief: smallest envelope with 3 mm brass rod, 3 x 6 x 2.5 flanged bearings, acrylic and delrin; all testing on the Air."
   ],
@@ -2660,32 +2668,40 @@
    },
    "fits": {
     "rod_press": {
-     "d": 2.95,
+     "d": 2.96,
      "seat": null,
-     "note": "3 mm brass rod pressed into a gear (placeholder until the press-fit test)"
+     "note": "3 mm brass rod pressed into a delrin gear (placeholder until the press-fit test, cut in delrin)"
     },
     "rod_free": {
-     "d": 3.1,
+     "d": 3.08,
      "seat": null,
-     "note": "3 mm rod turning freely (placeholder)"
+     "note": "3 mm rod turning in a plain delrin hole (placeholder)"
     },
     "bearing": {
-     "d": 6.0,
+     "d": 5.98,
      "seat": {
       "d": 7.3,
       "depth": 0.65
      },
-     "note": "3 x 6 x 2.5 flanged bearing pressed in, its 7.2 x 0.6 flange in the seat (placeholder)"
+     "note": "3 x 6 x 2.5 flanged bearing pressed into delrin, flange in the seat (placeholder)"
     },
     "m2_clear": {
-     "d": 2.2,
+     "d": 2.3,
      "seat": null,
      "note": "M2 screw passing through"
+    },
+    "m2_cb": {
+     "d": 2.3,
+     "seat": {
+      "d": 4.2,
+      "depth": 1.4
+     },
+     "note": "M2 screw through, its cheese head sunk in a counterbore"
     },
     "m2_tap": {
      "d": 1.6,
      "seat": null,
-     "note": "M2 screw threading into acrylic (placeholder)"
+     "note": "M2 tapped thread in delrin"
     }
    },
    "locks": {

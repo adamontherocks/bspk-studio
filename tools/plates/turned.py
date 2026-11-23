@@ -4,7 +4,7 @@
 # module, starts, hand; its pitch diameter is the blank's diameter there less 2 modules) and flutes (round-bottomed grooves along the
 # axis, as a ball end mill cuts them: count, width, depth). It is cut whole from rod on the Air's 4th axis, so it isn't resolved
 # into floors: the export is the true solid (STEP for Fusion, STL for MakeraCAM's rotation toolpath) straight from the profile.
-#   d.turn = {v}            d.worm = {from, to, module, starts, hand, pa}            d.flutes = {from, to, count, width, depth}
+#   d.turn = {v}            d.worm = {from, to, module, starts, hand, pa, backlash (mm the groove is widened)}            d.flutes = {from, to, count, width, depth}
 #   d.stock = rod Ø it is cut from (optional: checked)
 import json, math, os, re, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
@@ -18,7 +18,7 @@ def worm_numbers(w, r_blank):
     m = float(w['module']); n = int(w.get('starts') or 1); pa = math.radians(float(w.get('pa') or 20))
     rp = r_blank - m; p = math.pi * m
     return {'m': m, 'starts': n, 'pa': pa, 'rp': rp, 'rr': rp - 1.25 * m, 'ro': r_blank, 'pitch': p, 'lead': n * p,
-            'lead_deg': math.degrees(math.atan(n * p / (2 * math.pi * rp))), 'hand': w.get('hand') or 'right'}
+            'lead_deg': math.degrees(math.atan(n * p / (2 * math.pi * rp))), 'hand': w.get('hand') or 'right', 'backlash': float(w.get('backlash') or 0)}
 
 def plan(J, pid):
     """the profile as fitted lines and arcs in the part's own frame (x along the axis, y = radius), and where that frame sits"""
@@ -67,7 +67,7 @@ def build(job, base):
         # the groove as an axial section swept along a helix (Frenet keeps it an axial section all the way), one per start,
         # run a lead past each end and trimmed to the span, so the thread ends square at the span's ends
         rp, rr, ro, pa, P_ = w['rp'], w['rr'], w['ro'], w['pa'], w['pitch']
-        top = ro + 0.3; width = lambda r: P_ / 2 + 2 * (r - rp) * math.tan(pa)
+        top = ro + 0.3; width = lambda r: P_ / 2 + w['backlash'] + 2 * (r - rp) * math.tan(pa)   # the groove widened by the backlash
         prof = [(rr, -width(rr) / 2), (rr, width(rr) / 2), (top, width(top) / 2), (top, -width(top) / 2)]
         L = (w['to'] - w['from']) + 2 * w['lead']
         helix = cq.Wire.makeHelix(w['lead'], L, rp, lefthand=w['hand'] == 'left')
@@ -79,7 +79,7 @@ def build(job, base):
         span = cq.Solid.makeBox(w['to'] - w['from'], 4 * top, 4 * top, V(w['from'], -2 * top, -2 * top))
         body = body.cut(tool.intersect(span))
         notes.append(f"worm: module {w['m']:g}, {w['starts']} start{'s' if w['starts'] > 1 else ''}, {w['hand']}-hand, pitch Ø{2 * rp:.3f}, outside Ø{2 * ro:.3f}, root Ø{2 * rr:.3f}, "
-                     f"lead {w['lead']:.3f} mm ({w['lead_deg']:.2f}° lead angle), groove {width(rr):.3f} mm wide at the root, over {w['to'] - w['from']:g} mm")
+                     f"lead {w['lead']:.3f} mm ({w['lead_deg']:.2f}° lead angle), groove {width(rr):.3f} mm wide at the root" + (f" ({w['backlash']:g} of it backlash)" if w['backlash'] else '') + f", over {w['to'] - w['from']:g} mm")
     f = job.get('flutes')
     if f and f['count'] >= 2:
         rc = f['width'] / 2; rc_at = f['r'] - f['depth'] + rc; tools = []

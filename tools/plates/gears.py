@@ -115,12 +115,14 @@ def resolve_spec(spec):
         drawn = LineString(g[0] + g[0][:1])
         off = [math.hypot(x - at[0], y - at[1]) for x, y in wall if drawn.distance(Point(x, y)) > 0.005]
         top = max(off) if off else None
-        sap = None
-        if L.get('mate') and not L.get('plain'):
-            mt = L['mate']; pa = math.radians(L.get('pa') or 20.0)
+        sap, mate = None, None
+        for mt in ([L['mate']] if L.get('mate') else []) + list(L.get('mates') or []):     # every gear it meshes with: the lowest reach counts
+            if L.get('plain'): break
+            pa = math.radians(L.get('pa') or 20.0)
             u = mt['a'] * math.sin(pa) - math.sqrt(max(0.0, mt['ra'] ** 2 - mt['rb'] ** 2))
-            sap = math.hypot(info['rb'], u) if u > 0 else info['rb']
-        reach.append((L['label'], info, r, top, sap, L.get('mate')))
+            s_ = math.hypot(info['rb'], u) if u > 0 else info['rb']
+            if sap is None or s_ < sap: sap, mate = s_, mt
+        reach.append((L['label'], info, r, top, sap, mate))
     words, clash = [], []
     for lab, info, r, top, sap, mate in reach:
         short = (r - info['rf']) * 1000

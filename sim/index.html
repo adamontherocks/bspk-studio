@@ -488,7 +488,7 @@ function projectProblem(p) {
   for (const [sid, pair] of Object.entries(p.stages || {})) {
     if (!okId(sid) || !Array.isArray(pair) || pair.length !== 2 || !(pair[0] in gearAxis) || !(pair[1] in gearAxis) || gearAxis[pair[0]] === gearAxis[pair[1]])
       return `mesh “${sid}” needs two gears on different axes`;
-    for (const g of pair) { if (meshed.has(g)) return `${g} is in two meshes`; meshed.add(g); }
+    for (const g of pair) meshed.add(g);   // a gear can be in more than one mesh (an idler; a wheel two pinions drive)
   }
   if (p.arbors.length && (!p.rate || !p.arbors.some(a => a.id === p.rate.arbor) || !num(p.rate.period) || p.rate.period <= 0)) return 'it doesn’t say which axis is driven, or how fast';
   for (const r of p.targets || []) if (!r || !p.arbors.some(a => a.id === r.arbor) || !num(r.period) || r.period <= 0) return 'one of its speed checks is incomplete';
@@ -563,10 +563,11 @@ const LMAX = Math.max(0, ...ARBOR_DEFS.map(a => a.level), ...HAND_DEFS.map(h => 
 const PD = PROJECT.defaults;
 const Z_MAX = PD.zMax || 20;   // the height controls' range
 const DEFAULT_STAGES = Object.fromEntries(Object.entries(PROJECT.stages || {}).map(([sid, gears]) =>
-  [sid, { gears: gears.slice(), m: (PD.stages && PD.stages[sid] && PD.stages[sid].m) || 0.5, z: (PD.stages && PD.stages[sid] && PD.stages[sid].z) || 0 }]));
+  [sid, { gears: gears.slice(), m: (PD.stages && PD.stages[sid] && PD.stages[sid].m) || 0.5, z: (PD.stages && PD.stages[sid] && PD.stages[sid].z) || 0,
+          ...(PD.stages && PD.stages[sid] && PD.stages[sid].dz ? { dz: +PD.stages[sid].dz } : {}) }]));
 const STAGE_IDS = Object.keys(DEFAULT_STAGES);
 const gearStage = {};
-for (const sid of STAGE_IDS) for (const g of DEFAULT_STAGES[sid].gears) gearStage[g] = sid;
+for (const sid of STAGE_IDS) for (const g of DEFAULT_STAGES[sid].gears) if (!gearStage[g]) gearStage[g] = sid;   // a gear in two meshes: its first sets its height
 
 // Starting layout, laid out by direction from a neighbour; stored as absolute X/Y.
 function polarLayout(stages, spec) {
@@ -657,15 +658,21 @@ const lowZ = sid => { const [w, p] = wheelPin(sid); return Math.max(0, (S.thick[
 function derive(st, lite = false) {
   const gears = {};
   for (const [id, d] of Object.entries(GEAR_DEFS)) gears[id] = { ...d, t: st.thick[id], bore: fitSize(st, d.bore) };
+  // A mesh's two gears share a module and a height: the pinion centred on its wheel, or offset by the mesh's dz (a wheel riding high
+  // or low on a longer pinion). A gear in two meshes takes its height from the first; the second mesh's other gear follows it.
   for (const [sid, s] of Object.entries(st.stages)) {
     const [ga, gb] = s.gears.map(id => gears[id]);
-    const wheel = ga.z >= gb.z ? ga : gb, pin = wheel === ga ? gb : ga;
+    const wheel = ga.z >= gb.z ? ga : gb, pin = wheel === ga ? gb : ga, dz = s.dz || 0;
     wheel.m = pin.m = s.m;
-    wheel.stage = pin.stage = sid;
-    wheel.z0 = s.z;
-    pin.z0 = s.z + wheel.t / 2 - pin.t / 2;
-    wheel.partner = pin.id;
-    pin.partner = wheel.id;
+    if (!wheel.stage) wheel.stage = sid;
+    if (!pin.stage) pin.stage = sid;
+    if (wheel.z0 == null && pin.z0 != null) wheel.z0 = pin.z0 - (wheel.t / 2 - pin.t / 2) - dz;
+    else if (wheel.z0 == null) wheel.z0 = s.z;
+    if (pin.z0 == null) pin.z0 = wheel.z0 + wheel.t / 2 - pin.t / 2 + dz;
+    (wheel.partners = wheel.partners || []).push(pin.id);
+    (pin.partners = pin.partners || []).push(wheel.id);
+    if (!wheel.partner) wheel.partner = pin.id;
+    if (!pin.partner) pin.partner = wheel.id;
     wheel.isWheel = true;
   }
   for (const [gid, s] of Object.entries(st.solo)) Object.assign(gears[gid], { m: s.m, z0: s.z, soloId: gid, isWheel: true });
@@ -723,6 +730,12 @@ function derive(st, lite = false) {
   return { gears, pos, tops, drum, meshes, omega, psi };
 }
 
+// Rods (rules.rod = { d, from }): each arbor turns on a rod running from `from` (the bottom of its bearings) up to the top of its
+// highest part, so it is in the way of other arbors' gears in every layer it passes. Without the rule an axis is a line (the beta).
+const ROD = PROJECT.rules && PROJECT.rules.rod && +PROJECT.rules.rod.d > 0 ? { d: +PROJECT.rules.rod.d, from: +PROJECT.rules.rod.from || 0 } : null;
+function rodTop(st, D, a) {
+  return Math.max(...a.gears.map(g => D.gears[g.id].z1), ...HAND_DEFS.filter(h => h.arbor === a.id).map(h => st.hands[h.id].z + st.hands[h.id].t));
+}
 // ---------- checks: speeds, meshes, collisions, envelope, tooth interference ----------
 // Every element is a disc or cylinder about Z, so a clash = plan overlap + height overlap.
 // Only parts that exist are here. An axis is just the centre line its parts turn on: no shaft, no size, nothing to hit.
@@ -732,10 +745,11 @@ function elements(st, D) {
     const [x, y] = D.pos[a.id];
     for (const g of a.gears) {
       const G = D.gears[g.id];
-      els.push({ part: a.id, arbor: a.id, gear: g.id, partner: G.partner, name: G.label, x, y, r: G.ra, z0: G.z0, z1: G.z1 });
+      els.push({ part: a.id, arbor: a.id, gear: g.id, partner: G.partner, partners: G.partners || [], name: G.label, x, y, r: G.ra, z0: G.z0, z1: G.z1 });
     }
     const dr = D.drum[a.id];
     if (dr) els.push({ part: a.id, arbor: a.id, drum: a.gears[0].id, name: 'Barrel drum', x, y, r: dr.rOut, z0: dr.z0, z1: dr.z1 });
+    if (ROD) els.push({ part: a.id, arbor: a.id, rod: true, name: `${a.name} rod`, x, y, r: ROD.d / 2, z0: ROD.from, z1: rodTop(st, D, a) });
   }
   for (const h of HAND_DEFS) {
     const [x, y] = D.pos[h.arbor], hs = st.hands[h.id];
@@ -756,7 +770,7 @@ function clashCost(st, D) {
     const e1 = els[i];
     for (let j = i + 1; j < els.length; j++) {
       const e2 = els[j];
-      if (e1.arbor === e2.arbor || (e1.partner && e1.partner === e2.gear)) continue;
+      if (e1.arbor === e2.arbor || (e1.partners && e1.partners.includes(e2.gear))) continue;
       const up = Math.max(e1.z0 - e2.z1, e2.z0 - e1.z1);
       if (up >= GAP) continue;
       const clear = Math.max(Math.hypot(e1.x - e2.x, e1.y - e2.y) - e1.r - e2.r, up);
@@ -782,7 +796,7 @@ function analyse(st, D) {
   for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
     const e1 = els[i], e2 = els[j];
     if (e1.arbor === e2.arbor) continue;
-    if (e1.partner && e1.partner === e2.gear) continue;
+    if (e1.partners && e1.partners.includes(e2.gear)) continue;
     const side = Math.hypot(e1.x - e2.x, e1.y - e2.y) - e1.r - e2.r;
     const up = Math.max(e1.z0 - e2.z1, e2.z0 - e1.z1);
     const clear = Math.max(side, up);
@@ -818,7 +832,13 @@ function analyse(st, D) {
       if (X.ra > lim + 1e-9) interference.push({ from: X.label, into: Y.label, by: X.ra - lim, pair: [g1, g2].sort().join('|') });
     }
   }
-  return { rates, collisions, near, envelope, interference };
+  // how much of the thinner gear's face its partner covers (a pinion offset in its mesh can leave too little)
+  const faces = [];
+  for (const [g1, g2] of D.meshes) {
+    const a = D.gears[g1], b = D.gears[g2], ov = Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0), t = Math.min(a.t, b.t);
+    if (ov < 0.7 * t - 1e-9) faces.push({ pair: `${a.label} / ${b.label}`, ov, t });
+  }
+  return { rates, collisions, near, envelope, interference, faces };
 }
 
 let D = derive(S), A = null;  // A is filled by the first solve(), once the view settings exist
@@ -1502,7 +1522,7 @@ function profileR(X, u) {   // the blank's radius at u: the largest crossing of 
 }
 function wormNumbers(w, rBlank) {
   const m = w.module, n = w.starts || 1, pa = (w.pa || 20) * Math.PI / 180, rp = rBlank - m, p = Math.PI * m;
-  return { m, n, pa, rp, rr: rp - 1.25 * m, ro: rBlank, p, lead: n * p, leadDeg: Math.atan(n * p / (2 * Math.PI * rp)) * 180 / Math.PI, hand: w.hand === 'left' ? -1 : 1 };
+  return { m, n, pa, rp, rr: rp - 1.25 * m, ro: rBlank, p, lead: n * p, leadDeg: Math.atan(n * p / (2 * Math.PI * rp)) * 180 / Math.PI, hand: w.hand === 'left' ? -1 : 1, b: w.backlash || 0 };
 }
 function turnedZones(d, X) {
   const zones = [];
@@ -1511,7 +1531,7 @@ function turnedZones(d, X) {
     zones.push({ from: w.from, to: w.to, core: N.rr, nTh: 96, du: Math.min(0.05, N.p / 24), N,
       r: (u, th) => {   // the groove's axial section swept along the helix, as turned.py cuts it (groove centred at θ = 90° where the span starts)
         const s0 = (u - w.from) - N.hand * (Math.PI / 2 - th) * N.lead / (2 * Math.PI), ph = ((s0 % N.p) + N.p) % N.p, dd = Math.min(ph, N.p - ph);
-        return Math.min(profileR(X, u), Math.max(N.rr, Math.min(N.ro + 1, N.rp + (dd - N.p / 4) / tp)));
+        return Math.min(profileR(X, u), Math.max(N.rr, Math.min(N.ro + 1, N.rp + (dd - N.p / 4 - N.b / 2) / tp)));   // (the groove widened by the backlash)
       } });
   }
   if (d.flutes) {
@@ -2040,6 +2060,7 @@ function syncDrawn() {
 }
 
 const springMat = new THREE.MeshStandardMaterial({ color: 0x8c96a3, metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide });
+const rodMat = new THREE.MeshStandardMaterial({ color: 0xc9a45c, metalness: 0.7, roughness: 0.35 });   // brass rods
 
 // How far an axis's centre line runs: from the lowest part on it to just past the highest (hands included).
 function axisSpan(a) {
@@ -2056,6 +2077,7 @@ function buildArbor(part, a) {
   const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, z0), new THREE.Vector3(0, 0, z1)]), part.axisMat);
   axis.computeLineDistances();
   part.statics.add(axis);
+  if (ROD) addMesh(part, zCylinder(ROD.d / 2, ROD.from, rodTop(S, D, a), 24), part.statics, { edges: false, mat: rodMat });
   for (const g of a.gears) {
     const G = D.gears[g.id];
     const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { hole: (G.bore || 0) / 2, arms: armsOf(G, innerOf(g.id)) });
@@ -3101,6 +3123,10 @@ function gearControls(gid) {
     control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: Math.max(3, G.t * 2) * sc, step: 0.01, value: G.t * sc,
       onInput: v => liveEdit(EDIT.thick(gid, v / sc)),
       onCommit: (v0, v1) => commit({ key: `t:${gid}`, from: v0, to: v1, make: (x, y) => `${G.label} thickness ${f2(x)} → ${f2(y)} mm` }) }),
+    ...(G.stage && !G.isWheel && S.stages[G.stage] && S.stages[G.stage].gears.includes(gid) ? [
+      control({ label: 'Height on its wheel (0: centred; − rides lower, the wheel higher)', unit: 'mm', min: -3 * sc, max: 3 * sc, step: 0.025, value: (S.stages[G.stage].dz || 0) * sc,
+        onInput: v => { beginEdit(); S.stages[G.stage].dz = +(v / sc).toFixed(4); requestSolve(); },
+        onCommit: (v0, v1) => commit({ key: `dz:${gid}`, from: v0, to: v1, adapt: false, make: (x, y) => `${G.label} offset in its mesh ${f3(x)} → ${f3(y)} mm` }) })] : []),
   ];
 }
 // A hand's length, height and thickness.
@@ -3401,18 +3427,18 @@ function turnedCard(pid, d, k) {
   const W = d.worm ? wormNumbers(d.worm, profileR(X, (d.worm.from + d.worm.to) / 2)) : null;
   el.appendChild(para('pin', `${f2(L)} mm long, Ø${f3(Dm)} at its widest${d.stock ? (d.stock >= Dm ? ` (from Ø${d.stock} rod: ${f3((d.stock - Dm) / 2)} mm to turn off)` : ` · <b>wider than the Ø${d.stock} rod</b>`) : ''}. `
     + 'Drag the profile’s dots to change its diameters and lengths: the axis is the line it turns about, and only the half above it is drawn.'
-    + (W ? ` <b>Worm</b>: module ${W.m}, ${W.n} start${W.n > 1 ? 's' : ''}, ${W.hand > 0 ? 'right' : 'left'}-hand, pitch Ø${f3(2 * W.rp)}, outside Ø${f3(2 * W.ro)}, root Ø${f3(2 * W.rr)}, lead ${f3(W.lead)} mm (${f2(W.leadDeg)}° lead angle).` : '')
+    + (W ? ` <b>Worm</b>: module ${W.m}, ${W.n} start${W.n > 1 ? 's' : ''}, ${W.hand > 0 ? 'right' : 'left'}-hand, pitch Ø${f3(2 * W.rp)}, outside Ø${f3(2 * W.ro)}, root Ø${f3(2 * W.rr)}, lead ${f3(W.lead)} mm (${f2(W.leadDeg)}° lead angle)${W.b ? `, groove ${f3(W.b)} mm wider for backlash` : ''}.` : '')
     + (d.flutes ? ` <b>Crown</b>: ${d.flutes.count} flutes, Ø${d.flutes.width} ball, ${d.flutes.depth} deep.` : '')));
-  const fields = [...(d.worm ? [['worm', 'module', 'Worm module'], ['worm', 'starts', 'Starts'], ['worm', 'from', 'Worm from'], ['worm', 'to', 'Worm to']] : []),
+  const fields = [...(d.worm ? [['worm', 'module', 'Worm module'], ['worm', 'starts', 'Starts'], ['worm', 'from', 'Worm from'], ['worm', 'to', 'Worm to'], ['worm', 'backlash', 'Worm backlash']] : []),
                   ...(d.flutes ? [['flutes', 'count', 'Flutes'], ['flutes', 'width', 'Flute Ø'], ['flutes', 'depth', 'Flute depth'], ['flutes', 'from', 'Flutes from'], ['flutes', 'to', 'Flutes to']] : []),
                   ['', 'stock', 'Rod Ø']];
   const box = document.createElement('div');
   box.className = 'row';
   box.style.flexWrap = 'wrap';
-  box.innerHTML = fields.map(([g, f, lab]) => `<label class="field-l" style="flex:1 1 30%">${lab}<input class="txt" type="number" step="${f === 'starts' || f === 'count' ? 1 : 0.05}" data-g="${g}" data-f="${f}" value="${g ? d[g][f] : (d.stock || '')}"></label>`).join('');
+  box.innerHTML = fields.map(([g, f, lab]) => `<label class="field-l" style="flex:1 1 30%">${lab}<input class="txt" type="number" step="${f === 'starts' || f === 'count' ? 1 : 0.05}" data-g="${g}" data-f="${f}" value="${g ? (d[g][f] ?? 0) : (d.stock || '')}"></label>`).join('');
   box.addEventListener('change', e => {
     const g = e.target.dataset.g, f = e.target.dataset.f, v = +e.target.value;
-    if (!f || !isFinite(v) || v <= 0) { renderSelected(); return; }
+    if (!f || !isFinite(v) || v < 0 || (v === 0 && f !== 'backlash')) { renderSelected(); return; }
     cancelPending();
     const was = g ? d[g][f] : d.stock;
     if (g) d[g][f] = f === 'starts' || f === 'count' ? Math.max(f === 'count' ? 2 : 1, Math.round(v)) : +v.toFixed(4); else d.stock = +v.toFixed(4);
@@ -3589,9 +3615,9 @@ function machiningCard(pid, d, k) {
 const shopCutter = () => (PROJECT.shop && +PROJECT.shop.cutter) || 1;
 function gearSpec(gp) {
   const layers = gp.gears.map(gid => {
-    const G = D.gears[gid], mate = G.partner ? D.gears[G.partner] : null;
+    const G = D.gears[gid], mates = (G.partners || []).map(p => D.gears[p]).filter(q => !q.plain && !G.plain);
     return { label: G.label, m: G.m, z: G.z, x: G.x || 0, pa: PA_DEG, t: G.t, z0: G.z0, ...(G.plain ? { plain: true, rp: G.rp } : {}),
-             windows: armsOf(G, innerOf(gid)), ...(mate && !mate.plain && !G.plain ? { mate: { a: G.rp + mate.rp, ra: mate.ra, rb: mate.rb, label: mate.label } } : {}) };
+             windows: armsOf(G, innerOf(gid)), mates: mates.map(q => ({ a: G.rp + q.rp, ra: q.ra, rb: q.rb, label: q.label })) };
   });
   return { id: gp.pid, name: gp.name, at: D.pos[gp.arbor].slice(), phase: D.psi[gp.gears[0]] || 0, bore: Math.max(0, ...gp.gears.map(g => D.gears[g].bore || 0)),
            layers, shop: { cutter: S.gearCut[gp.pid] || shopCutter(), minWall: 0 } };
@@ -3753,6 +3779,7 @@ function renderChecks() {
     if (Mech.checksDrawn || Mech.stale) items.push(...Mech.report());
   } else if (S.drawn.length) items.push(['info', `<b>Drawn parts not checked for clashes yet</b>: ${S.drawn.map(d => esc(nameOf(d.id))).join(', ')}`]);
   items.push(['info', `<b>Tightest clearances</b><div class="mono">${A.near.slice(0, 3).map(n => `${n.text}: ${f3(n.clear * s)} mm`).join('<br>')}</div>`]);
+  if (A.faces && A.faces.length) items.push(['warn', `<b>Meshes with too little face</b> (under 70% of the thinner gear)<div class="mono">${A.faces.map(f => `${esc(f.pair)}: ${f3(f.ov * s)} of ${f3(f.t * s)} mm`).join('<br>')}</div>`]);
   if (A.interference.length) {
     const meshes = new Set(A.interference.map(i => i.pair)).size;
     items.push(['warn', `<b>Tooth interference on ${meshes} of ${D.meshes.length} meshes</b>
@@ -3840,7 +3867,8 @@ function turnedOf(d) {
   if (!d.turn || !num(d.turn.v)) return {};
   const w = d.worm, f = d.flutes, o = { turn: { v: d.turn.v } };
   if (w && num(w.from) && num(w.to) && w.to > w.from && num(w.module) && w.module > 0)
-    o.worm = { from: w.from, to: w.to, module: w.module, starts: Math.max(1, Math.round(+w.starts || 1)), hand: w.hand === 'left' ? 'left' : 'right', pa: num(w.pa) ? w.pa : 20 };
+    o.worm = { from: w.from, to: w.to, module: w.module, starts: Math.max(1, Math.round(+w.starts || 1)), hand: w.hand === 'left' ? 'left' : 'right', pa: num(w.pa) ? w.pa : 20,
+               ...(num(w.backlash) && w.backlash > 0 && w.backlash <= 0.5 ? { backlash: w.backlash } : {}) };
   if (f && num(f.from) && num(f.to) && f.to > f.from && num(f.count) && f.count >= 2 && num(f.width) && f.width > 0 && num(f.depth) && f.depth > 0)
     o.flutes = { from: f.from, to: f.to, count: Math.round(f.count), width: f.width, depth: f.depth };
   if (num(d.stock) && d.stock > 0) o.stock = d.stock;
@@ -3891,6 +3919,7 @@ function normalizeState(st) {
     const s = st.stages && st.stages[sid];
     if (s && num(s.m)) out.stages[sid].m = s.m;
     if (s && num(s.z)) out.stages[sid].z = s.z;
+    if (s && 'dz' in s) { if (num(s.dz) && s.dz) out.stages[sid].dz = s.dz; else delete out.stages[sid].dz; }   // (absent: the project's)
   }
   for (const gid of Object.keys(out.solo)) {
     const s = st.solo && st.solo[gid];
