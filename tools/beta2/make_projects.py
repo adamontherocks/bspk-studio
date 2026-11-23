@@ -129,58 +129,57 @@ def beta2():
     from shapely.ops import unary_union
     m, TS, TT = 0.6, 3.175, 1.5875                    # module; 1/8" and 1/16" delrin
     cd = lambda z1, z2: m * (z1 + z2) / 2
-    M_, H_ = (10.4, 0.0), (-10.4, 0.0)                 # the discs on Dual_Dial_Concept's dial centres
-    # the train: minute pinion 12 -> wheel 26 | pinion 12 -> wheel 32 | pinion 13 -> hour wheel 27 (exactly 12:1). The only tooth counts
-    # where every wheel clears the next arbor's rod (both bearings are below, so each rod runs up through every layer) and the hour
-    # wheel still fits under its Ø19 disc.
-    P0, Z1, P1, Z2, P2, Z3, PE = 12, 26, 12, 32, 13, 27, 12
-    t = 1.7766579120676278                            # A1's direction from M, from the layout search
+    M_, H_ = (10.4, 0.0), (-10.4, 0.0)                 # the discs on Dual_Dial_Concept's dial centres; the movement is centred on them
+    # the train: minute pinion 12 -> wheel 26 | pinion 12 -> wheel 32 | pinion 13 -> hour wheel 27 (exactly 12:1): the only tooth counts
+    # where every wheel clears the next arbor's rod (both bearings below, so each rod runs up through every layer) with the hour wheel
+    # under its Ø19 disc. The crown arbor E drives the minute pinion with an 18-tooth wheel of its own, from the other side of it.
+    P0, Z1, P1, Z2, P2, Z3 = 12, 26, 12, 32, 13, 27
+    ZE, XE, ZW = 15, 0.15, 18                          # E's worm wheel (15 teeth, shift +0.15) and its wheel on the minute pinion
+    t = 2.446078946670053                             # A1's direction from M, from the layout search (centred box, crown on y = 0)
     A1 = (M_[0] + cd(P0, Z1) * math.cos(t), M_[1] + cd(P0, Z1) * math.sin(t))
-    A2 = max(circ_int(A1, cd(P1, Z2), H_, cd(P2, Z3)), key=lambda p: p[1])
-    worm_rp, ZE = 2.65, 16
-    cw = m * ZE / 2 + worm_rp                          # the worm's axis lies on y = 0: E sits this far off it
-    E = (A1[0] + math.sqrt(cd(PE, Z1) ** 2 - (cw - A1[1]) ** 2), cw)
-    for a, b, want in ((M_, A1, cd(P0, Z1)), (A1, A2, cd(P1, Z2)), (A2, H_, cd(P2, Z3)), (E, A1, cd(PE, Z1))):
+    A2 = min(circ_int(A1, cd(P1, Z2), H_, cd(P2, Z3)), key=lambda p: math.dist(p, (0.10, -5.80)))
+    worm_rp = 2.65
+    cw = m * ZE / 2 + XE * m + worm_rp                 # the worm's axis lies on y = 0 (3 o'clock on the movement): E sits this far off it
+    E = (M_[0] + math.sqrt(cd(ZW, P0) ** 2 - cw ** 2), -cw)
+    for a, b, want in ((M_, A1, cd(P0, Z1)), (A1, A2, cd(P1, Z2)), (A2, H_, cd(P2, Z3)), (E, M_, cd(ZW, P0))):
         assert abs(math.dist(a, b) - want) < 1e-9
-    # heights (z = 0 is the top of the upper plate). The worm lies in the plates, axis 4 mm down; E's worm wheel is level with it in a
-    # pocket in the lower plate. Layer 1 (A1's wheel with the minute pinion and E's pinion) starts just above the upper plate.
-    zw = -4.0
-    L1 = 0.5                                           # A1's wheel 0.5 to 1.7; the 1/16" pinions centred on it
+    # heights (z = 0 is the top of the upper plate). The worm lies in the plates (axis 4.2 mm down); the stem's journals (Ø1.8) run in a
+    # channel in the lower plate under the upper one; E's worm wheel sits beside the worm in a pocket in the lower plate.
+    zw = -4.2
+    L1 = 0.5                                           # A1's wheel 0.5 to 1.7; the 1/16" minute pinion and E's wheel centred on it
     TW, TP = 1.2, TS - 1.2                             # a compound from 1/8": wheel 1.2 under a 1.975 pinion
-    z_a2w = L1 + TW + 0.3                              # A2's wheel 0.3 over A1's wheel (they overlap in plan)
+    z_a2w = max(L1 + TW, L1 + TW / 2 + TT / 2) + 0.3   # A2's wheel 0.3 over everything on layer 1 (it passes over the minute pinion and E's wheel)
     dz_a1a2 = (L1 + TW) - (z_a2w + TW / 2 - TP / 2)
-    z_a2p = z_a2w + TW; z_hw = max(z_a2w + TW + 0.3, z_a2p + TP + 0.3 - TT)      # the hour wheel clears A2's wheel; its top clears A2's pinion
+    z_a2p = z_a2w + TW; z_hw = max(z_a2w + TW + 0.3, z_a2p + TP + 0.3 - TT)
     dz_a2h = z_a2p - (z_hw + TT / 2 - TP / 2)
-    z_disc = z_hw + TT                                 # the hour disc sits right on the hour wheel; the minute disc beside it
-    # the plates' outline: everything with 1.5 mm to spare (from the layout search)
-    X0, X1, Y0, Y1 = -21.4, 25.75, -11.0, 22.3
-    edge = X1
+    z_disc = z_hw + TT
+    HX, HY = 23.05, 17.3                               # the plates: centred on the discs (46.1 x 34.6, from the layout search)
+    edge = HX
     wa, wb = E[0] - 2.5, E[0] + 2.5                    # the worm's span along the stem
-    x0 = wa - 1.2                                      # the stem's inner end (journal B)
+    x0 = wa - 0.9                                      # the stem's inner end (journal B)
     xc = edge + 2.0                                    # where the crown starts: past the case wall
-    R_ew = m * ZE / 2 + m                              # E's worm wheel tip radius
-    screws = [(X0 + 3.2, Y0 + 3.2), (X1 - 3.2, Y0 + 3.2), (X0 + 3.2, Y1 - 3.2), (X1 - 3.2, Y1 - 3.2)]
-    bridge = (x0, -5.6, edge - 0.6, 2.75)              # the stem bridge's outline (it stands 0.725 above the upper plate)
-    bscrews = [(x0 + 1.6, -4.3), (edge - 2.4, -4.3)]
+    jr = 0.9                                           # journal radius (Ø1.8)
+    R_ew = m * ZE / 2 + m * (1 + XE)
+    screws = [(sx * (HX - 3.2), sy * (HY - 3.2)) for sx in (-1, 1) for sy in (-1, 1)]
     arbors = [
         {'id': 'minute', 'name': 'Minute arbor', 'group': 'display', 'level': 0,
-         'role': 'Turns once an hour; carries the minute disc. Its 12-tooth pinion is driven by the first intermediate wheel. Brass rod in two bearings (one in each plate).',
+         'role': 'Turns once an hour; carries the minute disc. Its 12-tooth pinion takes the crown (from E\'s wheel) and drives the first intermediate wheel. Runs in plain delrin holes (under the disc), so the worm can lie close beside its rod.',
          'gears': [{'id': 'minute_pinion', 'label': 'Minute pinion', 'z': P0, 't': TT, 'x': 0.3, 'bore': 'rod_press'}]},
         {'id': 'a1', 'name': 'First intermediate', 'group': 'train', 'level': 1, 'partNames': {'a1': 'First intermediate wheel and pinion (one piece, 1/8" delrin)'},
-         'role': 'Its wheel is driven by the crown (through E) and drives the minute pinion; its pinion drives the second intermediate. One piece of 1/8" delrin, milled from the pinion side.',
+         'role': 'Above the centre, between the discs. Its wheel is driven by the minute pinion; its pinion drives the second intermediate. One piece of 1/8" delrin, milled from the pinion side.',
          'gears': [{'id': 'a1_wheel', 'label': 'First intermediate wheel', 'z': Z1, 't': TW, 'x': -0.3, 'bore': 'rod_press', 'arms': 0, 'part': 'a1'},
                    {'id': 'a1_pinion', 'label': 'First intermediate pinion', 'z': P1, 't': TP, 'x': 0.3, 'bore': 'rod_press', 'part': 'a1'}]},
         {'id': 'a2', 'name': 'Second intermediate', 'group': 'train', 'level': 2, 'partNames': {'a2': 'Second intermediate wheel and pinion (one piece, 1/8" delrin)'},
-         'role': '32:12 down from the first intermediate; its 13-tooth pinion drives the hour wheel 27:13. One piece of 1/8" delrin; the wheel has four arms (it shows between the discs).',
+         'role': 'Below the centre, between the discs. 32:12 down from the first intermediate; its 13-tooth pinion drives the hour wheel 27:13. One piece of 1/8" delrin; four arms.',
          'gears': [{'id': 'a2_wheel', 'label': 'Second intermediate wheel', 'z': Z2, 't': TW, 'x': -0.3, 'bore': 'rod_press', 'arms': 4, 'part': 'a2'},
                    {'id': 'a2_pinion', 'label': 'Second intermediate pinion', 'z': P2, 't': TP, 'x': 0.3, 'bore': 'rod_press', 'part': 'a2'}]},
         {'id': 'hour', 'name': 'Hour arbor', 'group': 'display', 'level': 3,
          'role': 'Turns once in 12 hours; the hour disc sits right on its wheel (riding high on the second intermediate pinion so the disc clears it).',
          'gears': [{'id': 'hour_wheel', 'label': 'Hour wheel', 'z': Z3, 't': TT, 'x': -0.3, 'bore': 'rod_press', 'arms': 0}]},
         {'id': 'e', 'name': 'Crown arbor (E)', 'group': 'crown', 'level': 4,
-         'role': 'Takes the crown: the worm on the stem turns its 16-tooth wheel (in a pocket in the lower plate), and its pinion turns the first intermediate wheel. Runs in plain delrin holes; one crown turn = one tooth.',
-         'gears': [{'id': 'e_wheel', 'label': 'Crown arbor worm wheel', 'z': ZE, 't': TT, 'x': 0.0, 'bore': 'rod_press', 'arms': 0},
-                   {'id': 'e_pinion', 'label': 'Crown arbor pinion', 'z': PE, 't': TT, 'x': 0.3, 'bore': 'rod_press'}]},
+         'role': 'Takes the crown: the worm on the stem turns its 15-tooth worm wheel (in a pocket in the lower plate), and its 18-tooth wheel turns the minute pinion. Runs in plain delrin holes. One crown turn = one tooth: 10 turns an hour.',
+         'gears': [{'id': 'e_worm', 'label': 'Crown arbor worm wheel', 'z': ZE, 't': TT, 'x': XE, 'bore': 'rod_press', 'arms': 0},
+                   {'id': 'e_wheel', 'label': 'Crown arbor wheel', 'z': ZW, 't': TT, 'x': -0.3, 'bore': 'rod_press', 'arms': 0}]},
     ]
     disc_r = 9.5
     hands = [
@@ -191,76 +190,69 @@ def beta2():
          'labels': ['0', '5', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'], 'indicator': math.pi / 2,
          'role': 'Ø19 black delrin, V-carved and filled; on the minute rod at the hour disc\'s height.'},
     ]
-    outline = rrect((X0 + X1) / 2, (Y0 + Y1) / 2, X1 - X0, Y1 - Y0, 4.0)
-    win = box(E[0] - 2.8, -3.55, E[0] + 2.8, 3.55)                       # the worm, with 0.3 round it
-    slot = box(x0 - 0.2, -1.55, edge + 0.5, 1.55)                        # journals A and B in the lower plate's channel
-    opening = unary_union([win, box(x0 - 0.2, -1.8, edge + 0.5, 1.8)])    # the upper plate: the worm window and the journals' slot, through
-    sb = box(*bridge); feet = unary_union([box(x0, -1.75, wa - 0.35, 1.75), box(wb + 0.35, -1.75, bridge[2], 1.75)])
+    outline = rrect(0.0, 0.0, 2 * HX, 2 * HY, 4.0)
+    win = box(wa - 0.3, -3.55, wb + 0.3, 3.55)                            # the worm, with 0.3 round it (both plates)
+    chan = box(x0 - 0.2, -0.975, edge + 0.5, 0.975)                       # the journals' channel in the lower plate (Ø1.8 + 0.15)
     sk = [sketch('K1', 'Lower plate outline', 'z', -2 * TS, outline), sketch('K2', 'Upper plate outline', 'z', -TS, outline),
           sketch('K3', 'Worm window (lower plate)', 'z', -2 * TS, poly_dots(win)),
-          sketch('K4', 'Crown arbor wheel pocket (lower plate)', 'z', -2 * TS, poly_dots(Point(E).buffer(R_ew + 0.3, 64))),
-          sketch('K5', 'Stem channel (lower plate)', 'z', -2 * TS, poly_dots(slot)),
-          sketch('K6', 'Worm window and stem slot (upper plate)', 'z', -TS, poly_dots(opening)),
-          sketch('K7', 'Stem bridge outline', 'z', -2.45, poly_dots(sb.buffer(-1.0).buffer(1.0, 32))),
-          sketch('K8', 'Stem bridge: underside relief (all but its two feet)', 'z', -2.45, poly_dots(sb.buffer(0.5).difference(feet))),
-          sketch('K9', 'Stem bridge: window onto the worm', 'z', -2.45, poly_dots(box(wa + 0.3, -2.2, wb - 0.3, 1.9).buffer(-0.5).buffer(0.5, 16)))]
+          sketch('K4', 'Crown arbor worm wheel pocket (lower plate)', 'z', -2 * TS, poly_dots(Point(E).buffer(R_ew + 0.3, 64))),
+          sketch('K5', 'Stem channel (lower plate)', 'z', -2 * TS, poly_dots(chan)),
+          sketch('K6', 'Worm window (upper plate)', 'z', -TS, poly_dots(win))]
     pos = {'minute': list(M_), 'a1': list(A1), 'a2': list(A2), 'hour': list(H_), 'e': list(E)}
     bearing = lambda i, a: {'id': f'h{i}', 'kind': 'bearing', 'name': f'Bearing · {a}', 'fit': 'bearing', 'at': pos[a], 'd': 5.98, 'axis': a, 'from': 'back', 'depth': None, 'seat': {'d': 7.3, 'depth': 0.65}}
-    plain = lambda i, a, frm='back', depth=None: {'id': f'h{i}', 'kind': 'rod', 'name': f'Plain hole · {a}', 'fit': 'rod_free', 'at': pos[a], 'd': 3.08, 'axis': a, 'from': frm, 'depth': depth}
-    lower = ([bearing(i + 1, a) for i, a in enumerate(['minute', 'a1', 'a2', 'hour'])] + [plain(5, 'e')]
+    plain = lambda i, a: {'id': f'h{i}', 'kind': 'rod', 'name': f'Plain hole · {a}', 'fit': 'rod_free', 'at': pos[a], 'd': 3.08, 'axis': a, 'from': 'back', 'depth': None}
+    lower = ([bearing(i + 1, a) for i, a in enumerate(['a1', 'a2', 'hour'])] + [plain(4, 'minute'), plain(5, 'e')]
              + [{'id': 'h6', 'kind': 'pocket', 'name': 'Worm window (shows it from the back)', 'sketch': 'K3', 'from': 'back', 'depth': None},
-                {'id': 'h7', 'kind': 'pocket', 'name': 'Crown arbor worm wheel pocket', 'sketch': 'K4', 'from': 'back', 'depth': round(TT + 0.3 + (zw + TT / 2 + TS), 4)},
-                {'id': 'h8', 'kind': 'pocket', 'name': 'Stem channel', 'sketch': 'K5', 'from': 'back', 'depth': round(-TS - (zw - 1.55), 4)}]
+                {'id': 'h7', 'kind': 'pocket', 'name': 'Crown arbor worm wheel pocket', 'sketch': 'K4', 'from': 'back', 'depth': round(-TS - (zw - TT / 2 - 0.3), 4)},
+                {'id': 'h8', 'kind': 'pocket', 'name': 'Stem channel (the upper plate closes it)', 'sketch': 'K5', 'from': 'back', 'depth': round(-TS - (zw - jr - 0.05), 4)}]
              + [{'id': f'h{10 + i}', 'kind': 'pilot', 'name': 'M2 thread (plate screw)', 'fit': 'm2_tap', 'at': list(sc), 'd': 1.6, 'from': 'back', 'depth': None} for i, sc in enumerate(screws)])
-    upper = ([bearing(i + 1, a) for i, a in enumerate(['minute', 'a1', 'a2', 'hour'])] + [plain(5, 'e')]
-             + [{'id': 'h6', 'kind': 'pocket', 'name': 'Worm window and stem slot', 'sketch': 'K6', 'from': 'back', 'depth': None}]
-             + [{'id': f'h{10 + i}', 'kind': 'clear', 'name': 'M2 through, head in a counterbore', 'fit': 'm2_cb', 'at': list(sc), 'd': 2.3, 'from': 'back', 'depth': None, 'seat': {'d': 4.2, 'depth': 1.4}} for i, sc in enumerate(screws)]
-             + [{'id': f'h{20 + i}', 'kind': 'pilot', 'name': 'M2 thread (stem bridge)', 'fit': 'm2_tap', 'at': list(sc), 'd': 1.6, 'from': 'back', 'depth': None} for i, sc in enumerate(bscrews)])
-    bcuts = ([{'id': 'h1', 'kind': 'pocket', 'name': 'Underside relief: it rests on the plate, its feet hold the stem down', 'sketch': 'K8', 'from': 'front', 'depth': 2.45},
-              {'id': 'h2', 'kind': 'pocket', 'name': 'Window onto the worm', 'sketch': 'K9', 'from': 'front', 'depth': None}]
-             + [{'id': f'h{10 + i}', 'kind': 'clear', 'name': 'M2 through (pan head on top)', 'fit': 'm2_clear', 'at': list(sc), 'd': 2.3, 'from': 'front', 'depth': None} for i, sc in enumerate(bscrews)])
-    prof = [(x0, 0), (x0, 1.3), (x0 + 0.2, 1.5), (wa, 1.5), (wa, 2.95), (wa + 0.3, 3.25), (wb - 0.3, 3.25), (wb, 2.95), (wb, 1.5),
-            (xc, 1.5), (xc, 3.85), (xc + 0.4, 4.25), (xc + 3.6, 4.25), (xc + 4.0, 3.85), (xc + 4.0, 0)]
+    upper = ([bearing(i + 1, a) for i, a in enumerate(['a1', 'a2', 'hour'])] + [plain(4, 'minute'), plain(5, 'e')]
+             + [{'id': 'h6', 'kind': 'pocket', 'name': 'Worm window', 'sketch': 'K6', 'from': 'back', 'depth': None}]
+             + [{'id': f'h{10 + i}', 'kind': 'clear', 'name': 'M2 through, head in a counterbore', 'fit': 'm2_cb', 'at': list(sc), 'd': 2.3, 'from': 'back', 'depth': None, 'seat': {'d': 4.2, 'depth': 1.4}} for i, sc in enumerate(screws)])
+    prof = [(x0, 0), (x0, jr - 0.2), (x0 + 0.2, jr), (wa, jr), (wa, 2.95), (wa + 0.3, 3.25), (wb - 0.3, 3.25), (wb, 2.95), (wb, jr),
+            (xc, jr), (xc, 3.85), (xc + 0.4, 4.25), (xc + 3.6, 4.25), (xc + 4.0, 3.85), (xc + 4.0, 0)]
     sk.append({'id': 'K10', 'name': 'Crown, stem and worm (half profile, turned about z = %g)' % zw, 'plane': {'axis': 'y', 'offset': 0.0}, 'closed': True,
                'points': [{'u': round(u, 4), 'v': round(zw + r_, 4), 'smooth': False} for u, r_ in prof]})
     drawn = [
-        {'id': 'D1', 'name': 'Lower plate (1/8" black delrin; bottom bearings flange-up, the worm\'s window, E\'s wheel pocket, the stem channel, M2 threads)', 'sketch': 'K1', 'thickness': TS, 'grow': 'plus', 'mill': 'back', 'cuts': lower},
-        {'id': 'D2', 'name': 'Upper plate (1/8" black delrin; top bearings with their flanges showing like jewels, the worm window and stem slot)', 'sketch': 'K2', 'thickness': TS, 'grow': 'plus', 'mill': 'back', 'cuts': upper},
-        {'id': 'D3', 'name': 'Stem bridge (1/8" black delrin, milled from underneath; its feet hold the stem down, a window shows the worm)', 'sketch': 'K7', 'thickness': TS, 'grow': 'plus', 'mill': 'front', 'cuts': bcuts},
+        {'id': 'D1', 'name': 'Lower plate (1/8" black delrin; bottom bearings flange-up, the worm\'s window, E\'s worm wheel pocket, the stem channel, M2 threads)', 'sketch': 'K1', 'thickness': TS, 'grow': 'plus', 'mill': 'back', 'cuts': lower},
+        {'id': 'D2', 'name': 'Upper plate (1/8" black delrin; top bearings with their flanges showing like jewels, the worm window, counterbored plate screws)', 'sketch': 'K2', 'thickness': TS, 'grow': 'plus', 'mill': 'back', 'cuts': upper},
         {'id': 'D4', 'name': 'Crown, stem and worm (one piece of 3/8" black delrin rod, cut on the 4th axis)', 'sketch': 'K10', 'thickness': 0.1, 'grow': 'plus',
          'turn': {'v': zw}, 'stock': 9.525,
          'worm': {'from': round(wa, 4), 'to': round(wb, 4), 'module': m, 'starts': 1, 'hand': 'right', 'pa': 20, 'backlash': 0.3},
          'flutes': {'from': round(xc, 4), 'to': round(xc + 4.0, 4), 'count': 12, 'width': 1.0, 'depth': 0.45}},
     ]
     top_z = z_disc + TT
+    turns = P0 * ZE / ZW
     project = {
         'format': 'bspk-studio-project', 'id': 'beta2', 'name': 'Beta 2', 'title': 'Beta 2 · hand-set Hemistitch, watch size',
-        'blurb': (f'Two Ø19 discs on Dual_Dial_Concept\'s dial centres, set by a crown at 3 o\'clock between the swivel lugs. The crown\'s worm turns a small crown arbor, '
-                  f'whose pinion drives the train: minute pinion 12 ← wheel 26, pinion 12 → wheel 32, pinion 13 → hour wheel 27 (exactly 12:1), so the discs keep true time against '
-                  f'each other. 16 crown turns an hour. Module 0.6 (the 0.5 mm end mill has room in every tooth space), black delrin throughout, brass rods in 3 x 6 x 2.5 '
-                  f'bearings showing like jewels. Movement {X1 - X0:.1f} x {Y1 - Y0:.1f} mm, {top_z + 2 * TS:.1f} mm from the back of the plates to the top of the discs.'),
-        'source': ['Claude, 2026-11-23, from Adam\'s brief: the watch version of Hemistitch, hand-set, standard movement layering with the guts on show, '
-                   'smallest envelope to a reliable machining tolerance, the case scaled to fit afterwards. Layout from a search over every rod, bearing flange, gear layer, the worm and the stem.'],
-        'groups': {'display': 'Discs', 'train': 'Train', 'crown': 'Crown works', 'drawn': 'Plates, bridge and stem'},
-        'focus': [{'id': 'train', 'label': 'Crown → E → first and second intermediate → discs', 'parts': ['e', 'a1', 'a2', 'minute', 'hour', 'D4']},
-                  {'id': 'crown', 'label': 'Crown works: stem, worm, E, stem bridge', 'parts': ['e', 'a1', 'D3', 'D4']}],
+        'blurb': (f'Two Ø19 discs on Dual_Dial_Concept\'s dial centres, the movement centred on them, set by a crown at 3 o\'clock on the movement, between the swivel lugs. '
+                  f'The crown\'s worm turns a small crown arbor whose wheel turns the minute pinion; the train runs on above and below the centre: minute pinion 12 → wheel 26, '
+                  f'pinion 12 → wheel 32, pinion 13 → hour wheel 27 (exactly 12:1), so the discs keep true time against each other. {turns:g} crown turns an hour. '
+                  f'Module 0.6 (the 0.5 mm end mill has room in every tooth space), black delrin throughout, brass rods, bearings showing like jewels. '
+                  f'Movement {2 * HX:.1f} x {2 * HY:.1f} mm, {top_z + 2 * TS:.1f} mm from the back of the plates to the top of the discs.'),
+        'source': ['Claude, 2026-11-23, from Adam\'s brief: the watch version of Hemistitch, hand-set, discs centred on the movement, crown at 3 o\'clock on the movement '
+                   'to clear the hinged lugs, standard movement layering with the guts on show, a reliable machining tolerance; the case scaled to fit afterwards. '
+                   'Layout from a search over every rod, bearing, gear layer, the worm and the stem, scored on the box centred on the discs.'],
+        'groups': {'display': 'Discs', 'train': 'Train', 'crown': 'Crown works', 'drawn': 'Plates and stem'},
+        'focus': [{'id': 'train', 'label': 'Crown → E → minute → first and second intermediate → hour', 'parts': ['e', 'minute', 'a1', 'a2', 'hour', 'D4']},
+                  {'id': 'crown', 'label': 'Crown works: stem, worm, E', 'parts': ['e', 'minute', 'D4']}],
         'rules': {'minModule': 0.6, 'fixedModule': True, 'why': 'module 0.6: the 0.5 mm end mill has room in every tooth space', 'arms': ARMS, 'rod': {'d': 3.0, 'from': -2 * TS}},
         'shop': {'machine': 'Makera Carvera Air', 'cutter': 0.5, 'note': 'black delrin throughout; fits are delrin placeholders until the press-fit test'},
         'rate': {'arbor': 'minute', 'period': 3600, 'dir': -1},
         'targets': [{'label': 'Minute disc', 'arbor': 'minute', 'period': 3600, 'dir': -1}, {'label': 'Hour disc', 'arbor': 'hour', 'period': 43200, 'dir': 1}],
         'arbors': arbors, 'hands': hands,
-        'stages': {'s_ma1': ['a1_wheel', 'minute_pinion'], 's_a1a2': ['a2_wheel', 'a1_pinion'], 's_a2h': ['hour_wheel', 'a2_pinion'], 's_ea1': ['a1_wheel', 'e_pinion']},
+        'stages': {'s_ma1': ['a1_wheel', 'minute_pinion'], 's_a1a2': ['a2_wheel', 'a1_pinion'], 's_a2h': ['hour_wheel', 'a2_pinion'], 's_em': ['e_wheel', 'minute_pinion']},
         'plate': {'name': 'Bench', 'z': -2 * TS - 1.5, 'role': 'Just the bench under the movement; the plates are the drawn parts.'},
         'defaults': {'movementD': 60, 'minGap': 0.3, 'zMax': 12, 'view': {'height': 22, 'mid': 0.5},
                      'stages': {'s_ma1': {'m': m, 'z': L1}, 's_a1a2': {'m': m, 'z': round(z_a2w, 4), 'dz': round(dz_a1a2, 5)},
-                                's_a2h': {'m': m, 'z': round(z_hw, 4), 'dz': round(dz_a2h, 5)}, 's_ea1': {'m': m, 'z': L1}},
-                     'solo': {'e_wheel': {'m': m, 'z': round(zw - TT / 2, 5)}},
+                                's_a2h': {'m': m, 'z': round(z_hw, 4), 'dz': round(dz_a2h, 5)}, 's_em': {'m': m, 'z': L1}},
+                     'solo': {'e_worm': {'m': m, 'z': round(zw - TT / 2, 5)}},
                      'pos': pos, 'fits': FITS_DELRIN,
                      'hands': {'hour_disc': {'length': disc_r, 'z': round(z_disc, 5), 't': TT}, 'minute_disc': {'length': disc_r, 'z': round(z_disc, 5), 't': TT}},
                      'locks': {g['id']: True for a in arbors for g in a['gears']} | {'hour_disc': True, 'minute_disc': True}},
     }
     state = {'pos': pos, 'sketches': sk, 'drawn': drawn, 'fits': FITS_DELRIN}
-    info = {'A1': A1, 'A2': A2, 'E': E, 'heights': dict(a1w=L1, a2w=z_a2w, hw=z_hw, disc=z_disc, top=top_z), 'dz': (dz_a1a2, dz_a2h), 'size': (X1 - X0, Y1 - Y0, top_z + 2 * TS)}
+    info = {'A1': A1, 'A2': A2, 'E': E, 'turns': turns, 'heights': dict(a1w=L1, a2w=z_a2w, hw=z_hw, disc=z_disc, top=top_z), 'size': (2 * HX, 2 * HY, top_z + 2 * TS)}
     return scene(project, state), info
 
 if __name__ == '__main__':
