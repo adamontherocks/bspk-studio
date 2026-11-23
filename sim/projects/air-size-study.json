@@ -1,0 +1,2701 @@
+{
+ "format": "bspk-studio-scene",
+ "version": 3,
+ "savedAt": "2026-11-23T13:36:26",
+ "state": {
+  "pos": {
+   "p6": [
+    -9.72,
+    21.13
+   ],
+   "w6": [
+    3.48,
+    21.13
+   ],
+   "p5": [
+    -8.85,
+    -1.04
+   ],
+   "w5": [
+    3.15,
+    -1.04
+   ],
+   "p4": [
+    -8.88,
+    -22.17
+   ],
+   "w4": [
+    3.12,
+    -22.17
+   ]
+  },
+  "sketches": [
+   {
+    "id": "K1",
+    "name": "Plate outline (base)",
+    "plane": {
+     "axis": "z",
+     "offset": -3.175
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 16.8,
+      "v": -38.45,
+      "smooth": false
+     },
+     {
+      "u": 17.0415,
+      "v": -38.4427,
+      "smooth": false
+     },
+     {
+      "u": 17.2821,
+      "v": -38.4208,
+      "smooth": false
+     },
+     {
+      "u": 17.521,
+      "v": -38.3845,
+      "smooth": false
+     },
+     {
+      "u": 17.7573,
+      "v": -38.3338,
+      "smooth": false
+     },
+     {
+      "u": 17.99,
+      "v": -38.2689,
+      "smooth": false
+     },
+     {
+      "u": 18.2184,
+      "v": -38.1901,
+      "smooth": false
+     },
+     {
+      "u": 18.4417,
+      "v": -38.0976,
+      "smooth": false
+     },
+     {
+      "u": 18.6589,
+      "v": -37.9918,
+      "smooth": false
+     },
+     {
+      "u": 18.8694,
+      "v": -37.8731,
+      "smooth": false
+     },
+     {
+      "u": 19.0723,
+      "v": -37.7419,
+      "smooth": false
+     },
+     {
+      "u": 19.2669,
+      "v": -37.5987,
+      "smooth": false
+     },
+     {
+      "u": 19.4525,
+      "v": -37.444,
+      "smooth": false
+     },
+     {
+      "u": 19.6284,
+      "v": -37.2784,
+      "smooth": false
+     },
+     {
+      "u": 19.794,
+      "v": -37.1025,
+      "smooth": false
+     },
+     {
+      "u": 19.9487,
+      "v": -36.9169,
+      "smooth": false
+     },
+     {
+      "u": 20.0919,
+      "v": -36.7223,
+      "smooth": false
+     },
+     {
+      "u": 20.2231,
+      "v": -36.5194,
+      "smooth": false
+     },
+     {
+      "u": 20.3418,
+      "v": -36.3089,
+      "smooth": false
+     },
+     {
+      "u": 20.4476,
+      "v": -36.0917,
+      "smooth": false
+     },
+     {
+      "u": 20.5401,
+      "v": -35.8684,
+      "smooth": false
+     },
+     {
+      "u": 20.6189,
+      "v": -35.64,
+      "smooth": false
+     },
+     {
+      "u": 20.6838,
+      "v": -35.4073,
+      "smooth": false
+     },
+     {
+      "u": 20.7345,
+      "v": -35.171,
+      "smooth": false
+     },
+     {
+      "u": 20.7708,
+      "v": -34.9321,
+      "smooth": false
+     },
+     {
+      "u": 20.7927,
+      "v": -34.6915,
+      "smooth": false
+     },
+     {
+      "u": 20.8,
+      "v": -34.45,
+      "smooth": false
+     },
+     {
+      "u": 20.8,
+      "v": 34.45,
+      "smooth": false
+     },
+     {
+      "u": 20.7927,
+      "v": 34.6915,
+      "smooth": false
+     },
+     {
+      "u": 20.7708,
+      "v": 34.9321,
+      "smooth": false
+     },
+     {
+      "u": 20.7345,
+      "v": 35.171,
+      "smooth": false
+     },
+     {
+      "u": 20.6838,
+      "v": 35.4073,
+      "smooth": false
+     },
+     {
+      "u": 20.6189,
+      "v": 35.64,
+      "smooth": false
+     },
+     {
+      "u": 20.5401,
+      "v": 35.8684,
+      "smooth": false
+     },
+     {
+      "u": 20.4476,
+      "v": 36.0917,
+      "smooth": false
+     },
+     {
+      "u": 20.3418,
+      "v": 36.3089,
+      "smooth": false
+     },
+     {
+      "u": 20.2231,
+      "v": 36.5194,
+      "smooth": false
+     },
+     {
+      "u": 20.0919,
+      "v": 36.7223,
+      "smooth": false
+     },
+     {
+      "u": 19.9487,
+      "v": 36.9169,
+      "smooth": false
+     },
+     {
+      "u": 19.794,
+      "v": 37.1025,
+      "smooth": false
+     },
+     {
+      "u": 19.6284,
+      "v": 37.2784,
+      "smooth": false
+     },
+     {
+      "u": 19.4525,
+      "v": 37.444,
+      "smooth": false
+     },
+     {
+      "u": 19.2669,
+      "v": 37.5987,
+      "smooth": false
+     },
+     {
+      "u": 19.0723,
+      "v": 37.7419,
+      "smooth": false
+     },
+     {
+      "u": 18.8694,
+      "v": 37.8731,
+      "smooth": false
+     },
+     {
+      "u": 18.6589,
+      "v": 37.9918,
+      "smooth": false
+     },
+     {
+      "u": 18.4417,
+      "v": 38.0976,
+      "smooth": false
+     },
+     {
+      "u": 18.2184,
+      "v": 38.1901,
+      "smooth": false
+     },
+     {
+      "u": 17.99,
+      "v": 38.2689,
+      "smooth": false
+     },
+     {
+      "u": 17.7573,
+      "v": 38.3338,
+      "smooth": false
+     },
+     {
+      "u": 17.521,
+      "v": 38.3845,
+      "smooth": false
+     },
+     {
+      "u": 17.2821,
+      "v": 38.4208,
+      "smooth": false
+     },
+     {
+      "u": 17.0415,
+      "v": 38.4427,
+      "smooth": false
+     },
+     {
+      "u": 16.8,
+      "v": 38.45,
+      "smooth": false
+     },
+     {
+      "u": -16.8,
+      "v": 38.45,
+      "smooth": false
+     },
+     {
+      "u": -17.0415,
+      "v": 38.4427,
+      "smooth": false
+     },
+     {
+      "u": -17.2821,
+      "v": 38.4208,
+      "smooth": false
+     },
+     {
+      "u": -17.521,
+      "v": 38.3845,
+      "smooth": false
+     },
+     {
+      "u": -17.7573,
+      "v": 38.3338,
+      "smooth": false
+     },
+     {
+      "u": -17.99,
+      "v": 38.2689,
+      "smooth": false
+     },
+     {
+      "u": -18.2184,
+      "v": 38.1901,
+      "smooth": false
+     },
+     {
+      "u": -18.4417,
+      "v": 38.0976,
+      "smooth": false
+     },
+     {
+      "u": -18.6589,
+      "v": 37.9918,
+      "smooth": false
+     },
+     {
+      "u": -18.8694,
+      "v": 37.8731,
+      "smooth": false
+     },
+     {
+      "u": -19.0723,
+      "v": 37.7419,
+      "smooth": false
+     },
+     {
+      "u": -19.2669,
+      "v": 37.5987,
+      "smooth": false
+     },
+     {
+      "u": -19.4525,
+      "v": 37.444,
+      "smooth": false
+     },
+     {
+      "u": -19.6284,
+      "v": 37.2784,
+      "smooth": false
+     },
+     {
+      "u": -19.794,
+      "v": 37.1025,
+      "smooth": false
+     },
+     {
+      "u": -19.9487,
+      "v": 36.9169,
+      "smooth": false
+     },
+     {
+      "u": -20.0919,
+      "v": 36.7223,
+      "smooth": false
+     },
+     {
+      "u": -20.2231,
+      "v": 36.5194,
+      "smooth": false
+     },
+     {
+      "u": -20.3418,
+      "v": 36.3089,
+      "smooth": false
+     },
+     {
+      "u": -20.4476,
+      "v": 36.0917,
+      "smooth": false
+     },
+     {
+      "u": -20.5401,
+      "v": 35.8684,
+      "smooth": false
+     },
+     {
+      "u": -20.6189,
+      "v": 35.64,
+      "smooth": false
+     },
+     {
+      "u": -20.6838,
+      "v": 35.4073,
+      "smooth": false
+     },
+     {
+      "u": -20.7345,
+      "v": 35.171,
+      "smooth": false
+     },
+     {
+      "u": -20.7708,
+      "v": 34.9321,
+      "smooth": false
+     },
+     {
+      "u": -20.7927,
+      "v": 34.6915,
+      "smooth": false
+     },
+     {
+      "u": -20.8,
+      "v": 34.45,
+      "smooth": false
+     },
+     {
+      "u": -20.8,
+      "v": -34.45,
+      "smooth": false
+     },
+     {
+      "u": -20.7927,
+      "v": -34.6915,
+      "smooth": false
+     },
+     {
+      "u": -20.7708,
+      "v": -34.9321,
+      "smooth": false
+     },
+     {
+      "u": -20.7345,
+      "v": -35.171,
+      "smooth": false
+     },
+     {
+      "u": -20.6838,
+      "v": -35.4073,
+      "smooth": false
+     },
+     {
+      "u": -20.6189,
+      "v": -35.64,
+      "smooth": false
+     },
+     {
+      "u": -20.5401,
+      "v": -35.8684,
+      "smooth": false
+     },
+     {
+      "u": -20.4476,
+      "v": -36.0917,
+      "smooth": false
+     },
+     {
+      "u": -20.3418,
+      "v": -36.3089,
+      "smooth": false
+     },
+     {
+      "u": -20.2231,
+      "v": -36.5194,
+      "smooth": false
+     },
+     {
+      "u": -20.0919,
+      "v": -36.7223,
+      "smooth": false
+     },
+     {
+      "u": -19.9487,
+      "v": -36.9169,
+      "smooth": false
+     },
+     {
+      "u": -19.794,
+      "v": -37.1025,
+      "smooth": false
+     },
+     {
+      "u": -19.6284,
+      "v": -37.2784,
+      "smooth": false
+     },
+     {
+      "u": -19.4525,
+      "v": -37.444,
+      "smooth": false
+     },
+     {
+      "u": -19.2669,
+      "v": -37.5987,
+      "smooth": false
+     },
+     {
+      "u": -19.0723,
+      "v": -37.7419,
+      "smooth": false
+     },
+     {
+      "u": -18.8694,
+      "v": -37.8731,
+      "smooth": false
+     },
+     {
+      "u": -18.6589,
+      "v": -37.9918,
+      "smooth": false
+     },
+     {
+      "u": -18.4417,
+      "v": -38.0976,
+      "smooth": false
+     },
+     {
+      "u": -18.2184,
+      "v": -38.1901,
+      "smooth": false
+     },
+     {
+      "u": -17.99,
+      "v": -38.2689,
+      "smooth": false
+     },
+     {
+      "u": -17.7573,
+      "v": -38.3338,
+      "smooth": false
+     },
+     {
+      "u": -17.521,
+      "v": -38.3845,
+      "smooth": false
+     },
+     {
+      "u": -17.2821,
+      "v": -38.4208,
+      "smooth": false
+     },
+     {
+      "u": -17.0415,
+      "v": -38.4427,
+      "smooth": false
+     },
+     {
+      "u": -16.8,
+      "v": -38.45,
+      "smooth": false
+     }
+    ]
+   },
+   {
+    "id": "K2",
+    "name": "Plate outline (frame)",
+    "plane": {
+     "axis": "z",
+     "offset": 0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 16.8,
+      "v": -38.45,
+      "smooth": false
+     },
+     {
+      "u": 17.0415,
+      "v": -38.4427,
+      "smooth": false
+     },
+     {
+      "u": 17.2821,
+      "v": -38.4208,
+      "smooth": false
+     },
+     {
+      "u": 17.521,
+      "v": -38.3845,
+      "smooth": false
+     },
+     {
+      "u": 17.7573,
+      "v": -38.3338,
+      "smooth": false
+     },
+     {
+      "u": 17.99,
+      "v": -38.2689,
+      "smooth": false
+     },
+     {
+      "u": 18.2184,
+      "v": -38.1901,
+      "smooth": false
+     },
+     {
+      "u": 18.4417,
+      "v": -38.0976,
+      "smooth": false
+     },
+     {
+      "u": 18.6589,
+      "v": -37.9918,
+      "smooth": false
+     },
+     {
+      "u": 18.8694,
+      "v": -37.8731,
+      "smooth": false
+     },
+     {
+      "u": 19.0723,
+      "v": -37.7419,
+      "smooth": false
+     },
+     {
+      "u": 19.2669,
+      "v": -37.5987,
+      "smooth": false
+     },
+     {
+      "u": 19.4525,
+      "v": -37.444,
+      "smooth": false
+     },
+     {
+      "u": 19.6284,
+      "v": -37.2784,
+      "smooth": false
+     },
+     {
+      "u": 19.794,
+      "v": -37.1025,
+      "smooth": false
+     },
+     {
+      "u": 19.9487,
+      "v": -36.9169,
+      "smooth": false
+     },
+     {
+      "u": 20.0919,
+      "v": -36.7223,
+      "smooth": false
+     },
+     {
+      "u": 20.2231,
+      "v": -36.5194,
+      "smooth": false
+     },
+     {
+      "u": 20.3418,
+      "v": -36.3089,
+      "smooth": false
+     },
+     {
+      "u": 20.4476,
+      "v": -36.0917,
+      "smooth": false
+     },
+     {
+      "u": 20.5401,
+      "v": -35.8684,
+      "smooth": false
+     },
+     {
+      "u": 20.6189,
+      "v": -35.64,
+      "smooth": false
+     },
+     {
+      "u": 20.6838,
+      "v": -35.4073,
+      "smooth": false
+     },
+     {
+      "u": 20.7345,
+      "v": -35.171,
+      "smooth": false
+     },
+     {
+      "u": 20.7708,
+      "v": -34.9321,
+      "smooth": false
+     },
+     {
+      "u": 20.7927,
+      "v": -34.6915,
+      "smooth": false
+     },
+     {
+      "u": 20.8,
+      "v": -34.45,
+      "smooth": false
+     },
+     {
+      "u": 20.8,
+      "v": 34.45,
+      "smooth": false
+     },
+     {
+      "u": 20.7927,
+      "v": 34.6915,
+      "smooth": false
+     },
+     {
+      "u": 20.7708,
+      "v": 34.9321,
+      "smooth": false
+     },
+     {
+      "u": 20.7345,
+      "v": 35.171,
+      "smooth": false
+     },
+     {
+      "u": 20.6838,
+      "v": 35.4073,
+      "smooth": false
+     },
+     {
+      "u": 20.6189,
+      "v": 35.64,
+      "smooth": false
+     },
+     {
+      "u": 20.5401,
+      "v": 35.8684,
+      "smooth": false
+     },
+     {
+      "u": 20.4476,
+      "v": 36.0917,
+      "smooth": false
+     },
+     {
+      "u": 20.3418,
+      "v": 36.3089,
+      "smooth": false
+     },
+     {
+      "u": 20.2231,
+      "v": 36.5194,
+      "smooth": false
+     },
+     {
+      "u": 20.0919,
+      "v": 36.7223,
+      "smooth": false
+     },
+     {
+      "u": 19.9487,
+      "v": 36.9169,
+      "smooth": false
+     },
+     {
+      "u": 19.794,
+      "v": 37.1025,
+      "smooth": false
+     },
+     {
+      "u": 19.6284,
+      "v": 37.2784,
+      "smooth": false
+     },
+     {
+      "u": 19.4525,
+      "v": 37.444,
+      "smooth": false
+     },
+     {
+      "u": 19.2669,
+      "v": 37.5987,
+      "smooth": false
+     },
+     {
+      "u": 19.0723,
+      "v": 37.7419,
+      "smooth": false
+     },
+     {
+      "u": 18.8694,
+      "v": 37.8731,
+      "smooth": false
+     },
+     {
+      "u": 18.6589,
+      "v": 37.9918,
+      "smooth": false
+     },
+     {
+      "u": 18.4417,
+      "v": 38.0976,
+      "smooth": false
+     },
+     {
+      "u": 18.2184,
+      "v": 38.1901,
+      "smooth": false
+     },
+     {
+      "u": 17.99,
+      "v": 38.2689,
+      "smooth": false
+     },
+     {
+      "u": 17.7573,
+      "v": 38.3338,
+      "smooth": false
+     },
+     {
+      "u": 17.521,
+      "v": 38.3845,
+      "smooth": false
+     },
+     {
+      "u": 17.2821,
+      "v": 38.4208,
+      "smooth": false
+     },
+     {
+      "u": 17.0415,
+      "v": 38.4427,
+      "smooth": false
+     },
+     {
+      "u": 16.8,
+      "v": 38.45,
+      "smooth": false
+     },
+     {
+      "u": -16.8,
+      "v": 38.45,
+      "smooth": false
+     },
+     {
+      "u": -17.0415,
+      "v": 38.4427,
+      "smooth": false
+     },
+     {
+      "u": -17.2821,
+      "v": 38.4208,
+      "smooth": false
+     },
+     {
+      "u": -17.521,
+      "v": 38.3845,
+      "smooth": false
+     },
+     {
+      "u": -17.7573,
+      "v": 38.3338,
+      "smooth": false
+     },
+     {
+      "u": -17.99,
+      "v": 38.2689,
+      "smooth": false
+     },
+     {
+      "u": -18.2184,
+      "v": 38.1901,
+      "smooth": false
+     },
+     {
+      "u": -18.4417,
+      "v": 38.0976,
+      "smooth": false
+     },
+     {
+      "u": -18.6589,
+      "v": 37.9918,
+      "smooth": false
+     },
+     {
+      "u": -18.8694,
+      "v": 37.8731,
+      "smooth": false
+     },
+     {
+      "u": -19.0723,
+      "v": 37.7419,
+      "smooth": false
+     },
+     {
+      "u": -19.2669,
+      "v": 37.5987,
+      "smooth": false
+     },
+     {
+      "u": -19.4525,
+      "v": 37.444,
+      "smooth": false
+     },
+     {
+      "u": -19.6284,
+      "v": 37.2784,
+      "smooth": false
+     },
+     {
+      "u": -19.794,
+      "v": 37.1025,
+      "smooth": false
+     },
+     {
+      "u": -19.9487,
+      "v": 36.9169,
+      "smooth": false
+     },
+     {
+      "u": -20.0919,
+      "v": 36.7223,
+      "smooth": false
+     },
+     {
+      "u": -20.2231,
+      "v": 36.5194,
+      "smooth": false
+     },
+     {
+      "u": -20.3418,
+      "v": 36.3089,
+      "smooth": false
+     },
+     {
+      "u": -20.4476,
+      "v": 36.0917,
+      "smooth": false
+     },
+     {
+      "u": -20.5401,
+      "v": 35.8684,
+      "smooth": false
+     },
+     {
+      "u": -20.6189,
+      "v": 35.64,
+      "smooth": false
+     },
+     {
+      "u": -20.6838,
+      "v": 35.4073,
+      "smooth": false
+     },
+     {
+      "u": -20.7345,
+      "v": 35.171,
+      "smooth": false
+     },
+     {
+      "u": -20.7708,
+      "v": 34.9321,
+      "smooth": false
+     },
+     {
+      "u": -20.7927,
+      "v": 34.6915,
+      "smooth": false
+     },
+     {
+      "u": -20.8,
+      "v": 34.45,
+      "smooth": false
+     },
+     {
+      "u": -20.8,
+      "v": -34.45,
+      "smooth": false
+     },
+     {
+      "u": -20.7927,
+      "v": -34.6915,
+      "smooth": false
+     },
+     {
+      "u": -20.7708,
+      "v": -34.9321,
+      "smooth": false
+     },
+     {
+      "u": -20.7345,
+      "v": -35.171,
+      "smooth": false
+     },
+     {
+      "u": -20.6838,
+      "v": -35.4073,
+      "smooth": false
+     },
+     {
+      "u": -20.6189,
+      "v": -35.64,
+      "smooth": false
+     },
+     {
+      "u": -20.5401,
+      "v": -35.8684,
+      "smooth": false
+     },
+     {
+      "u": -20.4476,
+      "v": -36.0917,
+      "smooth": false
+     },
+     {
+      "u": -20.3418,
+      "v": -36.3089,
+      "smooth": false
+     },
+     {
+      "u": -20.2231,
+      "v": -36.5194,
+      "smooth": false
+     },
+     {
+      "u": -20.0919,
+      "v": -36.7223,
+      "smooth": false
+     },
+     {
+      "u": -19.9487,
+      "v": -36.9169,
+      "smooth": false
+     },
+     {
+      "u": -19.794,
+      "v": -37.1025,
+      "smooth": false
+     },
+     {
+      "u": -19.6284,
+      "v": -37.2784,
+      "smooth": false
+     },
+     {
+      "u": -19.4525,
+      "v": -37.444,
+      "smooth": false
+     },
+     {
+      "u": -19.2669,
+      "v": -37.5987,
+      "smooth": false
+     },
+     {
+      "u": -19.0723,
+      "v": -37.7419,
+      "smooth": false
+     },
+     {
+      "u": -18.8694,
+      "v": -37.8731,
+      "smooth": false
+     },
+     {
+      "u": -18.6589,
+      "v": -37.9918,
+      "smooth": false
+     },
+     {
+      "u": -18.4417,
+      "v": -38.0976,
+      "smooth": false
+     },
+     {
+      "u": -18.2184,
+      "v": -38.1901,
+      "smooth": false
+     },
+     {
+      "u": -17.99,
+      "v": -38.2689,
+      "smooth": false
+     },
+     {
+      "u": -17.7573,
+      "v": -38.3338,
+      "smooth": false
+     },
+     {
+      "u": -17.521,
+      "v": -38.3845,
+      "smooth": false
+     },
+     {
+      "u": -17.2821,
+      "v": -38.4208,
+      "smooth": false
+     },
+     {
+      "u": -17.0415,
+      "v": -38.4427,
+      "smooth": false
+     },
+     {
+      "u": -16.8,
+      "v": -38.45,
+      "smooth": false
+     }
+    ]
+   },
+   {
+    "id": "K3",
+    "name": "Frame window",
+    "plane": {
+     "axis": "z",
+     "offset": 0
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 13.3,
+      "v": -32.95,
+      "smooth": false
+     },
+     {
+      "u": 13.5411,
+      "v": -32.9354,
+      "smooth": false
+     },
+     {
+      "u": 13.7786,
+      "v": -32.8919,
+      "smooth": false
+     },
+     {
+      "u": 14.0092,
+      "v": -32.82,
+      "smooth": false
+     },
+     {
+      "u": 14.2294,
+      "v": -32.7209,
+      "smooth": false
+     },
+     {
+      "u": 14.4361,
+      "v": -32.596,
+      "smooth": false
+     },
+     {
+      "u": 14.6262,
+      "v": -32.447,
+      "smooth": false
+     },
+     {
+      "u": 14.797,
+      "v": -32.2762,
+      "smooth": false
+     },
+     {
+      "u": 14.946,
+      "v": -32.0861,
+      "smooth": false
+     },
+     {
+      "u": 15.0709,
+      "v": -31.8794,
+      "smooth": false
+     },
+     {
+      "u": 15.17,
+      "v": -31.6592,
+      "smooth": false
+     },
+     {
+      "u": 15.2419,
+      "v": -31.4286,
+      "smooth": false
+     },
+     {
+      "u": 15.2854,
+      "v": -31.1911,
+      "smooth": false
+     },
+     {
+      "u": 15.3,
+      "v": -30.95,
+      "smooth": false
+     },
+     {
+      "u": 15.3,
+      "v": 30.95,
+      "smooth": false
+     },
+     {
+      "u": 15.2854,
+      "v": 31.1911,
+      "smooth": false
+     },
+     {
+      "u": 15.2419,
+      "v": 31.4286,
+      "smooth": false
+     },
+     {
+      "u": 15.17,
+      "v": 31.6592,
+      "smooth": false
+     },
+     {
+      "u": 15.0709,
+      "v": 31.8794,
+      "smooth": false
+     },
+     {
+      "u": 14.946,
+      "v": 32.0861,
+      "smooth": false
+     },
+     {
+      "u": 14.797,
+      "v": 32.2762,
+      "smooth": false
+     },
+     {
+      "u": 14.6262,
+      "v": 32.447,
+      "smooth": false
+     },
+     {
+      "u": 14.4361,
+      "v": 32.596,
+      "smooth": false
+     },
+     {
+      "u": 14.2294,
+      "v": 32.7209,
+      "smooth": false
+     },
+     {
+      "u": 14.0092,
+      "v": 32.82,
+      "smooth": false
+     },
+     {
+      "u": 13.7786,
+      "v": 32.8919,
+      "smooth": false
+     },
+     {
+      "u": 13.5411,
+      "v": 32.9354,
+      "smooth": false
+     },
+     {
+      "u": 13.3,
+      "v": 32.95,
+      "smooth": false
+     },
+     {
+      "u": -13.3,
+      "v": 32.95,
+      "smooth": false
+     },
+     {
+      "u": -13.5411,
+      "v": 32.9354,
+      "smooth": false
+     },
+     {
+      "u": -13.7786,
+      "v": 32.8919,
+      "smooth": false
+     },
+     {
+      "u": -14.0092,
+      "v": 32.82,
+      "smooth": false
+     },
+     {
+      "u": -14.2294,
+      "v": 32.7209,
+      "smooth": false
+     },
+     {
+      "u": -14.4361,
+      "v": 32.596,
+      "smooth": false
+     },
+     {
+      "u": -14.6262,
+      "v": 32.447,
+      "smooth": false
+     },
+     {
+      "u": -14.797,
+      "v": 32.2762,
+      "smooth": false
+     },
+     {
+      "u": -14.946,
+      "v": 32.0861,
+      "smooth": false
+     },
+     {
+      "u": -15.0709,
+      "v": 31.8794,
+      "smooth": false
+     },
+     {
+      "u": -15.17,
+      "v": 31.6592,
+      "smooth": false
+     },
+     {
+      "u": -15.2419,
+      "v": 31.4286,
+      "smooth": false
+     },
+     {
+      "u": -15.2854,
+      "v": 31.1911,
+      "smooth": false
+     },
+     {
+      "u": -15.3,
+      "v": 30.95,
+      "smooth": false
+     },
+     {
+      "u": -15.3,
+      "v": -30.95,
+      "smooth": false
+     },
+     {
+      "u": -15.2854,
+      "v": -31.1911,
+      "smooth": false
+     },
+     {
+      "u": -15.2419,
+      "v": -31.4286,
+      "smooth": false
+     },
+     {
+      "u": -15.17,
+      "v": -31.6592,
+      "smooth": false
+     },
+     {
+      "u": -15.0709,
+      "v": -31.8794,
+      "smooth": false
+     },
+     {
+      "u": -14.946,
+      "v": -32.0861,
+      "smooth": false
+     },
+     {
+      "u": -14.797,
+      "v": -32.2762,
+      "smooth": false
+     },
+     {
+      "u": -14.6262,
+      "v": -32.447,
+      "smooth": false
+     },
+     {
+      "u": -14.4361,
+      "v": -32.596,
+      "smooth": false
+     },
+     {
+      "u": -14.2294,
+      "v": -32.7209,
+      "smooth": false
+     },
+     {
+      "u": -14.0092,
+      "v": -32.82,
+      "smooth": false
+     },
+     {
+      "u": -13.7786,
+      "v": -32.8919,
+      "smooth": false
+     },
+     {
+      "u": -13.5411,
+      "v": -32.9354,
+      "smooth": false
+     },
+     {
+      "u": -13.3,
+      "v": -32.95,
+      "smooth": false
+     }
+    ]
+   },
+   {
+    "id": "K4",
+    "name": "Plate outline (top)",
+    "plane": {
+     "axis": "z",
+     "offset": 3.175
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": 16.8,
+      "v": -38.45,
+      "smooth": false
+     },
+     {
+      "u": 17.0415,
+      "v": -38.4427,
+      "smooth": false
+     },
+     {
+      "u": 17.2821,
+      "v": -38.4208,
+      "smooth": false
+     },
+     {
+      "u": 17.521,
+      "v": -38.3845,
+      "smooth": false
+     },
+     {
+      "u": 17.7573,
+      "v": -38.3338,
+      "smooth": false
+     },
+     {
+      "u": 17.99,
+      "v": -38.2689,
+      "smooth": false
+     },
+     {
+      "u": 18.2184,
+      "v": -38.1901,
+      "smooth": false
+     },
+     {
+      "u": 18.4417,
+      "v": -38.0976,
+      "smooth": false
+     },
+     {
+      "u": 18.6589,
+      "v": -37.9918,
+      "smooth": false
+     },
+     {
+      "u": 18.8694,
+      "v": -37.8731,
+      "smooth": false
+     },
+     {
+      "u": 19.0723,
+      "v": -37.7419,
+      "smooth": false
+     },
+     {
+      "u": 19.2669,
+      "v": -37.5987,
+      "smooth": false
+     },
+     {
+      "u": 19.4525,
+      "v": -37.444,
+      "smooth": false
+     },
+     {
+      "u": 19.6284,
+      "v": -37.2784,
+      "smooth": false
+     },
+     {
+      "u": 19.794,
+      "v": -37.1025,
+      "smooth": false
+     },
+     {
+      "u": 19.9487,
+      "v": -36.9169,
+      "smooth": false
+     },
+     {
+      "u": 20.0919,
+      "v": -36.7223,
+      "smooth": false
+     },
+     {
+      "u": 20.2231,
+      "v": -36.5194,
+      "smooth": false
+     },
+     {
+      "u": 20.3418,
+      "v": -36.3089,
+      "smooth": false
+     },
+     {
+      "u": 20.4476,
+      "v": -36.0917,
+      "smooth": false
+     },
+     {
+      "u": 20.5401,
+      "v": -35.8684,
+      "smooth": false
+     },
+     {
+      "u": 20.6189,
+      "v": -35.64,
+      "smooth": false
+     },
+     {
+      "u": 20.6838,
+      "v": -35.4073,
+      "smooth": false
+     },
+     {
+      "u": 20.7345,
+      "v": -35.171,
+      "smooth": false
+     },
+     {
+      "u": 20.7708,
+      "v": -34.9321,
+      "smooth": false
+     },
+     {
+      "u": 20.7927,
+      "v": -34.6915,
+      "smooth": false
+     },
+     {
+      "u": 20.8,
+      "v": -34.45,
+      "smooth": false
+     },
+     {
+      "u": 20.8,
+      "v": 34.45,
+      "smooth": false
+     },
+     {
+      "u": 20.7927,
+      "v": 34.6915,
+      "smooth": false
+     },
+     {
+      "u": 20.7708,
+      "v": 34.9321,
+      "smooth": false
+     },
+     {
+      "u": 20.7345,
+      "v": 35.171,
+      "smooth": false
+     },
+     {
+      "u": 20.6838,
+      "v": 35.4073,
+      "smooth": false
+     },
+     {
+      "u": 20.6189,
+      "v": 35.64,
+      "smooth": false
+     },
+     {
+      "u": 20.5401,
+      "v": 35.8684,
+      "smooth": false
+     },
+     {
+      "u": 20.4476,
+      "v": 36.0917,
+      "smooth": false
+     },
+     {
+      "u": 20.3418,
+      "v": 36.3089,
+      "smooth": false
+     },
+     {
+      "u": 20.2231,
+      "v": 36.5194,
+      "smooth": false
+     },
+     {
+      "u": 20.0919,
+      "v": 36.7223,
+      "smooth": false
+     },
+     {
+      "u": 19.9487,
+      "v": 36.9169,
+      "smooth": false
+     },
+     {
+      "u": 19.794,
+      "v": 37.1025,
+      "smooth": false
+     },
+     {
+      "u": 19.6284,
+      "v": 37.2784,
+      "smooth": false
+     },
+     {
+      "u": 19.4525,
+      "v": 37.444,
+      "smooth": false
+     },
+     {
+      "u": 19.2669,
+      "v": 37.5987,
+      "smooth": false
+     },
+     {
+      "u": 19.0723,
+      "v": 37.7419,
+      "smooth": false
+     },
+     {
+      "u": 18.8694,
+      "v": 37.8731,
+      "smooth": false
+     },
+     {
+      "u": 18.6589,
+      "v": 37.9918,
+      "smooth": false
+     },
+     {
+      "u": 18.4417,
+      "v": 38.0976,
+      "smooth": false
+     },
+     {
+      "u": 18.2184,
+      "v": 38.1901,
+      "smooth": false
+     },
+     {
+      "u": 17.99,
+      "v": 38.2689,
+      "smooth": false
+     },
+     {
+      "u": 17.7573,
+      "v": 38.3338,
+      "smooth": false
+     },
+     {
+      "u": 17.521,
+      "v": 38.3845,
+      "smooth": false
+     },
+     {
+      "u": 17.2821,
+      "v": 38.4208,
+      "smooth": false
+     },
+     {
+      "u": 17.0415,
+      "v": 38.4427,
+      "smooth": false
+     },
+     {
+      "u": 16.8,
+      "v": 38.45,
+      "smooth": false
+     },
+     {
+      "u": -16.8,
+      "v": 38.45,
+      "smooth": false
+     },
+     {
+      "u": -17.0415,
+      "v": 38.4427,
+      "smooth": false
+     },
+     {
+      "u": -17.2821,
+      "v": 38.4208,
+      "smooth": false
+     },
+     {
+      "u": -17.521,
+      "v": 38.3845,
+      "smooth": false
+     },
+     {
+      "u": -17.7573,
+      "v": 38.3338,
+      "smooth": false
+     },
+     {
+      "u": -17.99,
+      "v": 38.2689,
+      "smooth": false
+     },
+     {
+      "u": -18.2184,
+      "v": 38.1901,
+      "smooth": false
+     },
+     {
+      "u": -18.4417,
+      "v": 38.0976,
+      "smooth": false
+     },
+     {
+      "u": -18.6589,
+      "v": 37.9918,
+      "smooth": false
+     },
+     {
+      "u": -18.8694,
+      "v": 37.8731,
+      "smooth": false
+     },
+     {
+      "u": -19.0723,
+      "v": 37.7419,
+      "smooth": false
+     },
+     {
+      "u": -19.2669,
+      "v": 37.5987,
+      "smooth": false
+     },
+     {
+      "u": -19.4525,
+      "v": 37.444,
+      "smooth": false
+     },
+     {
+      "u": -19.6284,
+      "v": 37.2784,
+      "smooth": false
+     },
+     {
+      "u": -19.794,
+      "v": 37.1025,
+      "smooth": false
+     },
+     {
+      "u": -19.9487,
+      "v": 36.9169,
+      "smooth": false
+     },
+     {
+      "u": -20.0919,
+      "v": 36.7223,
+      "smooth": false
+     },
+     {
+      "u": -20.2231,
+      "v": 36.5194,
+      "smooth": false
+     },
+     {
+      "u": -20.3418,
+      "v": 36.3089,
+      "smooth": false
+     },
+     {
+      "u": -20.4476,
+      "v": 36.0917,
+      "smooth": false
+     },
+     {
+      "u": -20.5401,
+      "v": 35.8684,
+      "smooth": false
+     },
+     {
+      "u": -20.6189,
+      "v": 35.64,
+      "smooth": false
+     },
+     {
+      "u": -20.6838,
+      "v": 35.4073,
+      "smooth": false
+     },
+     {
+      "u": -20.7345,
+      "v": 35.171,
+      "smooth": false
+     },
+     {
+      "u": -20.7708,
+      "v": 34.9321,
+      "smooth": false
+     },
+     {
+      "u": -20.7927,
+      "v": 34.6915,
+      "smooth": false
+     },
+     {
+      "u": -20.8,
+      "v": 34.45,
+      "smooth": false
+     },
+     {
+      "u": -20.8,
+      "v": -34.45,
+      "smooth": false
+     },
+     {
+      "u": -20.7927,
+      "v": -34.6915,
+      "smooth": false
+     },
+     {
+      "u": -20.7708,
+      "v": -34.9321,
+      "smooth": false
+     },
+     {
+      "u": -20.7345,
+      "v": -35.171,
+      "smooth": false
+     },
+     {
+      "u": -20.6838,
+      "v": -35.4073,
+      "smooth": false
+     },
+     {
+      "u": -20.6189,
+      "v": -35.64,
+      "smooth": false
+     },
+     {
+      "u": -20.5401,
+      "v": -35.8684,
+      "smooth": false
+     },
+     {
+      "u": -20.4476,
+      "v": -36.0917,
+      "smooth": false
+     },
+     {
+      "u": -20.3418,
+      "v": -36.3089,
+      "smooth": false
+     },
+     {
+      "u": -20.2231,
+      "v": -36.5194,
+      "smooth": false
+     },
+     {
+      "u": -20.0919,
+      "v": -36.7223,
+      "smooth": false
+     },
+     {
+      "u": -19.9487,
+      "v": -36.9169,
+      "smooth": false
+     },
+     {
+      "u": -19.794,
+      "v": -37.1025,
+      "smooth": false
+     },
+     {
+      "u": -19.6284,
+      "v": -37.2784,
+      "smooth": false
+     },
+     {
+      "u": -19.4525,
+      "v": -37.444,
+      "smooth": false
+     },
+     {
+      "u": -19.2669,
+      "v": -37.5987,
+      "smooth": false
+     },
+     {
+      "u": -19.0723,
+      "v": -37.7419,
+      "smooth": false
+     },
+     {
+      "u": -18.8694,
+      "v": -37.8731,
+      "smooth": false
+     },
+     {
+      "u": -18.6589,
+      "v": -37.9918,
+      "smooth": false
+     },
+     {
+      "u": -18.4417,
+      "v": -38.0976,
+      "smooth": false
+     },
+     {
+      "u": -18.2184,
+      "v": -38.1901,
+      "smooth": false
+     },
+     {
+      "u": -17.99,
+      "v": -38.2689,
+      "smooth": false
+     },
+     {
+      "u": -17.7573,
+      "v": -38.3338,
+      "smooth": false
+     },
+     {
+      "u": -17.521,
+      "v": -38.3845,
+      "smooth": false
+     },
+     {
+      "u": -17.2821,
+      "v": -38.4208,
+      "smooth": false
+     },
+     {
+      "u": -17.0415,
+      "v": -38.4427,
+      "smooth": false
+     },
+     {
+      "u": -16.8,
+      "v": -38.45,
+      "smooth": false
+     }
+    ]
+   }
+  ],
+  "drawn": [
+   {
+    "id": "D1",
+    "name": "Base plate (1/8\" acrylic; a bearing under each arbor, flange up; M2 threads)",
+    "sketch": "K1",
+    "thickness": 3.175,
+    "grow": "plus",
+    "mill": "back",
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 p6",
+      "fit": "bearing",
+      "at": [
+       -9.72,
+       21.13
+      ],
+      "d": 6.0,
+      "axis": "p6",
+      "from": "back",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h2",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 w6",
+      "fit": "bearing",
+      "at": [
+       3.48,
+       21.13
+      ],
+      "d": 6.0,
+      "axis": "w6",
+      "from": "back",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h3",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 p5",
+      "fit": "bearing",
+      "at": [
+       -8.85,
+       -1.04
+      ],
+      "d": 6.0,
+      "axis": "p5",
+      "from": "back",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h4",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 w5",
+      "fit": "bearing",
+      "at": [
+       3.15,
+       -1.04
+      ],
+      "d": 6.0,
+      "axis": "w5",
+      "from": "back",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h5",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 p4",
+      "fit": "bearing",
+      "at": [
+       -8.88,
+       -22.17
+      ],
+      "d": 6.0,
+      "axis": "p4",
+      "from": "back",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h6",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 w4",
+      "fit": "bearing",
+      "at": [
+       3.12,
+       -22.17
+      ],
+      "d": 6.0,
+      "axis": "w4",
+      "from": "back",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h10",
+      "kind": "pilot",
+      "name": "M2 thread",
+      "fit": "m2_tap",
+      "at": [
+       -18.05,
+       -35.7
+      ],
+      "d": 1.6,
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h11",
+      "kind": "pilot",
+      "name": "M2 thread",
+      "fit": "m2_tap",
+      "at": [
+       -18.05,
+       35.7
+      ],
+      "d": 1.6,
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h12",
+      "kind": "pilot",
+      "name": "M2 thread",
+      "fit": "m2_tap",
+      "at": [
+       18.05,
+       -35.7
+      ],
+      "d": 1.6,
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h13",
+      "kind": "pilot",
+      "name": "M2 thread",
+      "fit": "m2_tap",
+      "at": [
+       18.05,
+       35.7
+      ],
+      "d": 1.6,
+      "from": "back",
+      "depth": null
+     }
+    ]
+   },
+   {
+    "id": "D2",
+    "name": "Frame (1/8\" acrylic; the space the gears turn in)",
+    "sketch": "K2",
+    "thickness": 3.175,
+    "grow": "plus",
+    "mill": "back",
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "pocket",
+      "name": "Window for the gears",
+      "sketch": "K3",
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h10",
+      "kind": "clear",
+      "name": "M2 through",
+      "fit": "m2_clear",
+      "at": [
+       -18.05,
+       -35.7
+      ],
+      "d": 2.2,
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h11",
+      "kind": "clear",
+      "name": "M2 through",
+      "fit": "m2_clear",
+      "at": [
+       -18.05,
+       35.7
+      ],
+      "d": 2.2,
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h12",
+      "kind": "clear",
+      "name": "M2 through",
+      "fit": "m2_clear",
+      "at": [
+       18.05,
+       -35.7
+      ],
+      "d": 2.2,
+      "from": "back",
+      "depth": null
+     },
+     {
+      "id": "h13",
+      "kind": "clear",
+      "name": "M2 through",
+      "fit": "m2_clear",
+      "at": [
+       18.05,
+       35.7
+      ],
+      "d": 2.2,
+      "from": "back",
+      "depth": null
+     }
+    ]
+   },
+   {
+    "id": "D3",
+    "name": "Top plate (1/8\" acrylic, milled from underneath; a bearing over each arbor, flange down)",
+    "sketch": "K4",
+    "thickness": 3.175,
+    "grow": "plus",
+    "mill": "front",
+    "cuts": [
+     {
+      "id": "h1",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 p6",
+      "fit": "bearing",
+      "at": [
+       -9.72,
+       21.13
+      ],
+      "d": 6.0,
+      "axis": "p6",
+      "from": "front",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h2",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 w6",
+      "fit": "bearing",
+      "at": [
+       3.48,
+       21.13
+      ],
+      "d": 6.0,
+      "axis": "w6",
+      "from": "front",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h3",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 p5",
+      "fit": "bearing",
+      "at": [
+       -8.85,
+       -1.04
+      ],
+      "d": 6.0,
+      "axis": "p5",
+      "from": "front",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h4",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 w5",
+      "fit": "bearing",
+      "at": [
+       3.15,
+       -1.04
+      ],
+      "d": 6.0,
+      "axis": "w5",
+      "from": "front",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h5",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 p4",
+      "fit": "bearing",
+      "at": [
+       -8.88,
+       -22.17
+      ],
+      "d": 6.0,
+      "axis": "p4",
+      "from": "front",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h6",
+      "kind": "bearing",
+      "name": "Bearing \u00b7 w4",
+      "fit": "bearing",
+      "at": [
+       3.12,
+       -22.17
+      ],
+      "d": 6.0,
+      "axis": "w4",
+      "from": "front",
+      "depth": null,
+      "seat": {
+       "d": 7.3,
+       "depth": 0.65
+      }
+     },
+     {
+      "id": "h10",
+      "kind": "clear",
+      "name": "M2 through (pan head on top)",
+      "fit": "m2_clear",
+      "at": [
+       -18.05,
+       -35.7
+      ],
+      "d": 2.2,
+      "from": "front",
+      "depth": null
+     },
+     {
+      "id": "h11",
+      "kind": "clear",
+      "name": "M2 through (pan head on top)",
+      "fit": "m2_clear",
+      "at": [
+       -18.05,
+       35.7
+      ],
+      "d": 2.2,
+      "from": "front",
+      "depth": null
+     },
+     {
+      "id": "h12",
+      "kind": "clear",
+      "name": "M2 through (pan head on top)",
+      "fit": "m2_clear",
+      "at": [
+       18.05,
+       -35.7
+      ],
+      "d": 2.2,
+      "from": "front",
+      "depth": null
+     },
+     {
+      "id": "h13",
+      "kind": "clear",
+      "name": "M2 through (pan head on top)",
+      "fit": "m2_clear",
+      "at": [
+       18.05,
+       35.7
+      ],
+      "d": 2.2,
+      "from": "front",
+      "depth": null
+     }
+    ]
+   }
+  ],
+  "fits": {
+   "rod_press": {
+    "d": 2.95,
+    "seat": null,
+    "note": "3 mm brass rod pressed into a gear (placeholder until the press-fit test)"
+   },
+   "rod_free": {
+    "d": 3.1,
+    "seat": null,
+    "note": "3 mm rod turning freely (placeholder)"
+   },
+   "bearing": {
+    "d": 6.0,
+    "seat": {
+     "d": 7.3,
+     "depth": 0.65
+    },
+    "note": "3 x 6 x 2.5 flanged bearing pressed in, its 7.2 x 0.6 flange in the seat (placeholder)"
+   },
+   "m2_clear": {
+    "d": 2.2,
+    "seat": null,
+    "note": "M2 screw passing through"
+   },
+   "m2_tap": {
+    "d": 1.6,
+    "seat": null,
+    "note": "M2 screw threading into acrylic (placeholder)"
+   }
+  },
+  "gearCut": {
+   "G:p4_g": 0.4,
+   "G:w4_g": 0.4
+  }
+ },
+ "project": {
+  "format": "bspk-studio-project",
+  "id": "air-size-study",
+  "name": "Air size study",
+  "title": "Air size study \u00b7 how small the teeth go",
+  "blurb": "Three gear pairs, 3:1 each, at module 0.6, 0.5, 0.4, cut in 1/16\" delrin with a 0.5 mm end mill on the Air, between three 1/8\" acrylic plates (41.6 x 76.9 mm). Each pinion has the fewest teeth that leave 1 mm of wall round its 3 mm rod. Cut it, spin each pair by hand, and the smallest pair that runs clean sets Beta 2's tooth size. Every hole names a fit, so the press-fit test's sizes drop in once.",
+  "source": [
+   "Claude, 2026-11-23, from Adam's Beta 2 brief: smallest envelope with 3 mm brass rod, 3 x 6 x 2.5 flanged bearings, acrylic and delrin; all testing on the Air."
+  ],
+  "groups": {
+   "m6": "Module 0.6",
+   "m5": "Module 0.5",
+   "m4": "Module 0.4"
+  },
+  "focus": [
+   {
+    "id": "m6",
+    "label": "Module 0.6: pinion 11 / wheel 33",
+    "parts": [
+     "p6",
+     "w6"
+    ]
+   },
+   {
+    "id": "m5",
+    "label": "Module 0.5: pinion 12 / wheel 36",
+    "parts": [
+     "p5",
+     "w5"
+    ]
+   },
+   {
+    "id": "m4",
+    "label": "Module 0.4: pinion 15 / wheel 45",
+    "parts": [
+     "p4",
+     "w4"
+    ]
+   }
+  ],
+  "rules": {
+   "minModule": 0.4,
+   "fixedModule": true,
+   "why": "the tooth sizes are what this rig tests",
+   "arms": {
+    "rim": 1.0,
+    "arm": 0.8,
+    "hubWall": 1.2
+   }
+  },
+  "shop": {
+   "machine": "Makera Carvera Air",
+   "cutter": 0.5,
+   "note": "all testing on the Air; fits are placeholders until the press-fit test"
+  },
+  "rate": {
+   "arbor": "p5",
+   "period": 60,
+   "dir": -1
+  },
+  "targets": [],
+  "arbors": [
+   {
+    "id": "p6",
+    "name": "Pinion arbor \u00b7 module 0.6",
+    "group": "m6",
+    "level": 0,
+    "role": "11 teeth, module 0.6, shift +0.3, pressed on a 3 mm rod that turns in a bearing in each plate.",
+    "gears": [
+     {
+      "id": "p6_g",
+      "label": "Pinion 11 \u00b7 m0.6",
+      "z": 11,
+      "t": 1.6,
+      "x": 0.3,
+      "bore": "rod_press"
+     }
+    ]
+   },
+   {
+    "id": "w6",
+    "name": "Wheel arbor \u00b7 module 0.6",
+    "group": "m6",
+    "level": 1,
+    "role": "33 teeth, module 0.6, shift -0.3, four arms; pressed on a 3 mm rod in a bearing in each plate.",
+    "gears": [
+     {
+      "id": "w6_g",
+      "label": "Wheel 33 \u00b7 m0.6",
+      "z": 33,
+      "t": 1.6,
+      "x": -0.3,
+      "bore": "rod_press",
+      "arms": 4
+     }
+    ]
+   },
+   {
+    "id": "p5",
+    "name": "Pinion arbor \u00b7 module 0.5",
+    "group": "m5",
+    "level": 0,
+    "role": "12 teeth, module 0.5, shift +0.3, pressed on a 3 mm rod that turns in a bearing in each plate.",
+    "gears": [
+     {
+      "id": "p5_g",
+      "label": "Pinion 12 \u00b7 m0.5",
+      "z": 12,
+      "t": 1.6,
+      "x": 0.3,
+      "bore": "rod_press"
+     }
+    ]
+   },
+   {
+    "id": "w5",
+    "name": "Wheel arbor \u00b7 module 0.5",
+    "group": "m5",
+    "level": 1,
+    "role": "36 teeth, module 0.5, shift -0.3, four arms; pressed on a 3 mm rod in a bearing in each plate.",
+    "gears": [
+     {
+      "id": "w5_g",
+      "label": "Wheel 36 \u00b7 m0.5",
+      "z": 36,
+      "t": 1.6,
+      "x": -0.3,
+      "bore": "rod_press",
+      "arms": 4
+     }
+    ]
+   },
+   {
+    "id": "p4",
+    "name": "Pinion arbor \u00b7 module 0.4",
+    "group": "m4",
+    "level": 0,
+    "role": "15 teeth, module 0.4, shift +0.3, pressed on a 3 mm rod that turns in a bearing in each plate.",
+    "gears": [
+     {
+      "id": "p4_g",
+      "label": "Pinion 15 \u00b7 m0.4",
+      "z": 15,
+      "t": 1.6,
+      "x": 0.3,
+      "bore": "rod_press"
+     }
+    ]
+   },
+   {
+    "id": "w4",
+    "name": "Wheel arbor \u00b7 module 0.4",
+    "group": "m4",
+    "level": 1,
+    "role": "45 teeth, module 0.4, shift -0.3, four arms; pressed on a 3 mm rod in a bearing in each plate.",
+    "gears": [
+     {
+      "id": "w4_g",
+      "label": "Wheel 45 \u00b7 m0.4",
+      "z": 45,
+      "t": 1.6,
+      "x": -0.3,
+      "bore": "rod_press",
+      "arms": 4
+     }
+    ]
+   }
+  ],
+  "hands": [],
+  "stages": {
+   "s6": [
+    "w6_g",
+    "p6_g"
+   ],
+   "s5": [
+    "w5_g",
+    "p5_g"
+   ],
+   "s4": [
+    "w4_g",
+    "p4_g"
+   ]
+  },
+  "plate": {
+   "name": "Bench",
+   "z": -3.675,
+   "role": "Just the bench under the rig; the rig's own plates are the drawn parts."
+  },
+  "defaults": {
+   "movementD": 87,
+   "minGap": 0.2,
+   "zMax": 12,
+   "view": {
+    "height": 12,
+    "mid": 1.6
+   },
+   "stages": {
+    "s6": {
+     "m": 0.6,
+     "z": 0.8
+    },
+    "s5": {
+     "m": 0.5,
+     "z": 0.8
+    },
+    "s4": {
+     "m": 0.4,
+     "z": 0.8
+    }
+   },
+   "pos": {
+    "p6": [
+     -9.72,
+     21.13
+    ],
+    "w6": [
+     3.48,
+     21.13
+    ],
+    "p5": [
+     -8.85,
+     -1.04
+    ],
+    "w5": [
+     3.15,
+     -1.04
+    ],
+    "p4": [
+     -8.88,
+     -22.17
+    ],
+    "w4": [
+     3.12,
+     -22.17
+    ]
+   },
+   "fits": {
+    "rod_press": {
+     "d": 2.95,
+     "seat": null,
+     "note": "3 mm brass rod pressed into a gear (placeholder until the press-fit test)"
+    },
+    "rod_free": {
+     "d": 3.1,
+     "seat": null,
+     "note": "3 mm rod turning freely (placeholder)"
+    },
+    "bearing": {
+     "d": 6.0,
+     "seat": {
+      "d": 7.3,
+      "depth": 0.65
+     },
+     "note": "3 x 6 x 2.5 flanged bearing pressed in, its 7.2 x 0.6 flange in the seat (placeholder)"
+    },
+    "m2_clear": {
+     "d": 2.2,
+     "seat": null,
+     "note": "M2 screw passing through"
+    },
+    "m2_tap": {
+     "d": 1.6,
+     "seat": null,
+     "note": "M2 screw threading into acrylic (placeholder)"
+    }
+   },
+   "locks": {
+    "p6_g": true,
+    "w6_g": true,
+    "p5_g": true,
+    "w5_g": true,
+    "p4_g": true,
+    "w4_g": true
+   }
+  }
+ }
+}

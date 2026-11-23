@@ -70,15 +70,21 @@ def floors(J, d, k, shop):
     """the air per floor (deepest first) as the cutter will leave it, before the walls are made one. Returns (Ls, A, notes)."""
     st = J['state']; SK = {s['id']: s for s in st['sketches']}; T = d['thickness']; face = face_of(d)
     outline = union([P(spline_poly(k['points']))])
-    outside = diff(BOX, outline); near_part = offset(outline, 2.0)
     func = []
     for c in d.get('cuts') or []:
         if is_drilled(c) or (c.get('from') or 'front') != face: continue     # (the sim's loader reads a missing face as the front)
         for paths, depth in cut_rings(c, SK, st['pos']):
             D = T if depth is None else min(T, max(0.0, depth))
             if D > 1e-6: func.append((paths, round(T - D, 4)))
+    return floors_from(outline, func, T, shop)
+
+def floors_from(outline, func, T, shop, speck=SPECK):
+    """the floors loop for any part: its outline (clipper paths), its cuts as [(paths, floor height from the far face)], its thickness.
+    speck: plate narrower than twice this comes down, and outside corners are rounded to it once (a gear passes a few µm: its tooth
+    tips are cut as drawn, since an end mill leaves an outside corner sharp)"""
+    outside = diff(BOX, outline); near_part = offset(outline, 2.0)
     Ls = sorted({0.0} | {f for _, f in func if f < T - 1e-6})
-    R = max(SPECK, shop['minWall'] / 2); r_cut = shop['cutter'] / 2
+    R = max(speck, shop['minWall'] / 2); r_cut = shop['cutter'] / 2
     prev, A, rounded, notes = [], [], [], {'towers': 0, 'thin_added': 0.0, 'cutter_filled': 0.0}
     for L in Ls:
         cuts_here = union(outside, *[p for p, f in func if f <= L + 1e-6])
@@ -87,7 +93,7 @@ def floors(J, d, k, shop):
         if shop['minWall'] > 0:
             big = [p for p in C if pc.Orientation(p) or abs(pc.Area(p)) / S / S >= TOWER_A]; notes['towers'] += len(C) - len(big)
             C = union(big, real)
-        C = union(opening(close(C, SPECK), SPECK), real)
+        C = union(opening(close(C, speck), speck), real)
         raw = diff(C, real)
         def needed(q):
             if opening([q], NEEDS / 2): return True                                    # wide enough somewhere: a real takedown
@@ -106,7 +112,7 @@ def floors(J, d, k, shop):
         miss = opening(miss, 0.003) if miss else []
         if miss:
             notes['cutter_filled'] += sum(ar(q) for q in pos(miss))
-            A2 = union(diff(A2, miss), prev)
+            A2 = union(diff(A2, offset(miss, 0.001)), prev)     # (1 µm into the wall it fills against, so it can't come away from it)
         rounded = diff(A2, cuts_here)
         A.append(clean_level(A2)); prev = A2
     return Ls, A, notes, near_part
@@ -150,7 +156,12 @@ def resolve_part(J, pid, log=None):
 def resolve_scene(J, pids):
     """for serve.py: resolve the named parts in a scene, return {pid: resolved or {'error': text}}"""
     out = {}
+    gp = [pid for pid in pids if pid.startswith('G:')]
+    if gp:
+        import gears
+        out.update(gears.resolve_scene(J, gp))
     for pid in pids:
+        if pid in out: continue
         try: out[pid] = resolve_part(J, pid)
         except Exception as e: out[pid] = {'error': f'{type(e).__name__}: {e}'}
     return out

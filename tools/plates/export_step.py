@@ -167,9 +167,17 @@ def export(J, pid, outdir):
     """both steps: plan here (system python), build in .venv (CadQuery). The solid is tried as one glued body first; if that isn't
     valid read back from the file, as stacked bodies (each band its own solid)."""
     t0 = time.time()
+    if pid.startswith('G:'):                      # a gear part: the sim's gear numbers and its resolved floors, read like a plate
+        import gears
+        J = gears.as_drawn(J, pid)
+    else:
+        d = next((x for x in J['state']['drawn'] if x['id'] == pid), None)
+        if d and d.get('turn'):                   # a turned part (4th axis): a true solid straight from its profile, worm and flutes
+            import turned
+            return turned.export(J, pid, outdir)
     job = plan(J, pid)
     os.makedirs(outdir, exist_ok=True)
-    base = os.path.join(outdir, f"{pid}-{slug(job['name'])}")
+    base = os.path.join(outdir, f"{re.sub(r'[^A-Za-z0-9]+', '-', pid).strip('-')}-{slug(job['name'])}")
     data = json.dumps(job).encode()
     run = subprocess.run([VENV_PY, __file__, '--build', base, 'dxf'], input=data, capture_output=True, timeout=300)
     if run.returncode != 0: return {'error': run.stderr.decode(errors='replace')[-2000:]}

@@ -9,6 +9,7 @@
   --bg:#0d1319; --stage-top:#18222d; --panel:#121a22; --line:#243140; --line-2:#2f3e4f;
   --fg:#dce5ed; --muted:#8798aa; --dim:#5f7183; --accent:#86bddb; --accent-ink:#0d1319;
   --warn:#e3a95c; --err:#ff5a48; --ok:#7fb2e6; --pin:#f0b44c; --sketch:#ffd23f;
+  --pv-bg:#0a0f14; --pv-plate:#4b6278; --pv-line:#e8eef3;
   --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   color-scheme:dark;
@@ -123,6 +124,13 @@ dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 .gear-card .gh div{display:flex;flex-direction:column;gap:2px;min-width:0}
 .gear-card .gh small{color:var(--muted);font:11px var(--mono)}
 .gear-card .gl{font-size:11.5px;color:var(--muted)}
+.tooth-pv{margin:0;flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:3px}
+.tooth-pv svg{width:100%;aspect-ratio:1;background:var(--pv-bg);border:1px solid var(--line);border-radius:6px}
+.tooth-pv figcaption{font:10.5px var(--mono);color:var(--muted);text-align:center}
+.fits{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.fits li{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;font-size:12px}
+.fits li small{grid-column:1/-1;color:var(--muted);font-size:11px}
+.fits input{width:78px}
 .lockrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .mesh-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:12px}
 .link{all:unset;cursor:pointer;color:var(--accent)}
@@ -241,9 +249,17 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
 
     <section>
       <div class="eyebrow">Project</div>
-      <div class="row"><select id="projectPick" aria-label="Project"></select><button id="projectOpen">Open</button></div>
+      <div class="row"><select id="projectPick" aria-label="Project"></select><button id="projectOpen">Open</button><button id="projectNew">New…</button></div>
       <p class="note" id="projectNote"></p>
+      <form id="newProject" class="field-l" hidden>
+        <label class="field-l">Name<input class="txt" id="npName" required maxlength="60" placeholder="e.g. Beta 2"></label>
+        <label class="field-l">What it is<textarea class="txt" id="npBlurb" rows="3" maxlength="600" placeholder="A line or two: what it does, what it's made of"></textarea></label>
+        <div class="row"><button class="primary" type="submit">Start it</button><button type="button" id="npCancel">Cancel</button></div>
+        <p class="note">It starts empty, set up for the Air with placeholder fits. Give Claude the brief, photos and sizes: Claude engineers the first parts into it and you edit from there.</p>
+      </form>
     </section>
+
+    <section id="shopSection" hidden></section>
 
     <section>
       <div class="eyebrow">Motion</div>
@@ -453,7 +469,7 @@ function projectProblem(p) {
   if (!p || typeof p !== 'object' || p.format !== 'bspk-studio-project') return 'it isn’t a BSPK Studio project';
   const okId = s => typeof s === 'string' && /^[A-Za-z][\w-]*$/.test(s), num = v => typeof v === 'number' && isFinite(v);
   const ids = new Set(), gearAxis = {};
-  if (!Array.isArray(p.arbors) || !p.arbors.length) return 'it has no axes';
+  if (!Array.isArray(p.arbors)) return 'it has no list of axes';
   for (const a of p.arbors) {
     if (!a || !okId(a.id) || ids.has(a.id) || !Array.isArray(a.gears) || !a.gears.length) return `axis “${a && a.id}” is missing its id or gears`;
     ids.add(a.id);
@@ -474,7 +490,7 @@ function projectProblem(p) {
       return `mesh “${sid}” needs two gears on different axes`;
     for (const g of pair) { if (meshed.has(g)) return `${g} is in two meshes`; meshed.add(g); }
   }
-  if (!p.rate || !p.arbors.some(a => a.id === p.rate.arbor) || !num(p.rate.period) || p.rate.period <= 0) return 'it doesn’t say which axis is driven, or how fast';
+  if (p.arbors.length && (!p.rate || !p.arbors.some(a => a.id === p.rate.arbor) || !num(p.rate.period) || p.rate.period <= 0)) return 'it doesn’t say which axis is driven, or how fast';
   for (const r of p.targets || []) if (!r || !p.arbors.some(a => a.id === r.arbor) || !num(r.period) || r.period <= 0) return 'one of its speed checks is incomplete';
   if (!p.defaults || typeof p.defaults !== 'object') return 'it has no starting layout';
   if (/[<>]/.test(JSON.stringify(p))) return 'its text contains < or >, which the page won’t show';
@@ -503,8 +519,8 @@ try {
   else if (wanted) bootNotice = 'Couldn’t open that project: this browser didn’t keep it through the reload. Your previous scene is shown instead.';
 } catch (e) { /* no session storage */ }
 
-const RATE_ROOT = PROJECT.rate.arbor;
-const RATE_W = (PROJECT.rate.dir > 0 ? 2 : -2) * Math.PI / PROJECT.rate.period;
+const RATE_ROOT = PROJECT.rate && PROJECT.arbors.length ? PROJECT.rate.arbor : null;   // null: no gear train (yet)
+const RATE_W = RATE_ROOT ? (PROJECT.rate.dir > 0 ? 2 : -2) * Math.PI / PROJECT.rate.period : 0;
 const ARBOR_DEFS = PROJECT.arbors.map((a, i) => ({ name: a.id, role: '', level: i, ...a, group: a.group || 'parts' }));
 const HAND_DEFS = (PROJECT.hands || []).map((h, i) => ({ name: h.id, role: '', level: ARBOR_DEFS.length + i, w0: 0.6, w1: 0.3, ...h, group: h.group || 'parts' }));
 const GROUPS = Object.fromEntries([...ARBOR_DEFS, ...HAND_DEFS].map(p => [p.group, { label: p.group }]));
@@ -514,12 +530,35 @@ const FOCUS = { all: null, ...Object.fromEntries((PROJECT.focus || []).map(f => 
 
 const GEAR_DEFS = {};
 for (const a of ARBOR_DEFS) for (const g of a.gears) GEAR_DEFS[g.id] = { ...g, arbor: a.id };
+// a size given as a number, or as the name of a fit in the state's table (its diameter)
+const fitSize = (st, f) => (typeof f === 'number' ? f : typeof f === 'string' && st.fits && st.fits[f] && +st.fits[f].d) || 0;
+// Gear parts: what comes off the machine as one piece. Each gear is its own, unless gears on one arbor share a `part` id: then
+// they are one piece (a compound, a pinion standing on its wheel), milled from the pinion's side.
+function gearParts() {
+  const out = [];
+  for (const a of ARBOR_DEFS) {
+    if (a.drumH) continue;
+    const groups = {};
+    for (const g of a.gears) if (!g.bought) (groups[g.part || g.id] = groups[g.part || g.id] || []).push(g.id);
+    for (const [k, gs] of Object.entries(groups))
+      out.push({ pid: `G:${k}`, arbor: a.id, gears: gs, name: (a.partNames && a.partNames[k]) || gs.map(g => GEAR_DEFS[g].label).join(' + ') });
+  }
+  return out;
+}
+const gearPartOf = pid => gearParts().find(gp => gp.pid === pid) || null;
+// the radius a wheel's windows must stay outside: a smaller gear of the same piece standing on it
+function innerOf(gid) {
+  const g = GEAR_DEFS[gid];
+  if (!g.part || !D || !D.gears) return 0;
+  const me = D.gears[gid];
+  return Math.max(0, ...ARBOR[g.arbor].gears.filter(o => o.id !== gid && o.part === g.part && D.gears[o.id].ra < me.ra).map(o => D.gears[o.id].ra + Math.max(ARMS.hubWall, 0.3)));
+}
 const ARBOR = Object.fromEntries(ARBOR_DEFS.map(a => [a.id, a]));
 const HAND = Object.fromEntries(HAND_DEFS.map(h => [h.id, h]));
 const ARBOR_IDS = ARBOR_DEFS.map(a => a.id);
 const arborOf = id => (HAND[id] ? HAND[id].arbor : id);
 const mainGear = a => ARBOR[a].gears.reduce((p, q) => (q.z > p.z ? q : p)).id;
-const LMAX = Math.max(...ARBOR_DEFS.map(a => a.level), ...HAND_DEFS.map(h => h.level));
+const LMAX = Math.max(0, ...ARBOR_DEFS.map(a => a.level), ...HAND_DEFS.map(h => h.level));
 
 const PD = PROJECT.defaults;
 const Z_MAX = PD.zMax || 20;   // the height controls' range
@@ -531,7 +570,7 @@ for (const sid of STAGE_IDS) for (const g of DEFAULT_STAGES[sid].gears) gearStag
 
 // Starting layout, laid out by direction from a neighbour; stored as absolute X/Y.
 function polarLayout(stages, spec) {
-  const pos = { [RATE_ROOT]: [0, 0] };
+  const pos = RATE_ROOT ? { [RATE_ROOT]: [0, 0] } : {};
   for (const [child, parent, deg] of spec) {
     const sid = Object.keys(stages).find(k => { const ar = stages[k].gears.map(g => GEAR_DEFS[g].arbor); return ar.includes(child) && ar.includes(parent); });
     if (!sid || !pos[parent]) continue;
@@ -562,6 +601,11 @@ const DEFAULT_STATE = {
   info: {},      // partId -> { name, note }
   pins: [],      // { id: 'P1', part, at: [x, y, z] in the part's own frame, note }
   sketches: [],  // { id: 'K1', name, plane: { axis: 'x'|'y'|'z', offset }, closed, points: [{ u, v, smooth }] }
+  // Fits: hole sizes by what the hole is for (a rod pressed in, a bearing's seat), in one table, so a measured size changes every
+  // hole that names it at once. Cuts and gear bores name a fit; the table starts from the project's.
+  fits: clone(PD.fits || {}),   // name -> { d, seat: { d, depth } | null, note }
+  made: {},      // gear parts resolved for the machine: 'G:<part>' -> { outline, tiers, face, log, at, key, reach } (tools/plates/gears.py)
+  gearCut: {},   // a gear part's own smallest end mill, where it differs from the project's
   drawn: [],     // parts you drew: { id: 'D1', name, sketch: 'K1', thickness, grow: 'plus'|'minus'|'both', back: null | [{ u, v, smooth, w? }] }
                  // w (optional, on front and back dots): the dot's own depth in or out of its face, positive toward the back
                  // edges: null | per dot, the dots on the joining edge from front dot i to back dot i: [{ t, d: [x, y, z], smooth }]
@@ -612,7 +656,7 @@ const lowZ = sid => { const [w, p] = wheelPin(sid); return Math.max(0, (S.thick[
 // ---------- state -> geometry, speeds, tooth phases ----------
 function derive(st, lite = false) {
   const gears = {};
-  for (const [id, d] of Object.entries(GEAR_DEFS)) gears[id] = { ...d, t: st.thick[id] };
+  for (const [id, d] of Object.entries(GEAR_DEFS)) gears[id] = { ...d, t: st.thick[id], bore: fitSize(st, d.bore) };
   for (const [sid, s] of Object.entries(st.stages)) {
     const [ga, gb] = s.gears.map(id => gears[id]);
     const wheel = ga.z >= gb.z ? ga : gb, pin = wheel === ga ? gb : ga;
@@ -649,7 +693,7 @@ function derive(st, lite = false) {
   if (lite) return { gears, pos, tops, drum };
 
   const meshes = Object.values(st.stages).map(s => s.gears);
-  const omega = { [RATE_ROOT]: RATE_W };  // the project's given speed (negative = clockwise seen from the dial side)
+  const omega = RATE_ROOT ? { [RATE_ROOT]: RATE_W } : {};  // the project's given speed (negative = clockwise seen from the dial side)
   for (let changed = true; changed;) {
     changed = false;
     for (const [g1, g2] of meshes) {
@@ -663,7 +707,7 @@ function derive(st, lite = false) {
   // Tooth phase per gear so meshing teeth interleave: a driven gear's gap faces its driver's tooth.
   const psi = {};
   const settlePhase = id => { for (const g of ARBOR[id].gears) if (!(g.id in psi)) psi[g.id] = 0; };
-  settlePhase(RATE_ROOT);
+  if (RATE_ROOT) settlePhase(RATE_ROOT);
   for (let changed = true; changed;) {
     changed = false;
     for (const [g1, g2] of meshes) for (const [d, n] of [[g1, g2], [g2, g1]]) {
@@ -1189,13 +1233,24 @@ function clearPart(part) {
   part.splitLen = 0; part.taperLen = 0;
 }
 
-function addCrossings(shape, rf, arms) {
-  const rim = Math.max(0.12 * rf, 0.3), hub = Math.max(0.22 * rf, 3 * ARBOR_R), arm = Math.max(0.1 * rf, 0.25);
-  const rOut = rf - rim, rIn = hub;
-  if (rOut - rIn < 0.5) return;
+// A wheel's crossings (the windows between its arms): rim, arm and hub sizes from the project's rules (defaults: the beta's look), the hub
+// clear of the bore by rules.arms.hubWall and of a pinion standing on the wheel (innerR). The machine cuts exactly these (gears.py).
+const ARMS = Object.assign({ rim: 0.3, arm: 0.25, hubWall: 0 }, (PROJECT.rules && PROJECT.rules.arms) || {});
+function armsOf(G, innerR = 0) {
+  const n = G.arms != null ? G.arms : G.plain ? (G.rp > 8 ? 4 : 0) : G.z >= 16 ? (G.z >= 60 ? 5 : 4) : 0;
+  if (!n || n < 2) return null;
+  const rf = G.plain ? G.rp : G.rf;
+  const rim = Math.max(0.12 * rf, ARMS.rim), arm = Math.max(0.1 * rf, ARMS.arm);
+  const rIn = Math.max(0.22 * rf, 3 * ARBOR_R, (G.bore || 0) / 2 + ARMS.hubWall, innerR), rOut = rf - rim;
+  if (rOut - rIn < 0.5) return null;
+  if (2 * Math.PI / n - 2 * Math.asin(Math.min(0.95, arm / 2 / rIn)) < 0.15) return null;
+  return { rOut, rIn, arm, n };
+}
+function addCrossings(shape, w) {
+  if (!w) return;
+  const { rOut, rIn, arm, n: arms } = w;
   const step = 2 * Math.PI / arms;
   const dOut = Math.asin(arm / 2 / rOut), dIn = Math.asin(Math.min(0.95, arm / 2 / rIn));
-  if (step - 2 * dIn < 0.15) return;
   for (let k = 0; k < arms; k++) {
     const a0 = k * step, p = new THREE.Path(), N = 20;
     for (let i = 0; i <= N; i++) {
@@ -1211,23 +1266,17 @@ function addCrossings(shape, rf, arms) {
   }
 }
 
-function gearGeometry(G, { hole = 0, crossings = false } = {}) {
-  if (G.plain) {   // no teeth: a plain wheel, with crossings when it's big enough to look like one
-    const shape = new THREE.Shape();
-    shape.absarc(0, 0, G.rp, 0, Math.PI * 2, false);
-    if (crossings) addCrossings(shape, G.rp, 4);
-    return new THREE.ExtrudeGeometry(shape, { depth: G.t, bevelEnabled: false, curveSegments: 64 });
-  }
-  const g = computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0 });
-  const shape = new THREE.Shape(outline(g).map(([x, y]) => new THREE.Vector2(x, y)));
+function gearGeometry(G, { hole = 0, arms = null } = {}) {
+  let shape;
+  if (G.plain) { shape = new THREE.Shape(); shape.absarc(0, 0, G.rp, 0, Math.PI * 2, false); }   // no teeth: a plain wheel, with crossings when it's big enough to look like one
+  else shape = new THREE.Shape(outline(computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0 })).map(([x, y]) => new THREE.Vector2(x, y)));
   if (hole > 0) {
     const h = new THREE.Path();
     h.absarc(0, 0, hole, 0, Math.PI * 2, true);
     shape.holes.push(h);
-  } else if (crossings) {
-    addCrossings(shape, g.rf, G.z >= 60 ? 5 : 4);
   }
-  return new THREE.ExtrudeGeometry(shape, { depth: G.t, bevelEnabled: false, curveSegments: 32 });
+  if (arms) addCrossings(shape, arms);
+  return new THREE.ExtrudeGeometry(shape, { depth: G.t, bevelEnabled: false, curveSegments: G.plain ? 64 : 32 });
 }
 
 function ring(rOut, rIn, depth) {
@@ -1434,11 +1483,93 @@ function buildTwisted(part, d, k) {
   const b = part.bbox;
   part.anchorLocal.set(b.max.x, (b.min.y + b.max.y) / 2, b.max.z);
 }
+// ---------- turned parts (4th axis): half a profile turned about a line in its sketch, with a worm and flutes cut in it ----------
+// d.turn = { v }: the axis is the sketch line v = turn.v; the profile is what lies above it. d.worm: a helical groove over a span of the
+// axis (module, starts, hand; pitch Ø = the blank's Ø there less 2 modules). d.flutes: round-bottomed grooves along the axis.
+// Exported as a true solid by tools/plates/turned.py; drawn here as the same surfaces, sampled.
+const turnedProfile = (d, k) => {
+  let X = outlinePoints(k).slice(0, -1).map(p => [p[0], Math.max(0, p[1] - d.turn.v)]);
+  const a = X.reduce((s2, p, i) => { const q = X[(i + 1) % X.length]; return s2 + p[0] * q[1] - q[0] * p[1]; }, 0);
+  return a < 0 ? X.reverse() : X;
+};
+function profileR(X, u) {   // the blank's radius at u: the largest crossing of the profile there
+  let best = 0;
+  for (let i = 0; i < X.length; i++) {
+    const [u0, r0] = X[i], [u1, r1] = X[(i + 1) % X.length];
+    if (Math.abs(u1 - u0) > 1e-12 && u >= Math.min(u0, u1) - 1e-9 && u <= Math.max(u0, u1) + 1e-9) best = Math.max(best, r0 + (r1 - r0) * (u - u0) / (u1 - u0));
+  }
+  return best;
+}
+function wormNumbers(w, rBlank) {
+  const m = w.module, n = w.starts || 1, pa = (w.pa || 20) * Math.PI / 180, rp = rBlank - m, p = Math.PI * m;
+  return { m, n, pa, rp, rr: rp - 1.25 * m, ro: rBlank, p, lead: n * p, leadDeg: Math.atan(n * p / (2 * Math.PI * rp)) * 180 / Math.PI, hand: w.hand === 'left' ? -1 : 1 };
+}
+function turnedZones(d, X) {
+  const zones = [];
+  if (d.worm) {
+    const w = d.worm, N = wormNumbers(w, profileR(X, (w.from + w.to) / 2)), tp = Math.tan(N.pa);
+    zones.push({ from: w.from, to: w.to, core: N.rr, nTh: 96, du: Math.min(0.05, N.p / 24), N,
+      r: (u, th) => {   // the groove's axial section swept along the helix, as turned.py cuts it (groove centred at θ = 90° where the span starts)
+        const s0 = (u - w.from) - N.hand * (Math.PI / 2 - th) * N.lead / (2 * Math.PI), ph = ((s0 % N.p) + N.p) % N.p, dd = Math.min(ph, N.p - ph);
+        return Math.min(profileR(X, u), Math.max(N.rr, Math.min(N.ro + 1, N.rp + (dd - N.p / 4) / tp)));
+      } });
+  }
+  if (d.flutes) {
+    const f = d.flutes, R = profileR(X, (f.from + f.to) / 2), rc = f.width / 2, rcen = R - f.depth + rc;
+    zones.push({ from: f.from, to: f.to, core: R - f.depth, nTh: Math.max(96, f.count * 12), du: 0.1,
+      r: (u, th) => {
+        let r = profileR(X, u);
+        for (let kk = 0; kk < f.count; kk++) {
+          const dA = th + 2 * Math.PI * kk / f.count, sn = rcen * Math.sin(dA), q = rc * rc - sn * sn;
+          if (q >= 0) r = Math.min(r, Math.max(0, rcen * Math.cos(dA) - Math.sqrt(q)));
+        }
+        return r;
+      } });
+  }
+  return zones;
+}
+function buildTurned(part, d, k) {
+  const ax = k.plane.axis, c = k.plane.offset, av = d.turn.v, NT = 72, X = turnedProfile(d, k), zones = turnedZones(d, X);
+  const ev = planeToModel(ax, 0, 0, 1), en = planeToModel(ax, 1, 0, 0);
+  const at = (u, r, th) => { const o = planeToModel(ax, c, u, av), ct = Math.cos(th), st = Math.sin(th); return [o[0] + r * (ct * ev[0] + st * en[0]), o[1] + r * (ct * ev[1] + st * en[1]), o[2] + r * (ct * ev[2] + st * en[2])]; };
+  const pos = [], tri = (a, b, e) => pos.push(...a, ...b, ...e), quad = (a, b, e, f) => { tri(a, b, e); tri(a, e, f); };
+  const zoneAt = u => zones.find(z => u >= z.from - 1e-9 && u <= z.to + 1e-9);
+  const Xc = X.map(([u, r]) => { const z = zoneAt(u); return [u, z ? Math.min(r, z.core) : r]; });   // the body under the worm and the flutes
+  for (let i = 0; i < Xc.length; i++) {
+    const [u0, r0] = Xc[i], [u1, r1] = Xc[(i + 1) % Xc.length];
+    if (r0 < 1e-9 && r1 < 1e-9) continue;
+    for (let j = 0; j < NT; j++) { const t0 = 2 * Math.PI * j / NT, t1 = 2 * Math.PI * (j + 1) / NT; quad(at(u0, r0, t0), at(u1, r1, t0), at(u1, r1, t1), at(u0, r0, t1)); }
+  }
+  for (const z of zones) {
+    const nu = Math.max(2, Math.ceil((z.to - z.from) / z.du)), U = Array.from({ length: nu + 1 }, (_, i) => z.from + (z.to - z.from) * i / nu);
+    const TH = Array.from({ length: z.nTh + 1 }, (_, j) => 2 * Math.PI * j / z.nTh);
+    const G = U.map(u => TH.map(th => z.r(u, th)));
+    for (let i = 0; i < nu; i++) for (let j = 0; j < z.nTh; j++)
+      quad(at(U[i], G[i][j], TH[j]), at(U[i + 1], G[i + 1][j], TH[j]), at(U[i + 1], G[i + 1][j + 1], TH[j + 1]), at(U[i], G[i][j + 1], TH[j + 1]));
+    for (const [i, u] of [[0, z.from], [nu, z.to]]) for (let j = 0; j < z.nTh; j++)   // the ends: from the body out to the cut surface
+      quad(at(u, z.core, TH[j]), at(u, G[i][j], TH[j]), at(u, G[i][j + 1], TH[j + 1]), at(u, z.core, TH[j + 1]));
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  addMesh(part, geo, part.statics, { edges: false });
+  const ep = [];   // edge lines: the profile's corners as circles, the axis dashed
+  for (const [u, r] of Xc) if (r > 1e-6) for (let j = 0; j < NT; j++) ep.push(...at(u, r, 2 * Math.PI * j / NT), ...at(u, r, 2 * Math.PI * (j + 1) / NT));
+  const eg = new THREE.BufferGeometry();
+  eg.setAttribute('position', new THREE.Float32BufferAttribute(ep, 3));
+  const lines = new THREE.LineSegments(eg, part.edgeMat);
+  lines.visible = edgesOn; part.statics.add(lines); part.edges.push(lines);
+  geo.computeBoundingBox();
+  part.bbox = geo.boundingBox.clone();
+  const b = part.bbox;
+  part.anchorLocal.set(b.max.x, (b.min.y + b.max.y) / 2, b.max.z);
+}
 function buildDrawn(part, d, k) {
-  if (k && k.closed && k.points.length >= 3 && ((d.cuts && d.cuts.length) || d.resolved) && isFlat(d, k) && window.ClipperLib) return buildPlate(part, d, k);
+  if (k && k.closed && k.points.length >= 3 && ((d.cuts && d.cuts.length) || d.resolved) && isFlat(d, k) && !d.turn && window.ClipperLib) return buildPlate(part, d, k);
   clearPart(part);
   part.bbox = null;
   if (!k || !k.closed || k.points.length < 3) return;   // an open outline has no body until it's closed again
+  if (d.turn) return buildTurned(part, d, k);
   if (d.twist) return buildTwisted(part, d, k);
   const F = k.points, B = backOf(d, k), n = F.length, ax = k.plane.axis;
   const [f0, f1] = faceOffsets(d, k), sg = depthSign(d), fd = faceDots(d, k);
@@ -1548,7 +1679,7 @@ const isFlat = (d, k) => !!k && !d.back && !k.points.some(q => q.w) && !(d.edges
 // "changed since resolved", until it is resolved again. Resolving always starts from the intent, never from an earlier result.
 const DRILLED = new Set(['hole', 'bearing', 'clear', 'screw', 'pilot', 'rod', 'dowel']), DRILL_MAX = 3.2;
 const ownCut = c => DRILLED.has(c.kind) && c.d > 0 && c.d <= DRILL_MAX;      // a drilled hole: its own true circle, not part of the tiers
-const millable = (d, k) => !!k && k.closed && k.points.length >= 3 && k.plane.axis === 'z' && isFlat(d, k) && !d.twist && !d.place;
+const millable = (d, k) => !!k && k.closed && k.points.length >= 3 && k.plane.axis === 'z' && isFlat(d, k) && !d.twist && !d.place && !d.turn;
 function hashText(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(36); }
 function intentKey(d, k) {   // everything the resolver reads
   const cuts = (d.cuts || []).map(c => [c.kind, c.from, c.depth, c.d, c.axis && S.pos[c.axis] ? S.pos[c.axis] : c.at, c.seat,
@@ -1894,14 +2025,15 @@ function syncDrawn() {
   for (const d of S.drawn) {
     if (!parts[d.id]) {
       makePart({ id: d.id, name: d.name, group: 'drawn', kind: 'drawn', level: 0,
-        role: 'A part you drew: its outline is a sketch, pushed out to a thickness. Select it and its dots appear: drag them to reshape it. Not checked for clashes yet.' });
+        role: d.turn ? 'A turned part: its sketch is half its profile, turned about a line (the axis). Select it and its dots appear: drag them to change its diameters and lengths. Not checked for clashes yet.'
+          : 'A part you drew: its outline is a sketch, pushed out to a thickness. Select it and its dots appear: drag them to reshape it. Not checked for clashes yet.' });
       addLabel(d.id);
       addRow(d.id);
       rebuilt = true;
     }
     const p = parts[d.id], k = sketchOf(d);
     const cutKey = (d.cuts || []).map(c => [c, c.axis && S.pos[c.axis], c.kind === 'pocket' && (S.sketches.find(x => x.id === c.sketch) || {}).points]);
-    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey, d.twist, d.twistAt, d.place, d.mill, d.minWall, d.cutter, d.resolved ? d.resolved.at + '|' + d.resolved.key : '']);
+    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey, d.twist, d.twistAt, d.place, d.mill, d.minWall, d.cutter, d.resolved ? d.resolved.at + '|' + d.resolved.key : '', d.turn, d.worm, d.flutes]);
     if (p.key !== key) { buildDrawn(p, d, k); applyPlace(p, d); p.key = key; rebuilt = true; }
   }
   return rebuilt;
@@ -1926,7 +2058,7 @@ function buildArbor(part, a) {
   part.statics.add(axis);
   for (const g of a.gears) {
     const G = D.gears[g.id];
-    const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { crossings: G.plain ? G.rp > 8 : G.z >= 16 });
+    const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { hole: (G.bore || 0) / 2, arms: armsOf(G, innerOf(g.id)) });
     const mesh = addMesh(part, geom, part.spin, { gear: g.id });
     mesh.position.z = G.z0;
     part.gearMeshes[g.id] = mesh;
@@ -2040,7 +2172,7 @@ function syncScene() {
     const p = parts[a.id], [x, y] = D.pos[a.id];
     p.root.position.x = x;
     p.root.position.y = y;
-    const k = JSON.stringify([a.gears.map(g => [D.gears[g.id].m, D.gears[g.id].z0, D.gears[g.id].t]), axisSpan(a)]);
+    const k = JSON.stringify([a.gears.map(g => [D.gears[g.id].m, D.gears[g.id].z0, D.gears[g.id].t, D.gears[g.id].bore]), axisSpan(a)]);
     if (p.key !== k) { buildArbor(p, a); p.key = k; rebuilt = true; }
     for (const g of a.gears) p.gearMeshes[g.id].rotation.z = D.psi[g.id];
     const big = a.gears.map(g => D.gears[g.id]).sort((u, v) => v.ra - u.ra)[0];
@@ -3124,6 +3256,11 @@ function renderSelected() {
       card.addEventListener('click', e => { if (!e.target.closest('input,button')) setActiveGear(g.id); });
       el.appendChild(card);
     }
+    const gps = gearParts().filter(gp => gp.arbor === id);
+    if (gps.length) {
+      el.appendChild(subHead(`Machining · ${gps.length > 1 ? 'each piece' : 'the piece'} as the cutter will leave it`));
+      for (const gp of gps) el.appendChild(gearCard(gp));
+    }
   } else if (p.kind === 'hand') {
     const h = HAND[p.id], hs = S.hands[p.id];
     const info = document.createElement('dl');
@@ -3147,6 +3284,8 @@ function renderSelected() {
       + row('Clashes', 'not checked yet');
     el.appendChild(info);
     if (k && !k.closed) el.appendChild(para('pin', 'Its outline is open, so it has no body. Close the sketch again to bring it back.'));
+    if (d.turn && k && k.closed) el.appendChild(turnedCard(p.id, d, k));
+    if (!d.turn) {
     el.appendChild(subHead('Shape'));
     el.appendChild(control({ label: 'Thickness', unit: 'mm', min: 0.05 * sc, max: 20 * sc, step: 0.05, value: d.thickness * sc,
       onInput: v => { beginEdit(); d.thickness = Math.max(minThickness(d, k), v / sc); requestSolve(); },   // never so thin a front dot passes its back partner
@@ -3168,10 +3307,12 @@ function renderSelected() {
       commit({ text: `${nameOf(p.id)} now grows ${growText(d, k)} from its plane`, adapt: false });
     });
     el.appendChild(grow);
+    }
     if (k) el.appendChild(control({ label: `Plane position · ${n}`, unit: 'mm', min: -60 * sc, max: 60 * sc, step: 0.05, value: k.plane.offset * sc,
       onInput: v => { beginEdit(); k.plane.offset = +(v / sc).toFixed(4); requestSolve(); },
       onCommit: (v0, v1) => commit({ key: `dp:${p.id}`, from: v0, to: v1, adapt: false, make: (x, y) => `${nameOf(p.id)} plane ${n} ${f2(x)} → ${f2(y)} mm` }) }));
     if (millable(d, k)) el.appendChild(machiningCard(p.id, d, k));
+    if (!d.turn) {
     el.appendChild(subHead(`Holes and pockets · cut straight in along ${n}`));
     if (!k || !isFlat(d, k)) el.appendChild(para('pin', 'Holes and pockets need a flat part: no back outline of its own, no dot depths and no joining-edge dots.'));
     else if (!window.ClipperLib) el.appendChild(para('pin', 'Holes and pockets need the Clipper library, which didn’t load (no internet?). They’re kept and show again once it loads.'));
@@ -3191,6 +3332,7 @@ function renderSelected() {
       });
       el.appendChild(add);
       el.appendChild(para('note', 'Depth blank = straight through. A hole set on an axis follows that axis when you move the arbor. Bearing pockets come with a seat for the flange (7.2 × 0.6 here: check your bearings). Countersinks show as steps; the export cuts a true cone.'));
+    }
     }
     el.appendChild(subHead('Outlines · the dots you see belong to one of them'));
     const face = window.Sketcher ? window.Sketcher.face() : 'front', liveEdge = window.Sketcher ? window.Sketcher.edge() : null;
@@ -3250,6 +3392,45 @@ document.getElementById('selected').addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
   if (go) select(go.dataset.go);
 });
+
+// A turned part's card: what it is, the worm's and the flutes' numbers (editable), and its export (a true solid for the 4th axis).
+function turnedCard(pid, d, k) {
+  const el = document.createElement('div'), X = turnedProfile(d, k);
+  const us = X.map(q => q[0]), L = Math.max(...us) - Math.min(...us), Dm = 2 * Math.max(...X.map(q => q[1]));
+  el.appendChild(subHead('Turned part · cut whole from rod on the 4th axis'));
+  const W = d.worm ? wormNumbers(d.worm, profileR(X, (d.worm.from + d.worm.to) / 2)) : null;
+  el.appendChild(para('pin', `${f2(L)} mm long, Ø${f3(Dm)} at its widest${d.stock ? (d.stock >= Dm ? ` (from Ø${d.stock} rod: ${f3((d.stock - Dm) / 2)} mm to turn off)` : ` · <b>wider than the Ø${d.stock} rod</b>`) : ''}. `
+    + 'Drag the profile’s dots to change its diameters and lengths: the axis is the line it turns about, and only the half above it is drawn.'
+    + (W ? ` <b>Worm</b>: module ${W.m}, ${W.n} start${W.n > 1 ? 's' : ''}, ${W.hand > 0 ? 'right' : 'left'}-hand, pitch Ø${f3(2 * W.rp)}, outside Ø${f3(2 * W.ro)}, root Ø${f3(2 * W.rr)}, lead ${f3(W.lead)} mm (${f2(W.leadDeg)}° lead angle).` : '')
+    + (d.flutes ? ` <b>Crown</b>: ${d.flutes.count} flutes, Ø${d.flutes.width} ball, ${d.flutes.depth} deep.` : '')));
+  const fields = [...(d.worm ? [['worm', 'module', 'Worm module'], ['worm', 'starts', 'Starts'], ['worm', 'from', 'Worm from'], ['worm', 'to', 'Worm to']] : []),
+                  ...(d.flutes ? [['flutes', 'count', 'Flutes'], ['flutes', 'width', 'Flute Ø'], ['flutes', 'depth', 'Flute depth'], ['flutes', 'from', 'Flutes from'], ['flutes', 'to', 'Flutes to']] : []),
+                  ['', 'stock', 'Rod Ø']];
+  const box = document.createElement('div');
+  box.className = 'row';
+  box.style.flexWrap = 'wrap';
+  box.innerHTML = fields.map(([g, f, lab]) => `<label class="field-l" style="flex:1 1 30%">${lab}<input class="txt" type="number" step="${f === 'starts' || f === 'count' ? 1 : 0.05}" data-g="${g}" data-f="${f}" value="${g ? d[g][f] : (d.stock || '')}"></label>`).join('');
+  box.addEventListener('change', e => {
+    const g = e.target.dataset.g, f = e.target.dataset.f, v = +e.target.value;
+    if (!f || !isFinite(v) || v <= 0) { renderSelected(); return; }
+    cancelPending();
+    const was = g ? d[g][f] : d.stock;
+    if (g) d[g][f] = f === 'starts' || f === 'count' ? Math.max(f === 'count' ? 2 : 1, Math.round(v)) : +v.toFixed(4); else d.stock = +v.toFixed(4);
+    const ok = turnedOf(d);
+    if (g && !ok[g]) { d[g][f] = was; renderSelected(); return; }
+    commit({ text: `${shortName(pid)}: ${e.target.closest('label').firstChild.textContent.trim().toLowerCase()} ${was ?? '—'} → ${g ? d[g][f] : d.stock}`, adapt: false });
+  });
+  el.appendChild(box);
+  if (DISK.on) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<button data-a="export">Export STEP and STL</button>';
+    row.addEventListener('click', e => { if (e.target.dataset.a === 'export') exportPart(pid, e.target); });
+    el.appendChild(row);
+    el.appendChild(para('note', 'STEP for Fusion, STL for MakeraCAM’s rotation toolpath (it works from a mesh). No resolve: the 4th axis cuts the solid as drawn.'));
+  } else el.appendChild(para('pin', 'Export runs on this machine: open the sim from serve.py (python3 serve.py).'));
+  return el;
+}
 
 // "Make it a part": a closed sketch becomes a solid. The sketch stays the part's outline, so its dots reshape it.
 function makeDrawnFrom(sketchId, thickness = 1) {
@@ -3403,16 +3584,99 @@ function machiningCard(pid, d, k) {
   el.appendChild(row);
   return el;
 }
+// A gear part's intent, as the machine side needs it (tools/plates/gears.py): every gear's numbers as the sim works them out, the bore,
+// the windows, the partner each gear meshes with (to check the cutter's root fillet against its tips), and the end mill.
+const shopCutter = () => (PROJECT.shop && +PROJECT.shop.cutter) || 1;
+function gearSpec(gp) {
+  const layers = gp.gears.map(gid => {
+    const G = D.gears[gid], mate = G.partner ? D.gears[G.partner] : null;
+    return { label: G.label, m: G.m, z: G.z, x: G.x || 0, pa: PA_DEG, t: G.t, z0: G.z0, ...(G.plain ? { plain: true, rp: G.rp } : {}),
+             windows: armsOf(G, innerOf(gid)), ...(mate && !mate.plain && !G.plain ? { mate: { a: G.rp + mate.rp, ra: mate.ra, rb: mate.rb, label: mate.label } } : {}) };
+  });
+  return { id: gp.pid, name: gp.name, at: D.pos[gp.arbor].slice(), phase: D.psi[gp.gears[0]] || 0, bore: Math.max(0, ...gp.gears.map(g => D.gears[g].bore || 0)),
+           layers, shop: { cutter: S.gearCut[gp.pid] || shopCutter(), minWall: 0 } };
+}
+const gearKey = sp => hashText(JSON.stringify({ ...sp, at: null, phase: null, name: null }));   // where it sits doesn't change the piece
+const gearState = gp => { const r = S.made[gp.pid]; return !r ? 'none' : r.key === gearKey(gearSpec(gp)) ? 'fresh' : 'stale'; };
+const pieceName = pid => (pid.startsWith('G:') ? (gearPartOf(pid) || { name: pid }).name : shortName(pid));
+function gearCard(gp) {
+  const el = document.createElement('div'), st = gearState(gp), r = S.made[gp.pid], busy = RESOLVING.has(gp.pid), pid = gp.pid;
+  el.className = 'gear-card';
+  el.appendChild(para('gl', `<b>${esc(gp.name)}</b>${gp.gears.length > 1 ? ' · one piece, milled from the smaller gear’s side' : ''}`));
+  el.appendChild(para('pin', busy ? 'Resolving…'
+    : st === 'fresh' ? `<b>Resolved</b> ${whenText(r.at)}${r.interference && r.interference.length ? ' · <b>the cutter’s root fillet is in a partner’s path</b>' : ''}: ${esc(r.log)}`
+    : st === 'stale' ? `<b>Changed since it was resolved</b> (${whenText(r.at)}). Resolve again to see what the cutter will leave.`
+    : 'Not resolved yet.'));
+  if (st === 'fresh') { const pv = gearPreview(gp, r); if (pv) el.appendChild(pv); }
+  if (!DISK.on) { el.appendChild(para('pin', 'Resolve and export run on this machine: open the sim from serve.py (python3 serve.py).')); return el; }
+  el.appendChild(control({ label: `Smallest end mill Ø (the project's: ${shopCutter()} mm)`, unit: 'mm', min: 0.1, max: 6.35, step: 0.05, value: S.gearCut[pid] || shopCutter(),
+    onInput: v => { beginEdit(); if (Math.abs(+v - shopCutter()) < 1e-9) delete S.gearCut[pid]; else S.gearCut[pid] = Math.max(0.1, +(+v).toFixed(3)); },
+    onCommit: (v0, v1) => commit({ key: `gc:${pid}`, from: v0, to: v1, adapt: false, make: (x, y) => `${gp.name}: smallest end mill Ø${f2(y)} mm (was Ø${f2(x)})` }) }));
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `<button data-a="resolve"${busy ? ' disabled' : ''}>${st === 'fresh' ? 'Resolve again' : 'Resolve'}</button>` +
+    `<button data-a="export"${st === 'fresh' && !busy ? '' : ' disabled title="Resolve it first"'}>Export STEP</button>`;
+  row.addEventListener('click', e => {
+    if (e.target.dataset.a === 'resolve') resolveParts([pid]);
+    if (e.target.dataset.a === 'export') exportPart(pid, e.target);
+  });
+  el.appendChild(row);
+  return el;
+}
+// One tooth space close up, per gear of the piece: the plate the cutter leaves (light), what it can't reach and leaves as plate
+// (magenta, so it reads apart from everything else), and the drawn tooth (dark line). In the piece's own frame, as resolved.
+function gearPreview(gp, r) {
+  if (!window.ClipperLib) return null;
+  const C = ClipperLib, K = 1e4, toP = ring => ring.map(([x, y]) => ({ X: Math.round(x * K), Y: Math.round(y * K) }));
+  const T = gp.gears.reduce((n, g) => n + D.gears[g].t, 0), order = gp.gears.slice().sort((a, b) => D.gears[a].z0 - D.gears[b].z0);
+  const fromFar = r.face === 'front' ? order.slice().reverse() : order;
+  const wrap = document.createElement('div');
+  wrap.className = 'row';
+  let h = 0;
+  fromFar.forEach((gid, i) => {
+    const G = D.gears[gid];
+    if (G.plain) { h += G.t; return; }
+    const drawn = outline(computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0 }));
+    const a = Math.PI / G.z, rm = G.rf + 0.4 * (G.ra - G.rf), cx = rm * Math.cos(a), cy = rm * Math.sin(a), w = 1.35 * G.m;
+    const box = [[cx - w, cy - w], [cx + w, cy - w], [cx + w, cy + w], [cx - w, cy + w]];
+    let plate;
+    const cl = new C.Clipper();
+    if (i === 0) { cl.AddPaths([toP(r.outline)], C.PolyType.ptSubject, true); }
+    else {
+      const depth = +(T - h).toFixed(4), air = r.tiers.filter(t => Math.abs(t.depth - depth) < 1e-3).flatMap(t => t.paths);
+      cl.AddPaths([toP(box)], C.PolyType.ptSubject, true); cl.AddPaths(air.map(toP), C.PolyType.ptClip, true);
+    }
+    const sol = new C.Paths();
+    cl.Execute(i === 0 ? C.ClipType.ctUnion : C.ClipType.ctDifference, sol, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+    plate = sol;
+    const c2 = new C.Clipper(), left = new C.Paths();
+    c2.AddPaths(plate, C.PolyType.ptSubject, true); c2.AddPaths([toP(drawn)], C.PolyType.ptClip, true);
+    c2.Execute(C.ClipType.ctDifference, left, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+    const d = paths => paths.map(pp => 'M' + pp.map(q => `${(q.X / K).toFixed(4)},${(-q.Y / K).toFixed(4)}`).join('L') + 'Z').join('');
+    const fig = document.createElement('figure');
+    fig.className = 'tooth-pv';
+    fig.innerHTML = `<svg viewBox="${cx - w} ${-cy - w} ${2 * w} ${2 * w}" role="img" aria-label="${esc(G.label)}: one tooth space as cut">` +
+      `<path d="${d(plate)}" fill="var(--pv-plate)" fill-rule="evenodd"/><path d="${d(left)}" fill="#ff3df0"/>` +
+      `<path d="${d([toP(drawn)])}" fill="none" stroke="var(--pv-line)" stroke-width="${w / 60}"/></svg><figcaption>${esc(G.label)}</figcaption>`;
+    wrap.appendChild(fig);
+    h += G.t;
+  });
+  return wrap.children.length ? wrap : null;
+}
 async function resolveParts(pids) {
-  pids = pids.filter(pid => !RESOLVING.has(pid) && drawnOf(pid));
+  pids = pids.filter(pid => !RESOLVING.has(pid) && (drawnOf(pid) || gearPartOf(pid)));
   if (!pids.length) return;
   if (!DISK.on) { showText('Resolve needs this machine', 'Resolve runs the plate resolver on this machine: open the sim from serve.py (python3 serve.py), not the public site.'); return; }
-  const keys = {};
-  for (const pid of pids) { const d = drawnOf(pid); keys[pid] = intentKey(d, sketchOf(d)); RESOLVING.add(pid); }
+  const keys = {}, specs = {};
+  for (const pid of pids) {
+    if (pid.startsWith('G:')) { specs[pid] = gearSpec(gearPartOf(pid)); keys[pid] = gearKey(specs[pid]); }
+    else { const d = drawnOf(pid); keys[pid] = intentKey(d, sketchOf(d)); }
+    RESOLVING.add(pid);
+  }
   renderSelected(); renderChecks();
   let res = null, err = '';
   try {
-    const r = await fetch('resolve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: sceneFile(), pids }) });
+    const r = await fetch('resolve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: { ...sceneFile(), gearParts: specs }, pids }) });
     if (r.ok) res = await r.json(); else err = `${r.status}: ${await r.text()}`;
   } catch (e) { err = String(e); }
   for (const pid of pids) RESOLVING.delete(pid);
@@ -3420,23 +3684,25 @@ async function resolveParts(pids) {
   const done = [], failed = [];
   cancelPending();
   for (const pid of pids) {
-    const d = drawnOf(pid), r = res[pid];
-    if (!d || !r) continue;
-    if (r.error) { failed.push(`${shortName(pid)}: ${r.error}`); continue; }
-    d.resolved = { ...r, key: keys[pid] };
+    const r = res[pid], gear = pid.startsWith('G:'), d = gear ? null : drawnOf(pid);
+    if (!r || (!gear && !d)) continue;
+    if (r.error) { failed.push(`${pieceName(pid)}: ${r.error}`); continue; }
+    if (gear) S.made[pid] = { ...r, key: keys[pid] }; else d.resolved = { ...r, key: keys[pid] };
     done.push(pid);
   }
-  if (done.length) commit({ text: `Resolved for the machine: ${done.map(pid => `${shortName(pid)} (${drawnOf(pid).resolved.log})`).join('; ')}`, adapt: false });
+  if (done.length) commit({ text: `Resolved for the machine: ${done.map(pid => `${pieceName(pid)} (${(pid.startsWith('G:') ? S.made[pid] : drawnOf(pid).resolved).log})`).join('; ')}`, adapt: false });
   else { renderSelected(); renderChecks(); }
   if (failed.length) showText('Some parts did not resolve', failed.join('\n'));
 }
 async function exportPart(pid, btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Exporting…'; }
   let j = null;
-  try { const r = await fetch('export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: sceneFile(), pid }) }); j = await r.json(); }
+  const label = btn ? btn.textContent : 'Export STEP';
+  const gearParts_ = pid.startsWith('G:') ? { [pid]: gearSpec(gearPartOf(pid)) } : {};
+  try { const r = await fetch('export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: { ...sceneFile(), gearParts: gearParts_ }, pid }) }); j = await r.json(); }
   catch (e) { j = { error: String(e) }; }
-  if (btn) { btn.disabled = false; btn.textContent = 'Export STEP'; }
-  showText(j.error ? 'Export failed' : `${shortName(pid)} exported`, j.error || `Saved on this machine:\n${j.path}\n\n${j.log || ''}`);
+  if (btn) { btn.disabled = false; btn.textContent = label; }
+  showText(j.error ? 'Export failed' : `${pieceName(pid)} exported`, j.error || `Saved on this machine:\n${j.path}\n\n${j.log || ''}`);
 }
 
 function renderChecks() {
@@ -3467,7 +3733,7 @@ function renderChecks() {
         (DISK.on && todo.length ? `<div class="row" style="margin-top:6px"><button id="resolveAll">Resolve ${todo.length > 1 ? `these ${todo.length}` : 'it'}</button></div>` : '')]
       : ['ok', `<b>Machining</b>: all ${mill.length} parts with cuts are resolved: the view and the checks show what the machine will cut`]);
   }
-  items.push(['info', `<b>Furthest reach</b>: ${A.envelope.name} at r ${f2(A.envelope.r * s)} mm; the plate edge is at r ${f2(S.movementD / 2 * s)} mm` +
+  if (A.envelope.name) items.push(['info', `<b>Furthest reach</b>: ${A.envelope.name} at r ${f2(A.envelope.r * s)} mm; the plate edge is at r ${f2(S.movementD / 2 * s)} mm` +
     (over > 0 ? `, so it hangs ${f2(over * s)} mm past the plate (not flagged: the plate isn’t a boundary)` : '')]);
   const minM = PROJECT.rules && PROJECT.rules.minModule;
   if (minM) {
@@ -3535,6 +3801,7 @@ function commit(spec) {
   solve();
   renderSelected();
   renderLog();
+  renderShop();
 }
 
 function record(spec, entries) {
@@ -3557,6 +3824,7 @@ function restore(i) {
   solve();
   renderSelected();
   renderLog();
+  renderShop();
 }
 
 // ---------- the data record: autosave, scene files, part files, the report ----------
@@ -3566,6 +3834,54 @@ const clockText = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', min
 
 // Accept a scene from a file or browser storage: start from the defaults and take only what we recognise,
 // so an older or partial file can't leave the sim half-built.
+// a turned part's own fields (4th axis: tools/plates/turned.py), kept only when they make sense
+function turnedOf(d) {
+  const num = v => typeof v === 'number' && isFinite(v);
+  if (!d.turn || !num(d.turn.v)) return {};
+  const w = d.worm, f = d.flutes, o = { turn: { v: d.turn.v } };
+  if (w && num(w.from) && num(w.to) && w.to > w.from && num(w.module) && w.module > 0)
+    o.worm = { from: w.from, to: w.to, module: w.module, starts: Math.max(1, Math.round(+w.starts || 1)), hand: w.hand === 'left' ? 'left' : 'right', pa: num(w.pa) ? w.pa : 20 };
+  if (f && num(f.from) && num(f.to) && f.to > f.from && num(f.count) && f.count >= 2 && num(f.width) && f.width > 0 && num(f.depth) && f.depth > 0)
+    o.flutes = { from: f.from, to: f.to, count: Math.round(f.count), width: f.width, depth: f.depth };
+  if (num(d.stock) && d.stock > 0) o.stock = d.stock;
+  return o;
+}
+// every cut that names a fit takes its size (and its seat, where the fit gives one) from the table
+function applyFits(st) {
+  let n = 0;
+  for (const d of st.drawn || []) for (const c of d.cuts || []) {
+    const f = c.fit && st.fits && st.fits[c.fit];
+    if (!f) continue;
+    c.d = f.d; n++;
+    if ('seat' in f) c.seat = f.seat ? { d: f.seat.d, depth: f.seat.depth } : null;
+  }
+  return n;
+}
+const fitUsers = name => S.drawn.reduce((n, d) => n + (d.cuts || []).filter(c => c.fit === name).length, 0)
+  + Object.values(GEAR_DEFS).filter(g => g.bore === name).length;
+function renderShop() {
+  const el = document.getElementById('shopSection');
+  if (!el) return;
+  const shop = PROJECT.shop || {}, names = Object.keys(S.fits);
+  el.hidden = !shop.machine && !names.length;
+  if (el.hidden) return;
+  el.innerHTML = `<div class="eyebrow">Shop and fits</div>` +
+    (shop.machine ? `<p class="note">${esc(shop.machine)} · smallest end mill Ø${shopCutter()} mm${shop.note ? ` · ${esc(shop.note)}` : ''}</p>` : '') +
+    (names.length ? `<ul class="fits">${names.map(k => { const f = S.fits[k], n = fitUsers(k);
+      return `<li><span>${esc(k)}</span><span class="ctl-val"><input type="number" class="txt" step="0.005" min="0.1" data-fit="${esc(k)}" value="${f.d}" aria-label="${esc(k)} diameter"><em>mm</em></span>` +
+        `<small>${f.seat ? `seat Ø${f.seat.d} × ${f.seat.depth} deep · ` : ''}${f.note ? esc(f.note) + ' · ' : ''}${n} hole${n === 1 ? '' : 's'} use it</small></li>`; }).join('')}</ul>` +
+      '<p class="note">Change a size and every hole that names it follows. Placeholders until the press-fit test on the machine.</p>' : '');
+  el.querySelectorAll('[data-fit]').forEach(inp => inp.addEventListener('change', () => {
+    const k = inp.dataset.fit, v = +inp.value, f = S.fits[k];
+    if (!f || !(v > 0) || Math.abs(v - f.d) < 1e-9) { inp.value = f ? f.d : ''; return; }
+    cancelPending();
+    const was = f.d;
+    f.d = +v.toFixed(4);
+    const n = applyFits(S);
+    commit({ text: `Fit “${k}” Ø${was} → Ø${f.d} mm (${fitUsers(k)} hole${fitUsers(k) === 1 ? '' : 's'} follow)`, adapt: false });
+  }));
+}
+
 function normalizeState(st) {
   const out = clone(DEFAULT_STATE), num = v => typeof v === 'number' && isFinite(v);
   if (!st || typeof st !== 'object') return out;
@@ -3610,6 +3926,7 @@ function normalizeState(st) {
           && (c.kind === 'pocket' ? out.sketches.some(x => x.id === String(c.sketch)) : num(c.d) && c.d > 0 && okXY(c.at)))
         .map(c => ({ id: String(c.id), kind: c.kind, ...(typeof c.name === 'string' && c.name ? { name: c.name } : {}),
           ...(c.kind === 'pocket' ? { sketch: String(c.sketch) } : { at: c.at.slice(), d: c.d, ...(typeof c.axis === 'string' && c.axis ? { axis: c.axis } : {}) }),
+          ...(typeof c.fit === 'string' && /^[\w-]+$/.test(c.fit) ? { fit: c.fit } : {}),
           from: c.from === 'back' ? 'back' : 'front', depth: num(c.depth) && c.depth > 0 ? c.depth : null,
           seat: c.seat && num(c.seat.d) && num(c.seat.depth) && c.seat.d > 0 && c.seat.depth > 0 ? { d: c.seat.d, depth: c.seat.depth } : null,
           csk: c.csk && num(c.csk.d) && c.csk.d > 0 ? { d: c.csk.d } : null }));
@@ -3623,8 +3940,24 @@ function normalizeState(st) {
                grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges, ...(cuts.length ? { cuts } : {}), ...(d.mill === 'front' || d.mill === 'back' ? { mill: d.mill } : {}),
                ...(num(d.twist) && d.twist && Math.abs(d.twist) <= 36000 ? { twist: d.twist } : {}), ...(okXY(d.twistAt) ? { twistAt: d.twistAt.slice() } : {}),
                ...(d.place && Array.isArray(d.place.pivot) && d.place.pivot.length === 3 && d.place.pivot.every(num) && Array.isArray(d.place.axis) && d.place.axis.length === 3
-                   && d.place.axis.every(num) && Math.hypot(...d.place.axis) > 1e-9 && num(d.place.deg) ? { place: { pivot: d.place.pivot.slice(), axis: d.place.axis.slice(), deg: d.place.deg } } : {}) };
+                   && d.place.axis.every(num) && Math.hypot(...d.place.axis) > 1e-9 && num(d.place.deg) ? { place: { pivot: d.place.pivot.slice(), axis: d.place.axis.slice(), deg: d.place.deg } } : {}),
+               ...turnedOf(d) };
     });
+  if (st.fits && typeof st.fits === 'object') {
+    out.fits = {};
+    for (const [k, v] of Object.entries(st.fits)) if (/^[\w-]+$/.test(k) && v && num(v.d) && v.d > 0)
+      out.fits[k] = { d: v.d, ...(v.seat && num(v.seat.d) && num(v.seat.depth) && v.seat.d > 0 && v.seat.depth > 0 ? { seat: { d: v.seat.d, depth: v.seat.depth } } : v.seat === null ? { seat: null } : {}),
+                      ...(typeof v.note === 'string' && v.note ? { note: v.note } : {}) };
+  }
+  const okRing = p => Array.isArray(p) && p.length >= 3 && p.every(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1]));
+  if (st.made && typeof st.made === 'object') for (const [k, rv] of Object.entries(st.made)) {
+    if (!/^G:[\w-]+$/.test(k) || !rv || !okRing(rv.outline) || !Array.isArray(rv.tiers)) continue;
+    out.made[k] = { outline: rv.outline, tiers: rv.tiers.filter(t => t && num(t.depth) && t.depth > 0 && Array.isArray(t.paths)).map(t => ({ depth: t.depth, paths: t.paths.filter(okRing) })),
+                    face: rv.face === 'front' ? 'front' : 'back', key: typeof rv.key === 'string' ? rv.key : null, at: typeof rv.at === 'string' ? rv.at : '',
+                    log: typeof rv.log === 'string' ? rv.log : '', interference: Array.isArray(rv.interference) ? rv.interference.filter(x => typeof x === 'string') : [] };
+  }
+  if (st.gearCut && typeof st.gearCut === 'object') for (const [k, v] of Object.entries(st.gearCut)) if (/^G:[\w-]+$/.test(k) && num(v) && v > 0) out.gearCut[k] = v;
+  applyFits(out);
   const known = k => !!parts[k] || out.drawn.some(d => d.id === k);
   if (st.info && typeof st.info === 'object') {
     for (const [k, v] of Object.entries(st.info)) if (known(k) && v && typeof v === 'object') {
@@ -3696,6 +4029,7 @@ async function restoreFromDisk() {
       solve();
       renderSelected();
       renderLog();
+      renderShop();
       saveLocal();
       return;
     }
@@ -3807,9 +4141,17 @@ function openScene(data, text, savedAt, keep = true) {
   return 'reloading';
 }
 const projectSlot = id => `${AUTOSAVE_KEY}.project.${id}`;
+// A new project's fit table: Adam's stock (3 mm brass rod, 3 × 6 × 2.5 flanged bearings) with sizes to replace once the press-fit test is cut
+const NEW_FITS = {
+  rod_press: { d: 2.95, seat: null, note: '3 mm rod pressed into acrylic or delrin (placeholder)' },
+  rod_free: { d: 3.1, seat: null, note: '3 mm rod turning freely (placeholder)' },
+  bearing: { d: 6.0, seat: { d: 7.3, depth: 0.65 }, note: '3 × 6 × 2.5 flanged bearing pressed in; seat for the 7.2 × 0.6 flange (placeholder)' },
+};
 
-// Project → Open: the projects that come with the sim, plus the one open now if it came from a file.
+// Project → Open: the projects that come with the sim, the ones started here (kept in this browser), and the one open now.
 const BUILT_IN = [
+  { id: 'beta2', name: 'Beta 2 (hand-set Hemistitch)', file: 'projects/beta2.json' },
+  { id: 'air-size-study', name: 'Air size study', file: 'projects/air-size-study.json' },
   { id: 'hemistitch-slava', name: 'Hemistitch + Slava donor', file: 'projects/hemistitch-slava.json' },
   { id: 'hemistitch-prototype', name: 'Hemistitch prototype', file: 'projects/hemistitch-prototype.json' },
   { id: 'crescent', name: 'Crescent (Claude\'s movement)', file: 'projects/crescent.json' },
@@ -3817,7 +4159,17 @@ const BUILT_IN = [
 ];
 {
   const pick = document.getElementById('projectPick'), btn = document.getElementById('projectOpen');
-  const list = BUILT_IN.some(b => b.id === PROJECT.id) ? BUILT_IN : [{ id: PROJECT.id, name: PROJECT.name }, ...BUILT_IN];
+  const stored = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i), pre = `${AUTOSAVE_KEY}.project.`;
+      if (!key || !key.startsWith(pre) || BUILT_IN.some(b => key === pre + b.id)) continue;
+      const data = JSON.parse(localStorage.getItem(key) || 'null');
+      if (data && data.project && !projectProblem(data.project)) stored.push({ id: data.project.id, name: data.project.name, stored: true });
+    }
+  } catch (e) { /* no storage */ }
+  const known = [...BUILT_IN, ...stored];
+  const list = known.some(b => b.id === PROJECT.id) ? known : [{ id: PROJECT.id, name: PROJECT.name }, ...known];
   for (const b of list) pick.add(new Option(b.id === PROJECT.id ? `${b.name} (open now)` : b.name, b.id));
   pick.value = PROJECT.id;
   const sync = () => {
@@ -3829,15 +4181,31 @@ const BUILT_IN = [
       : `Open ${pick.options[pick.selectedIndex].text}${kept ? ' where you left it' : ' fresh'}. This scene is kept first${DISK.on ? ' (and backed up on disk when serve.py is running)' : ''}; Save scene also writes a file you can keep.`;
   };
   pick.addEventListener('change', sync);
+  // New project: an empty project (no gear train, no parts) set up for the shop, opened at once
+  const form = document.getElementById('newProject');
+  document.getElementById('projectNew').addEventListener('click', () => { form.hidden = !form.hidden; if (!form.hidden) document.getElementById('npName').focus(); });
+  document.getElementById('npCancel').addEventListener('click', () => { form.hidden = true; });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('npName').value.replace(/[<>]/g, '').trim(), blurb = document.getElementById('npBlurb').value.replace(/[<>]/g, '').trim();
+    if (!name) return;
+    const id = (name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'project').replace(/^[^a-z]/, 'p$&').slice(0, 40) + '-' + Date.now().toString(36).slice(-4);
+    const p = { format: 'bspk-studio-project', id, name, title: name, blurb, source: [`Started in BSPK Studio ${new Date().toISOString().slice(0, 10)}.`],
+                groups: {}, arbors: [], hands: [], stages: {}, rate: null, targets: [], rules: {},
+                shop: { machine: 'Makera Carvera Air', cutter: 0.5, note: 'placeholder fits until the press-fit test' },
+                defaults: { movementD: 40, minGap: 0.2, zMax: 30, view: { height: 20, mid: 5 }, fits: clone(NEW_FITS) } };
+    const res = openScene({ format: 'bspk-studio-scene', state: {}, project: p }, `Started ${name}`);
+    if (res !== 'opened' && res !== 'reloading') showText('Couldn’t start that project', res);
+  });
   btn.addEventListener('click', async () => {
-    const b = BUILT_IN.find(x => x.id === pick.value);
+    const b = known.find(x => x.id === pick.value);
     if (!b) return;
     let data = null, text = `Opened ${b.name}`;
     try { data = JSON.parse(localStorage.getItem(projectSlot(b.id)) || 'null'); } catch (e) { data = null; }
     if (data && data.state) { data = { format: 'bspk-studio-scene', state: data.state, project: data.project }; text += ' where you left it'; }
     else {
-      try { data = b.scene ? b.scene() : await (await fetch(b.file, { cache: 'no-store' })).json(); } catch (e) { data = null; }
-      if (!data) { showText('Couldn’t open that project', `${b.name}: its file (${b.file}) didn’t load.`); return; }
+      try { data = b.scene ? b.scene() : b.file ? await (await fetch(b.file, { cache: 'no-store' })).json() : null; } catch (e) { data = null; }
+      if (!data) { showText('Couldn’t open that project', b.file ? `${b.name}: its file (${b.file}) didn’t load.` : `${b.name}: this browser no longer has it.`); return; }
     }
     const res = openScene(data, text);
     if (res !== 'opened' && res !== 'reloading') showText('Couldn’t open that project', `${b.name}: ${res}`);
@@ -4180,6 +4548,7 @@ setScale(1);
 setView('iso');
 renderSelected();
 renderLog();
+renderShop();
 restoreFromDisk();
 
 let last = performance.now(), lastPick = 0;

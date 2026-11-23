@@ -1,0 +1,446 @@
+{
+ "format": "bspk-studio-scene",
+ "version": 3,
+ "savedAt": "2026-11-23T13:36:26",
+ "state": {
+  "pos": {
+   "hour": [
+    -10.0,
+    0.0
+   ],
+   "minute": [
+    10.0,
+    0.0
+   ],
+   "inter": [
+    2.0250000000000004,
+    -8.966569856974292
+   ]
+  },
+  "sketches": [
+   {
+    "id": "K1",
+    "name": "Crown, stem and worm (half profile, turned about z = 1.4)",
+    "plane": {
+     "axis": "y",
+     "offset": -20.8166
+    },
+    "closed": true,
+    "points": [
+     {
+      "u": -2.975,
+      "v": 1.4,
+      "smooth": false
+     },
+     {
+      "u": -2.975,
+      "v": 2.7,
+      "smooth": false
+     },
+     {
+      "u": -2.775,
+      "v": 2.9,
+      "smooth": false
+     },
+     {
+      "u": -0.475,
+      "v": 2.9,
+      "smooth": false
+     },
+     {
+      "u": -0.475,
+      "v": 4.6,
+      "smooth": false
+     },
+     {
+      "u": -0.175,
+      "v": 4.9,
+      "smooth": false
+     },
+     {
+      "u": 4.225,
+      "v": 4.9,
+      "smooth": false
+     },
+     {
+      "u": 4.525,
+      "v": 4.6,
+      "smooth": false
+     },
+     {
+      "u": 4.525,
+      "v": 2.9,
+      "smooth": false
+     },
+     {
+      "u": 7.525,
+      "v": 2.9,
+      "smooth": false
+     },
+     {
+      "u": 7.525,
+      "v": 5.6,
+      "smooth": false
+     },
+     {
+      "u": 7.825,
+      "v": 5.9,
+      "smooth": false
+     },
+     {
+      "u": 11.125,
+      "v": 5.9,
+      "smooth": false
+     },
+     {
+      "u": 11.525,
+      "v": 5.5,
+      "smooth": false
+     },
+     {
+      "u": 11.525,
+      "v": 1.4,
+      "smooth": false
+     }
+    ]
+   }
+  ],
+  "drawn": [
+   {
+    "id": "D1",
+    "name": "Crown, stem and worm (one delrin part from 3/8\" rod, cut on the 4th axis)",
+    "sketch": "K1",
+    "thickness": 0.1,
+    "grow": "plus",
+    "turn": {
+     "v": 1.4
+    },
+    "stock": 9.525,
+    "worm": {
+     "from": -0.475,
+     "to": 4.525,
+     "module": 0.5,
+     "starts": 1,
+     "hand": "right",
+     "pa": 20
+    },
+    "flutes": {
+     "from": 7.525,
+     "to": 11.525,
+     "count": 12,
+     "width": 1.0,
+     "depth": 0.45
+    }
+   }
+  ],
+  "fits": {
+   "rod_press": {
+    "d": 2.95,
+    "seat": null,
+    "note": "3 mm brass rod pressed into a gear (placeholder until the press-fit test)"
+   },
+   "rod_free": {
+    "d": 3.1,
+    "seat": null,
+    "note": "3 mm rod turning freely (placeholder)"
+   },
+   "bearing": {
+    "d": 6.0,
+    "seat": {
+     "d": 7.3,
+     "depth": 0.65
+    },
+    "note": "3 x 6 x 2.5 flanged bearing pressed in, its 7.2 x 0.6 flange in the seat (placeholder)"
+   },
+   "m2_clear": {
+    "d": 2.2,
+    "seat": null,
+    "note": "M2 screw passing through"
+   },
+   "m2_tap": {
+    "d": 1.6,
+    "seat": null,
+    "note": "M2 screw threading into acrylic (placeholder)"
+   }
+  }
+ },
+ "project": {
+  "format": "bspk-studio-project",
+  "id": "beta2",
+  "name": "Beta 2",
+  "title": "Beta 2 \u00b7 hand-set Hemistitch",
+  "blurb": "A two-disc time teller, wound by hand like Crescent: the crown's worm turns an intermediate wheel that drives the minute disc 3:1 up and the hour disc 12:1 below it, so the two discs always keep true time against each other. 12 crown turns an hour. Module 0.5 in 1/16\" delrin until the size study says otherwise; 3 mm brass rod in 3 x 6 x 2.5 flanged bearings; plates in acrylic (next).",
+  "source": [
+   "Claude, 2026-11-23, from Adam's brief: a mid-complexity Hemistitch, manually wound, standard movement layering, smallest envelope; the worm on the crown stem (one delrin part with the crown) for the Air's 4th axis. First layout: plates come once the layout is agreed."
+  ],
+  "groups": {
+   "display": "Discs",
+   "train": "Train",
+   "drawn": "Crown and plates"
+  },
+  "focus": [
+   {
+    "id": "train",
+    "label": "Crown \u2192 intermediate \u2192 minute and hour",
+    "parts": [
+     "inter",
+     "minute",
+     "hour",
+     "D1"
+    ]
+   }
+  ],
+  "rules": {
+   "minModule": 0.4,
+   "fixedModule": true,
+   "why": "module 0.5 for the Air's 0.5 mm end mill, until the size study",
+   "arms": {
+    "rim": 1.0,
+    "arm": 0.8,
+    "hubWall": 1.2
+   }
+  },
+  "shop": {
+   "machine": "Makera Carvera Air",
+   "cutter": 0.5,
+   "note": "all testing on the Air; fits are placeholders until the press-fit test"
+  },
+  "rate": {
+   "arbor": "minute",
+   "period": 3600,
+   "dir": -1
+  },
+  "targets": [
+   {
+    "label": "Minute disc",
+    "arbor": "minute",
+    "period": 3600,
+    "dir": -1
+   },
+   {
+    "label": "Hour disc",
+    "arbor": "hour",
+    "period": 43200,
+    "dir": -1
+   }
+  ],
+  "arbors": [
+   {
+    "id": "minute",
+    "name": "Minute arbor",
+    "group": "display",
+    "level": 0,
+    "role": "Turns once an hour and carries the minute disc. Its 12-tooth pinion is driven by the intermediate wheel (3:1 up from it).",
+    "gears": [
+     {
+      "id": "minute_pinion",
+      "label": "Minute pinion",
+      "z": 12,
+      "t": 1.6,
+      "x": 0.3,
+      "bore": "rod_press"
+     }
+    ]
+   },
+   {
+    "id": "inter",
+    "name": "Intermediate arbor",
+    "group": "train",
+    "level": 1,
+    "partNames": {
+     "inter": "Intermediate wheel and pinion (one piece, 1/8\" delrin)"
+    },
+    "role": "The crown's worm turns its wheel (one tooth per crown turn); the same wheel drives the minute pinion and its own pinion drives the hour wheel. Wheel and pinion are one piece, milled from the pinion's side.",
+    "gears": [
+     {
+      "id": "inter_wheel",
+      "label": "Intermediate wheel",
+      "z": 36,
+      "t": 1.2,
+      "x": -0.3,
+      "bore": "rod_press",
+      "arms": 4,
+      "part": "inter"
+     },
+     {
+      "id": "inter_pinion",
+      "label": "Intermediate pinion",
+      "z": 12,
+      "t": 1.9749999999999999,
+      "x": 0.3,
+      "bore": "rod_press",
+      "part": "inter"
+     }
+    ]
+   },
+   {
+    "id": "hour",
+    "name": "Hour arbor",
+    "group": "display",
+    "level": 2,
+    "role": "Turns once in 12 hours and carries the hour disc. Driven 4:1 down by the intermediate pinion.",
+    "gears": [
+     {
+      "id": "hour_wheel",
+      "label": "Hour wheel",
+      "z": 48,
+      "t": 1.6,
+      "x": -0.3,
+      "bore": "rod_press",
+      "arms": 4
+     }
+    ]
+   }
+  ],
+  "hands": [
+   {
+    "id": "hour_disc",
+    "name": "Hour disc",
+    "arbor": "hour",
+    "group": "display",
+    "level": 3,
+    "shape": "disc",
+    "marks": 12,
+    "labels": [
+     "12",
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9",
+     "10",
+     "11"
+    ],
+    "indicator": 1.5707963267948966,
+    "role": "Hours 1 to 12, V-carved into acrylic and inked. The hour under the index at its top is the hour."
+   },
+   {
+    "id": "minute_disc",
+    "name": "Minute disc",
+    "arbor": "minute",
+    "group": "display",
+    "level": 3,
+    "shape": "disc",
+    "marks": 60,
+    "labels": [
+     "0",
+     "5",
+     "10",
+     "15",
+     "20",
+     "25",
+     "30",
+     "35",
+     "40",
+     "45",
+     "50",
+     "55"
+    ],
+    "indicator": 1.5707963267948966,
+    "role": "Minutes, V-carved and inked; the minute under the index at its top."
+   }
+  ],
+  "stages": {
+   "s_mi": [
+    "inter_wheel",
+    "minute_pinion"
+   ],
+   "s_ih": [
+    "hour_wheel",
+    "inter_pinion"
+   ]
+  },
+  "plate": {
+   "name": "Bench",
+   "z": -6,
+   "role": "Just the bench; the main plate comes next, once the layout is agreed."
+  },
+  "defaults": {
+   "movementD": 56,
+   "minGap": 0.15,
+   "zMax": 14,
+   "view": {
+    "height": 16,
+    "mid": 3
+   },
+   "stages": {
+    "s_mi": {
+     "m": 0.5,
+     "z": 0.8
+    },
+    "s_ih": {
+     "m": 0.5,
+     "z": 2.1875
+    }
+   },
+   "pos": {
+    "hour": [
+     -10.0,
+     0.0
+    ],
+    "minute": [
+     10.0,
+     0.0
+    ],
+    "inter": [
+     2.0250000000000004,
+     -8.966569856974292
+    ]
+   },
+   "fits": {
+    "rod_press": {
+     "d": 2.95,
+     "seat": null,
+     "note": "3 mm brass rod pressed into a gear (placeholder until the press-fit test)"
+    },
+    "rod_free": {
+     "d": 3.1,
+     "seat": null,
+     "note": "3 mm rod turning freely (placeholder)"
+    },
+    "bearing": {
+     "d": 6.0,
+     "seat": {
+      "d": 7.3,
+      "depth": 0.65
+     },
+     "note": "3 x 6 x 2.5 flanged bearing pressed in, its 7.2 x 0.6 flange in the seat (placeholder)"
+    },
+    "m2_clear": {
+     "d": 2.2,
+     "seat": null,
+     "note": "M2 screw passing through"
+    },
+    "m2_tap": {
+     "d": 1.6,
+     "seat": null,
+     "note": "M2 screw threading into acrylic (placeholder)"
+    }
+   },
+   "hands": {
+    "hour_disc": {
+     "length": 9.5,
+     "z": 6.4,
+     "t": 1.6
+    },
+    "minute_disc": {
+     "length": 9.5,
+     "z": 6.4,
+     "t": 1.6
+    }
+   },
+   "locks": {
+    "minute_pinion": true,
+    "inter_wheel": true,
+    "inter_pinion": true,
+    "hour_wheel": true,
+    "hour_disc": true,
+    "minute_disc": true
+   }
+  }
+ }
+}
