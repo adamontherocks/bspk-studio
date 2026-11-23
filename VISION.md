@@ -658,6 +658,12 @@ Adam: "was i wrong about the slip clutch? i asked if it went on the balance axis
 - **Checked in the scratch sim:** rates right, no clashes with rods counted (tightest 0.3 mm), both plates and all six gear pieces resolved (root fillets clear by 162-415 µm), the stem and E's worm wheel exported valid, the worm turned against E's exported worm wheel: clear over 45° of worm turn (about 0.24 mm of play). Loaded into Adam's tab (his previous scene backed up in scenes/).
 - **Lost on the way:** the stem bridge (the "at least one bridge"). A centre bridge between the discs holding the two intermediates' top pivots, with their jewels in the gaps, is the obvious one; its feet need room at the top and bottom edges, where the intermediate wheels reach.
 
+### 2026-11-23 (evening, later) — Beta 2 · aligned: both intermediates on the centre line (a second project, to compare)
+
+- **Adam:** can the first intermediate move so both intermediates share one vertical line, for symmetry on the top plate (their brass rods showing through the plate or a bridge), even if the minute and crown arbors change.
+- **Yes, at a cost in height.** A search over every tooth set that passes the rod rule (exactly 12:1, the hour wheel under its disc) solved for A1's angle where both intermediates share an x, then placed the crown arbor and ran every check. Nearest the centre: minute pinion 13 → wheel 33 | pinion 14 → wheel 28 | pinion 11 → hour wheel 26; both intermediates at x = 0.19 mm, the first 9.3 above the centre, the second 3.3 below; the crown arbor's 12-tooth worm wheel and 15-tooth wheel give 10.4 crown turns an hour. **44.5 x 42.2 mm** (against 46.1 x 34.6): on one line, one intermediate has to sit further out, and its 33-tooth wheel reaches higher. The smallest aligned box was 45.1 x 40.6 with the intermediates 0.53 off the line.
+- Written as its own project (`sim/projects/beta2-aligned.json`, Project → Open "Beta 2 · intermediates on the centre line") by the same generator (`VARIANTS` in `tools/beta2/make_projects.py`), so the two can be compared; Beta 2 itself is unchanged. In the scratch sim: rates right, no clashes, both plates and six gear pieces resolved, stem and worm wheel exported valid, the worm clear of its wheel over 45° of turn.
+
 ### Files
 
 - `sim/index.html` — the editable watch train (the clock beta), plus pins, part records, autosave, scene files, the report, label padlocks and the quick-edit box. ~2,400 lines.

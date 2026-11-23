@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-23T15:17:25",
+ "savedAt": "2026-11-23T15:34:20",
  "state": {
   "pos": {
    "minute": [
@@ -3105,7 +3105,7 @@
     "partNames": {
      "a1": "First intermediate wheel and pinion (one piece, 1/8\" delrin)"
     },
-    "role": "Above the centre, between the discs. Its wheel is driven by the minute pinion; its pinion drives the second intermediate. One piece of 1/8\" delrin, milled from the pinion side.",
+    "role": "Above the centre, between the discs. Its 26-tooth wheel is driven by the minute pinion; its 12-tooth pinion drives the second intermediate. One piece of 1/8\" delrin, milled from the pinion side.",
     "gears": [
      {
       "id": "a1_wheel",

@@ -124,7 +124,15 @@ def box(x0, y0, x1, y1):
     from shapely.geometry import box as B
     return B(x0, y0, x1, y1)
 
-def beta2():
+VARIANTS = {
+    'beta2': {'id': 'beta2', 'name': 'Beta 2', 'title': 'Beta 2 · hand-set Hemistitch, watch size', 'teeth': (12, 26, 12, 32, 13, 27),
+              'ZE': 15, 'XE': 0.15, 'ZW': 18, 't': 2.446078946670053, 'A2near': (0.10, -5.80), 'Ey': -1, 'HX': 23.05, 'HY': 17.3, 'aligned': False},
+    # the two intermediates on one vertical line (Adam, 2026-11-23): their rods show symmetrically between the discs; taller
+    'beta2-aligned': {'id': 'beta2-aligned', 'name': 'Beta 2 · aligned', 'title': 'Beta 2 · intermediates on the centre line', 'teeth': (13, 33, 14, 28, 11, 26),
+                      'ZE': 12, 'XE': 0.3, 'ZW': 15, 't': None, 'A1near': (0.1948, 9.2895), 'A2near': (0.1948, -3.3105), 'Ey': -1, 'HX': 22.25, 'HY': 21.1, 'aligned': True},
+}
+
+def beta2(v=VARIANTS['beta2']):
     from shapely.geometry import Point
     from shapely.ops import unary_union
     m, TS, TT = 0.6, 3.175, 1.5875                    # module; 1/8" and 1/16" delrin
@@ -133,14 +141,25 @@ def beta2():
     # the train: minute pinion 12 -> wheel 26 | pinion 12 -> wheel 32 | pinion 13 -> hour wheel 27 (exactly 12:1): the only tooth counts
     # where every wheel clears the next arbor's rod (both bearings below, so each rod runs up through every layer) with the hour wheel
     # under its Ø19 disc. The crown arbor E drives the minute pinion with an 18-tooth wheel of its own, from the other side of it.
-    P0, Z1, P1, Z2, P2, Z3 = 12, 26, 12, 32, 13, 27
-    ZE, XE, ZW = 15, 0.15, 18                          # E's worm wheel (15 teeth, shift +0.15) and its wheel on the minute pinion
-    t = 2.446078946670053                             # A1's direction from M, from the layout search (centred box, crown on y = 0)
-    A1 = (M_[0] + cd(P0, Z1) * math.cos(t), M_[1] + cd(P0, Z1) * math.sin(t))
-    A2 = min(circ_int(A1, cd(P1, Z2), H_, cd(P2, Z3)), key=lambda p: math.dist(p, (0.10, -5.80)))
+    P0, Z1, P1, Z2, P2, Z3 = v['teeth']
+    ZE, XE, ZW = v['ZE'], v['XE'], v['ZW']             # E's worm wheel (teeth, shift) and its wheel on the minute pinion
+    def place(t):
+        a1 = (M_[0] + cd(P0, Z1) * math.cos(t), M_[1] + cd(P0, Z1) * math.sin(t))
+        return a1, min(circ_int(a1, cd(P1, Z2), H_, cd(P2, Z3)), key=lambda p: math.dist(p, v['A2near']))
+    if v['aligned']:                                   # A1's direction from M where the two intermediates share an x (bisection)
+        n = v['A1near']; t0 = math.atan2(n[1] - M_[1], n[0] - M_[0]); lo, hi = t0 - 0.02, t0 + 0.02
+        g = lambda t: place(t)[0][0] - place(t)[1][0]
+        assert (g(lo) > 0) != (g(hi) > 0)
+        for _ in range(80):
+            mid = (lo + hi) / 2
+            if (g(mid) > 0) == (g(lo) > 0): lo = mid
+            else: hi = mid
+        t = (lo + hi) / 2
+    else: t = v['t']                                   # A1's direction from M, from the layout search (centred box, crown on y = 0)
+    A1, A2 = place(t)
     worm_rp = 2.65
     cw = m * ZE / 2 + XE * m + worm_rp                 # the worm's axis lies on y = 0 (3 o'clock on the movement): E sits this far off it
-    E = (M_[0] + math.sqrt(cd(ZW, P0) ** 2 - cw ** 2), -cw)
+    E = (M_[0] + math.sqrt(cd(ZW, P0) ** 2 - cw ** 2), v['Ey'] * cw)
     for a, b, want in ((M_, A1, cd(P0, Z1)), (A1, A2, cd(P1, Z2)), (A2, H_, cd(P2, Z3)), (E, M_, cd(ZW, P0))):
         assert abs(math.dist(a, b) - want) < 1e-9
     # heights (z = 0 is the top of the upper plate). The worm lies in the plates (axis 4.2 mm down); the stem's journals (Ø1.8) run in a
@@ -153,7 +172,7 @@ def beta2():
     z_a2p = z_a2w + TW; z_hw = max(z_a2w + TW + 0.3, z_a2p + TP + 0.3 - TT)
     dz_a2h = z_a2p - (z_hw + TT / 2 - TP / 2)
     z_disc = z_hw + TT
-    HX, HY = 23.05, 17.3                               # the plates: centred on the discs (46.1 x 34.6, from the layout search)
+    HX, HY = v['HX'], v['HY']                          # the plates: centred on the discs (from the layout search)
     edge = HX
     wa, wb = E[0] - 2.5, E[0] + 2.5                    # the worm's span along the stem
     x0 = wa - 0.9                                      # the stem's inner end (journal B)
@@ -163,21 +182,21 @@ def beta2():
     screws = [(sx * (HX - 3.2), sy * (HY - 3.2)) for sx in (-1, 1) for sy in (-1, 1)]
     arbors = [
         {'id': 'minute', 'name': 'Minute arbor', 'group': 'display', 'level': 0,
-         'role': 'Turns once an hour; carries the minute disc. Its 12-tooth pinion takes the crown (from E\'s wheel) and drives the first intermediate wheel. Runs in plain delrin holes (under the disc), so the worm can lie close beside its rod.',
+         'role': f'Turns once an hour; carries the minute disc. Its {P0}-tooth pinion takes the crown (from E\'s wheel) and drives the first intermediate wheel. Runs in plain delrin holes (under the disc), so the worm can lie close beside its rod.',
          'gears': [{'id': 'minute_pinion', 'label': 'Minute pinion', 'z': P0, 't': TT, 'x': 0.3, 'bore': 'rod_press'}]},
         {'id': 'a1', 'name': 'First intermediate', 'group': 'train', 'level': 1, 'partNames': {'a1': 'First intermediate wheel and pinion (one piece, 1/8" delrin)'},
-         'role': 'Above the centre, between the discs. Its wheel is driven by the minute pinion; its pinion drives the second intermediate. One piece of 1/8" delrin, milled from the pinion side.',
+         'role': f'{"Above" if A1[1] > 0 else "Below"} the centre, between the discs. Its {Z1}-tooth wheel is driven by the minute pinion; its {P1}-tooth pinion drives the second intermediate. One piece of 1/8" delrin, milled from the pinion side.',
          'gears': [{'id': 'a1_wheel', 'label': 'First intermediate wheel', 'z': Z1, 't': TW, 'x': -0.3, 'bore': 'rod_press', 'arms': 0, 'part': 'a1'},
                    {'id': 'a1_pinion', 'label': 'First intermediate pinion', 'z': P1, 't': TP, 'x': 0.3, 'bore': 'rod_press', 'part': 'a1'}]},
         {'id': 'a2', 'name': 'Second intermediate', 'group': 'train', 'level': 2, 'partNames': {'a2': 'Second intermediate wheel and pinion (one piece, 1/8" delrin)'},
-         'role': 'Below the centre, between the discs. 32:12 down from the first intermediate; its 13-tooth pinion drives the hour wheel 27:13. One piece of 1/8" delrin; four arms.',
+         'role': f'{"Above" if A2[1] > 0 else "Below"} the centre, between the discs. {Z2}:{P1} down from the first intermediate; its {P2}-tooth pinion drives the hour wheel {Z3}:{P2}. One piece of 1/8" delrin; four arms.',
          'gears': [{'id': 'a2_wheel', 'label': 'Second intermediate wheel', 'z': Z2, 't': TW, 'x': -0.3, 'bore': 'rod_press', 'arms': 4, 'part': 'a2'},
                    {'id': 'a2_pinion', 'label': 'Second intermediate pinion', 'z': P2, 't': TP, 'x': 0.3, 'bore': 'rod_press', 'part': 'a2'}]},
         {'id': 'hour', 'name': 'Hour arbor', 'group': 'display', 'level': 3,
          'role': 'Turns once in 12 hours; the hour disc sits right on its wheel (riding high on the second intermediate pinion so the disc clears it).',
          'gears': [{'id': 'hour_wheel', 'label': 'Hour wheel', 'z': Z3, 't': TT, 'x': -0.3, 'bore': 'rod_press', 'arms': 0}]},
         {'id': 'e', 'name': 'Crown arbor (E)', 'group': 'crown', 'level': 4,
-         'role': 'Takes the crown: the worm on the stem turns its 15-tooth worm wheel (in a pocket in the lower plate), and its 18-tooth wheel turns the minute pinion. Runs in plain delrin holes. One crown turn = one tooth: 10 turns an hour.',
+         'role': f'Takes the crown: the worm on the stem turns its {ZE}-tooth worm wheel (in a pocket in the lower plate), and its {ZW}-tooth wheel turns the minute pinion. Runs in plain delrin holes. One crown turn = one tooth: {P0 * ZE / ZW:.3g} turns an hour.',
          'gears': [{'id': 'e_worm', 'label': 'Crown arbor worm wheel', 'z': ZE, 't': TT, 'x': XE, 'bore': 'rod_press', 'arms': 0},
                    {'id': 'e_wheel', 'label': 'Crown arbor wheel', 'z': ZW, 't': TT, 'x': -0.3, 'bore': 'rod_press', 'arms': 0}]},
     ]
@@ -224,10 +243,11 @@ def beta2():
     top_z = z_disc + TT
     turns = P0 * ZE / ZW
     project = {
-        'format': 'bspk-studio-project', 'id': 'beta2', 'name': 'Beta 2', 'title': 'Beta 2 · hand-set Hemistitch, watch size',
+        'format': 'bspk-studio-project', 'id': v['id'], 'name': v['name'], 'title': v['title'],
         'blurb': (f'Two Ø19 discs on Dual_Dial_Concept\'s dial centres, the movement centred on them, set by a crown at 3 o\'clock on the movement, between the swivel lugs. '
-                  f'The crown\'s worm turns a small crown arbor whose wheel turns the minute pinion; the train runs on above and below the centre: minute pinion 12 → wheel 26, '
-                  f'pinion 12 → wheel 32, pinion 13 → hour wheel 27 (exactly 12:1), so the discs keep true time against each other. {turns:g} crown turns an hour. '
+                  f'The crown\'s worm turns a small crown arbor whose wheel turns the minute pinion; the train runs on above and below the centre'
+                  + (', the two intermediates on one line through the middle' if v['aligned'] else '') + f': minute pinion {P0} → wheel {Z1}, '
+                  f'pinion {P1} → wheel {Z2}, pinion {P2} → hour wheel {Z3} (exactly 12:1), so the discs keep true time against each other. {turns:.3g} crown turns an hour. '
                   f'Module 0.6 (the 0.5 mm end mill has room in every tooth space), black delrin throughout, brass rods, bearings showing like jewels. '
                   f'Movement {2 * HX:.1f} x {2 * HY:.1f} mm, {top_z + 2 * TS:.1f} mm from the back of the plates to the top of the discs.'),
         'source': ['Claude, 2026-11-23, from Adam\'s brief: the watch version of Hemistitch, hand-set, discs centred on the movement, crown at 3 o\'clock on the movement '
@@ -252,13 +272,14 @@ def beta2():
                      'locks': {g['id']: True for a in arbors for g in a['gears']} | {'hour_disc': True, 'minute_disc': True}},
     }
     state = {'pos': pos, 'sketches': sk, 'drawn': drawn, 'fits': FITS_DELRIN}
-    info = {'A1': A1, 'A2': A2, 'E': E, 'turns': turns, 'heights': dict(a1w=L1, a2w=z_a2w, hw=z_hw, disc=z_disc, top=top_z), 'size': (2 * HX, 2 * HY, top_z + 2 * TS)}
+    info = {'id': v['id'], 'A1': A1, 'A2': A2, 'E': E, 'turns': turns, 'heights': dict(a1w=L1, a2w=z_a2w, hw=z_hw, disc=z_disc, top=top_z), 'size': (2 * HX, 2 * HY, top_z + 2 * TS)}
     return scene(project, state), info
 
 if __name__ == '__main__':
     s1, pairs, WH = size_study()
     json.dump(s1, open(os.path.join(OUT, 'air-size-study.json'), 'w'), indent=1)
-    s2, info = beta2()
-    json.dump(s2, open(os.path.join(OUT, 'beta2.json'), 'w'), indent=1)
     print('size study plates %.1f x %.1f mm;' % WH, '; '.join(f"m{p['m']}: {p['zp']}/{p['zw']} at CD {p['a']:g}" for p in pairs))
-    print('beta2:', json.dumps(info, default=str))
+    for key, var in VARIANTS.items():
+        s2, info = beta2(var)
+        json.dump(s2, open(os.path.join(OUT, f'{key}.json'), 'w'), indent=1)
+        print(key + ':', json.dumps(info, default=str))
