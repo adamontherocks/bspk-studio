@@ -704,6 +704,26 @@ Adam: "was i wrong about the slip clutch? i asked if it went on the balance axis
   - Every screw checked against the resolved plates: counterbored cheese heads on the transfer and secondary plates, pan heads on the NE and hour-side plates' factory faces. The transfer and NE plates' screws pass through the secondary plate into the main plate, clamping both.
   - The sim: no collisions, no wall drawn twice. The stem exported.
 - **Honest limits:** the NE plate has two screws, both at its NW end. East of the crown arbor wheel there is no room for a head clear of that wheel and the minute disc, so its east end rests in its well. 3/16" delrin is new stock (or 1/4" faced down 1.59).
+
+### 2026-11-24 (later) — Beta 2 · layered, second pass: 19 markup notes and 2 sketches, built
+
+- **How we worked:** Adam left 15 notes; Claude answered each on its pin (one, P4, had to be a question). He answered by sketching and noting again (K55, K56, P16–P18), and Claude drew his crude lines back exact into the sim, beside his (K57, K58). Then P19: "these sketches don't take that merge into consideration... you'll need to perform some geometry surgery". Claude drew the anchor merge as one outline and one step (K59, K60). He said "Build it". The loop was notes, then sketches, then exact sketches back, then one merge, then the build.
+- **The cradle (P1–P3):** the secondary plate (1/8", 1.43..4.60) is no longer cut down for the plates above. It stays whole up to one floor 0.2 under each top-layer wheel (the transfer wheel and the crown arbor wheel at 3.78, the minute pinion at 4.08). It pivots the transfer arbor (2.35 long, under its wheel), the crown arbor and the minute arbor. The transfer and NE plates sit on it in 0.325 wells, so both are now **1/8"** (4.28..7.45, tops flush with the discs); no 3/16" stock is needed.
+- **New rule, checked (P3):** under every wheel's whole sweep, one floor from one plate at one height. Allowed under it: its own arbor's bore and seat, the wheels it meshes, and any wheel or the worm turning below it. Result: no breaks.
+- **The anchor (P4, P14–P19):**
+  - The twin arms stay as the first intermediate's only top support (Adam's P16–P18 answered P4). They are lowered flat to the pad's surface (5.56) from the foot's arch, and run straight from A1's pad, rounded into it r 1.5.
+  - The outline is one wall, top to bottom. On the left, the arm's edge rounds r 1.5 into the round foot (r 2.8 about the anchor screw) and back out. On the right is Adam's K56: r 1.5, then straight, then tangent into the transfer wheel's opening at -144°.
+  - The step is the foot's top arc plus a shoulder (r 1.046) each side, tangent to the arm's outer edge exactly where the outline starts its round. Full height thins to nothing there (a taper, kept), with no shelf.
+- **The top plate (P5, P10–P13):** the hour side's top plate is the main plate's top face, rounded, meeting the transfer and NE plates on a 0.05 joint. It now runs along the north edge to the NE plate.
+- **The ledge rule (P6–P13):** every well is now 0.05 bigger than its plate (it was 0.3), so the step under a plate matches its edge. Slivers are no longer cut out of a plate's outline (that made P8 and P9's notches). Instead, a strip under 1 mm wide that shows from above is lowered once to the highest surface actually beside it, if it lies beside an upper plate's edge or is a near copy of a wall. Never lowered: a wheel's floor, a taper where two walls cross at an angle, or the transfer plate's shoulders.
+- **Checked:**
+  - `layered.check()` covers every plate at every height against every wheel, disc, rod, the worm and the stem; plates resting in and beside each other; screws; supports; and the no-breaks rule.
+  - All five plates were resolved, and every screw was checked against the resolved plates.
+  - The sim: no collisions, discs true, no wall drawn twice.
+- **The sim's doubled-wall check** had a blind spot: a long straight edge that a shorter edge above or below shares exactly read as "two walls crossing" (12 mm on the secondary plate's east edge, round the crown bay). Walls that coincide exactly (within 2 µm) for 1 mm or more now count as one wall carrying on. Copies and crossings 0.006–0.3 apart are still flagged. The same fix moved about 40 mm of the main plate's "tapers" to what they were: walls carrying straight on.
+- **Honest limits:**
+  - The NE plate is still screwed only at its NW end.
+  - The transfer plate's strip along the south wall under the transfer wheel's opening is 1.2 wide at its narrowest.
 ### Files
 
 - `sim/index.html` — the editable watch train (the clock beta), plus pins, part records, autosave, scene files, the report, label padlocks and the quick-edit box. ~2,400 lines.
@@ -1048,6 +1068,7 @@ The first real project (§10.8). It pulls forward the build-order rows it needs;
 - **Snapping every edge to every nearby circle makes it worse** (2026-11-18): lining the plate's edges up with all the main plate's overlapping recess circles scalloped them into wiggles, and slivers at the rim shaved off the 1 mm perimeter steps. → snap only where an edge follows a reference for a few mm, never across a deliberate step, and look at the result before calling it refined.
 - **A test tab restores its own saved copy** (2026-11-17): reopening a project in the scratch tab brought back its saved scene, so the new checks first ran on the old design (usefully: they failed it). → when loading a regenerated project for a test, clear that tab's saved copy first and confirm the part list is the new one.
 - **A minimum wall breaks a well out through the plate's edge** (2026-11-23): the haute main plate takes down walls under 0.6 mm, and two bridge wells had come within 0.5 of the outline, so the resolver opened them through the edge and a top plate screw lost its thread. The design checker had passed: it read the drawn pockets, not the resolved plate. Keep every well 1.0 inside the edge, and check screws against the resolved tiers.
+- **A ledge rule that cascades cuts islands loose** (2026-11-24): lowering every thin visible strip level by level took the 0.05 joint between two plates all the way down into a deep recess. That isolated the block under the transfer plate's foot, the resolver took it down as a free-standing island, and the anchor screw lost its thread. Count a well's clearance ring as part of the plate in it, lower a strip once to the highest surface really beside it, never touch a wheel's floor, and check screws against the resolved plate.
 - **Battery died mid-session** (2026-11-06): autosave kept the layout, but the log and undo history live only in the page and were lost on reload. A Save scene file is the durable copy. Test new code on a separate port (its own browser storage) so the designer's autosave is never touched.
 
 ---
