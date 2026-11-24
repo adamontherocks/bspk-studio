@@ -724,6 +724,15 @@ Adam: "was i wrong about the slip clutch? i asked if it went on the balance axis
 - **Honest limits:**
   - The NE plate is still screwed only at its NW end.
   - The transfer plate's strip along the south wall under the transfer wheel's opening is 1.2 wide at its narrowest.
+
+### 2026-11-24 (evening) — Beta 2 · layered: notes P20–P26, sketch K266, holes reviewed
+
+- **P20, P21 ("bump"):** the step's shoulders reversed its curve. Adam's K266 redrew the step as one arch. Made exact (K267, 0.04 mm from his dots): the foot's own r 2.8 circle from where the outline's left round joins it, over the top to 78°, then a sweep r 6.6 tangent to the foot's circle and to the transfer wheel's opening. Above it, the arms and the corner by the opening sit at the pad's surface; the corner thins to nothing at the opening.
+- **P22, P23, P10 (ledge, dented wall):** the hour-side top plate had its corners rounded r 0.6, which left the main plate's corner showing; the ledge rule then lowered it in pieces. Those corners are 98°, so the top plate is now exactly the main plate's top face (no rounding). Its edges are the main plate's walls, and the walls run straight down. It meets the transfer and NE plates on 0.05 joints, right to the step (2.65).
+- **P24 (shelf by the transfer plate):** the ledge rule now looks only at floors you can see from above when it lowers a strip, so a strip beside an upper plate comes down to the visible floor beside it, not to the hidden well floor. It also never touches the floor ring under a disc's edge (as it never touches a wheel's floor). In the main plate it now lowers nothing at all.
+- **P25, P26:** the transfer plate has two screws: the anchor foot (0, -13.4) and the SE corner (20, -10.5).
+- **Holes, reviewed:** every hole was checked as through, blind, or threaded into the plate below. The exporter does blind holes (DRILL_<Ø>_DEPTH_<mm> layers, cut in the solid). The transfer and NE plates could thread into the secondary plate (2.85 mm of it under each screw), but then the secondary plate needs screws of its own: there's room to hide one counterbored head under the plates above, none under the NE plate, and the thread would drop from 5 mm in the main plate to about 2 mm in 1/8" delrin. Adam hand-taps with a taper tap (about 3 mm of lead on M2), so stopping a blind hole short is impractical. **Every tapped hole stays through**, and the transfer and NE plates' screws keep passing through the secondary plate into the main plate, clamping both.
+- **Checked:** layered.check (no problems, no breaks); all five plates resolved; every screw on the resolved plates; no resolved plate inside any wheel's sweep; the sim: no collisions, no wall drawn twice.
 ### Files
 
 - `sim/index.html` — the editable watch train (the clock beta), plus pins, part records, autosave, scene files, the report, label padlocks and the quick-edit box. ~2,400 lines.

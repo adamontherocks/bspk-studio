@@ -69,15 +69,28 @@ def anchor(O, A1, B, rB, HX, HY, dM, dH, zoneA1w, bay):
     slot = sbox(-xi, -12.0, xi, A1[1]).difference(C(A1, 2.6, 256)).difference(C(c0, r0, 256))
     slot = slot.buffer(-0.5, 64, join_style=1).buffer(0.5, 64, join_style=1)          # (its corners rounded r 0.5)
     F = largest(F.difference(slot))
-    # the step: the foot's top arc, and a shoulder each side tangent to the arm's outer edge exactly where the outline starts its round
-    r_s = ((yk - c0[1]) ** 2 + xa * xa - r0 * r0) / (2 * (r0 + xa))
-    sc, msc = (xa - r_s, yk), (-(xa - r_s), yk)
-    tp = (c0[0] + r0 * (sc[0] - c0[0]) / (r0 + r_s), c0[1] + r0 * (sc[1] - c0[1]) / (r0 + r_s)); mtp = (-tp[0], tp[1])
-    step = [(-xa, yk)] + arc(msc, r_s, 180, 360 + deg(msc, mtp))[1:] + arc(c0, r0, deg(c0, mtp), deg(c0, tp))[1:] + arc(sc, r_s, deg(sc, tp) % 360, 360)[1:]
-    low = Polygon([(-xa - 0.5, 0.5), (-xa - 0.5, yk)] + step + [(xa + 0.5, yk), (xa + 0.5, 0.5)]).buffer(0).union(C(A1, 3.0))
-    # (only the arms' side of the step comes down: the plate east of the right arm stays full height)
-    low = low.intersection(sbox(-xa - 0.5, -HY, xa, 1.0)).union(C(A1, 3.0))
-    notes = [f'anchor: the outline leaves the arms\' edges at y {yk:.3f}; shoulders r {r_s:.3f} meet the foot at x +-{tp[0]:.3f}, y {tp[1]:.3f}; K56 tangent at {phi} deg']
+    # the step (Adam's K266, P20-P21: one arch, no shoulders): the foot's own r 2.8 circle from where the outline's left round joins it,
+    # over the top, then a sweep tangent to the foot's circle and to the transfer wheel's opening, which it meets on that tangent (so the
+    # lowered corner by the opening thins to nothing there). Its radius is the one that fits his dots best (0.04 mm).
+    rl = R_IN
+    lc = (-(xa + rl), c0[1] + math.sqrt((r0 + rl) ** 2 - (xa + rl) ** 2))
+    jl = (c0[0] + r0 * (lc[0] - c0[0]) / (r0 + rl), c0[1] + r0 * (lc[1] - c0[1]) / (r0 + rl))      # the left round meets the foot here
+    th = 78.05                                                                                     # where the sweep leaves the foot (deg)
+    u = (math.cos(math.radians(th)), math.sin(math.radians(th)))
+    lo_, hi_ = r0 + 1e-3, 60.0
+    fR = lambda R: math.dist((c0[0] - (R - r0) * u[0], c0[1] - (R - r0) * u[1]), B) - (R + rB)
+    for _ in range(80):
+        mid = (lo_ + hi_) / 2
+        if fR(lo_) * fR(mid) <= 0: hi_ = mid
+        else: lo_ = mid
+    Rw = (lo_ + hi_) / 2; cw = (c0[0] - (Rw - r0) * u[0], c0[1] - (Rw - r0) * u[1])
+    tw = (c0[0] + r0 * u[0], c0[1] + r0 * u[1])
+    tb = (cw[0] + Rw * (B[0] - cw[0]) / math.dist(cw, B), cw[1] + Rw * (B[1] - cw[1]) / math.dist(cw, B))
+    step = arc(c0, r0, deg(c0, jl), th) + arc(cw, Rw, deg(cw, tw), deg(cw, tb))[1:]
+    xe = 6.5
+    low = Polygon([(-xa - 1.2, 1.0), (-xa - 1.2, jl[1])] + step + [(xe, tb[1]), (xe, 1.0)]).buffer(0).union(C(A1, 3.0))
+    notes = [f'anchor: the outline leaves the right arm\'s edge at y {yk:.3f}; step: foot circle from ({jl[0]:.3f},{jl[1]:.3f}) to {th} deg, then a sweep r {Rw:.3f} '
+             f'tangent to the transfer wheel\'s opening at ({tb[0]:.3f},{tb[1]:.3f}); K56 tangent at {phi} deg']
     return F, low, step, notes
 
 def build(aligned_scene, info, helpers):
@@ -183,9 +196,9 @@ def build(aligned_scene, info, helpers):
     for k in ('main', 'sec', 'tp', 'ne'): make_pockets(plates[k])
     # the hour side's top plate: the main plate's top face on the hour side (and along the north edge to the NE plate, P5), clear of the
     # transfer and NE plates by a 0.05 joint; its corners rounded (the main plate's corners under them come down to match: the ledge rule)
-    deck = solid(plates['main'], z_top - 1e-6).intersection(sbox(-HX - 1, -HY - 1, 2.5, HY + 1))
-    F_L = smooth(deck, 0.6, 0.6).difference(U([dH, dM, F_P.buffer(WELL), F_N.buffer(WELL)]))   # (meets them on a 0.05 joint, like a well)
-    plates['top']['F'] = largest(smooth(F_L, 0.3, 0))
+    deck = solid(plates['main'], z_top - 1e-6).intersection(sbox(-HX - 1, -HY - 1, 3.0, HY + 1))   # (the main plate's top face ends at the step, 2.65)
+    F_L = deck.difference(U([dH, dM, F_P.buffer(WELL), F_N.buffer(WELL)]))     # (exactly the main plate's top face: its corners are not rounded,
+    plates['top']['F'] = largest(F_L.buffer(0))                               #  so its edges are the main plate's walls; 0.05 joints to its neighbours)
     make_pockets(plates['top'])
     for k in ('main', 'sec', 'tp', 'ne'): make_pockets(plates[k])
     # ---- the ledge rule: any strip of a plate under 1 mm wide, showing from above (not under a plate that rests on it) beside a floor or
@@ -212,9 +225,10 @@ def build(aligned_scene, info, helpers):
                     if p.area < 1e-5 or p.buffer(-0.005).is_empty: continue          # (not a real strip: a rounding hairline)
                     if p.difference(done).area < 0.5 * p.area: continue
                     if any(abs(t - (z0 - AX)) < 1e-6 and p.intersects(C(c, r + GAP)) for _, c, r, z0, z1 in G.values()): continue   # (a wheel's floor stays whole)
+                    if any(abs(t - (z0 - DISC_AX)) < 1e-6 and p.intersects(C(c, r + GAP)) for _, c, r, z0, z1 in discs.values()): continue   # (and a disc's)
                     if not (p.intersects(near_cover) or 2 * p.area / max(p.length, 1e-9) < 0.3): continue
                     ring = p.buffer(0.03).difference(p.buffer(0.001))          # the surfaces actually beside it, lower than it
-                    nb = [t2 for t2 in tops if t2 < t - 1e-9 and surfs[t2].intersection(ring).area > 1e-6]
+                    nb = [t2 for t2 in tops if t2 < t - 1e-9 and surfs[t2].difference(covered).intersection(ring).area > 1e-6]   # (floors you can see)
                     if hole.intersection(ring).area > 1e-6: nb.append(X['zb'])
                     if not nb: continue
                     f = max(nb)
@@ -274,7 +288,14 @@ def build(aligned_scene, info, helpers):
             alt = spread([a, b]) if math.dist(a, b) >= spacing else []
             if len(alt) > len(picks): picks = alt
         return picks
-    plates['tp']['screws'] = pick(plates['tp'], 4, spacing=5.0)
+    def pick_near(X, targets):
+        inner = X['F'].buffer(-CB_KEEP); out = []
+        for tx, ty in targets:
+            cand = [(round(tx + 0.25 * i, 2), round(ty + 0.25 * j, 2)) for i in range(-12, 13) for j in range(-12, 13)]
+            cand = [q for q in cand if inner.contains(Point(q)) and path_ok(X, q)]
+            if cand: out.append(min(cand, key=lambda q: math.dist(q, (tx, ty))))
+        return out
+    plates['tp']['screws'] = pick_near(plates['tp'], [(0.0, -13.4), (20.0, -10.5)])
     plates['ne']['screws'] = pick(plates['ne'], 2, spacing=4.5)
     exposed_sec = plates['sec']['F'].difference(U([plates['tp']['F'], plates['ne']['F']]).buffer(WELL + CB_KEEP))
     plates['sec']['screws'] = pick(plates['sec'], 2, region=exposed_sec)
