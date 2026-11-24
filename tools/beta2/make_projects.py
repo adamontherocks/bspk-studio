@@ -449,3 +449,11 @@ if __name__ == '__main__':
     else:
         json.dump(s4, open(os.path.join(OUT, 'beta2-haute.json'), 'w'), indent=1)
     print('beta2-haute:', json.dumps({k: v for k, v in rep.items() if k != 'problems'}, default=str))
+    import layered
+    s5, rep5, _ = layered.build(s3, info, {'rrect': rrect, 'sketch': sketch, 'poly_dots': poly_dots, 'FITS_DELRIN': FITS_DELRIN})
+    if rep5['problems']:
+        print('beta2-layered NOT written:', *rep5['problems'], sep='\n  ')
+    else:
+        json.dump(s5, open(os.path.join(OUT, 'beta2-layered.json'), 'w'), indent=1)
+    print('beta2-layered:', json.dumps({k: v for k, v in rep5.items() if k not in ('problems', 'notes')}, default=str))
+    print('  ' + '\n  '.join(rep5['notes']))
