@@ -83,6 +83,7 @@ def floors_from(outline, func, T, shop, speck=SPECK):
     speck: plate narrower than twice this comes down, and outside corners are rounded to it once (a gear passes a few µm: its tooth
     tips are cut as drawn, since an end mill leaves an outside corner sharp)"""
     outside = diff(BOX, outline); near_part = offset(outline, 2.0)
+    tower_a = min(TOWER_A, 0.5 * sum(abs(pc.Area(p)) for p in outline) / S / S)   # (a part smaller than TOWER_A isn't an island of itself: a collar, a plug)
     Ls = sorted({0.0} | {f for _, f in func if f < T - 1e-6})
     R = max(speck, shop['minWall'] / 2); r_cut = shop['cutter'] / 2
     prev, A, rounded, notes = [], [], [], {'towers': 0, 'thin_added': 0.0, 'cutter_filled': 0.0}
@@ -91,7 +92,7 @@ def floors_from(outline, func, T, shop, speck=SPECK):
         real = union(cuts_here, prev)
         C = close(real, R)
         if shop['minWall'] > 0:
-            big = [p for p in C if pc.Orientation(p) or abs(pc.Area(p)) / S / S >= TOWER_A]; notes['towers'] += len(C) - len(big)
+            big = [p for p in C if pc.Orientation(p) or abs(pc.Area(p)) / S / S >= tower_a]; notes['towers'] += len(C) - len(big)
             C = union(big, real)
         C = union(opening(close(C, speck), speck), real)
         raw = diff(C, real)

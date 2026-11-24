@@ -733,7 +733,11 @@ function derive(st, lite = false) {
 // Rods (rules.rod = { d, from }): each arbor turns on a rod running from `from` (the bottom of its bearings) up to the top of its
 // highest part, so it is in the way of other arbors' gears in every layer it passes. Without the rule an axis is a line (the beta).
 // rules.rod.top = { arbor: z } runs an arbor's rod on up to z (into a bridge that holds its top pivot).
-const ROD = PROJECT.rules && PROJECT.rules.rod && +PROJECT.rules.rod.d > 0 ? { d: +PROJECT.rules.rod.d, from: +PROJECT.rules.rod.from || 0, top: PROJECT.rules.rod.top || {} } : null;
+const ROD = PROJECT.rules && PROJECT.rules.rod && +PROJECT.rules.rod.d > 0 ? { d: +PROJECT.rules.rod.d, from: +PROJECT.rules.rod.from || 0, top: PROJECT.rules.rod.top || {}, bottom: PROJECT.rules.rod.bottom || {} } : null;
+// rules.rod.bottom = { arbor: z } starts an arbor's rod lower (through the back face, for a collar under it).
+const rodFrom = a => ROD && Number.isFinite(+ROD.bottom[a.id]) && ROD.bottom[a.id] !== null ? +ROD.bottom[a.id] : ROD ? ROD.from : 0;
+// rules.backlash (mm): each mesh's backlash, taken half off each gear's teeth at the pitch circle (the centre distances stay exact).
+const GEAR_THIN = Math.max(0, +(PROJECT.rules && PROJECT.rules.backlash) || 0) / 2;
 function rodTop(st, D, a) {
   return Math.max(...a.gears.map(g => D.gears[g.id].z1), ...HAND_DEFS.filter(h => h.arbor === a.id).map(h => st.hands[h.id].z + st.hands[h.id].t),
                   ROD && Number.isFinite(+ROD.top[a.id]) && ROD.top[a.id] !== null ? +ROD.top[a.id] : -Infinity);
@@ -751,7 +755,7 @@ function elements(st, D) {
     }
     const dr = D.drum[a.id];
     if (dr) els.push({ part: a.id, arbor: a.id, drum: a.gears[0].id, name: 'Barrel drum', x, y, r: dr.rOut, z0: dr.z0, z1: dr.z1 });
-    if (ROD) els.push({ part: a.id, arbor: a.id, rod: true, name: `${a.name} rod`, x, y, r: ROD.d / 2, z0: ROD.from, z1: rodTop(st, D, a) });
+    if (ROD) els.push({ part: a.id, arbor: a.id, rod: true, name: `${a.name} rod`, x, y, r: ROD.d / 2, z0: rodFrom(a), z1: rodTop(st, D, a) });
   }
   for (const h of HAND_DEFS) {
     const [x, y] = D.pos[h.arbor], hs = st.hands[h.id];
@@ -1291,7 +1295,7 @@ function addCrossings(shape, w) {
 function gearGeometry(G, { hole = 0, arms = null } = {}) {
   let shape;
   if (G.plain) { shape = new THREE.Shape(); shape.absarc(0, 0, G.rp, 0, Math.PI * 2, false); }   // no teeth: a plain wheel, with crossings when it's big enough to look like one
-  else shape = new THREE.Shape(outline(computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0 })).map(([x, y]) => new THREE.Vector2(x, y)));
+  else shape = new THREE.Shape(outline(computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0, thin: GEAR_THIN })).map(([x, y]) => new THREE.Vector2(x, y)));
   if (hole > 0) {
     const h = new THREE.Path();
     h.absarc(0, 0, hole, 0, Math.PI * 2, true);
@@ -2083,7 +2087,7 @@ function buildArbor(part, a) {
   const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, z0), new THREE.Vector3(0, 0, z1)]), part.axisMat);
   axis.computeLineDistances();
   part.statics.add(axis);
-  if (ROD) addMesh(part, zCylinder(ROD.d / 2, ROD.from, rodTop(S, D, a), 24), part.statics, { edges: false, mat: rodMat });
+  if (ROD) addMesh(part, zCylinder(ROD.d / 2, rodFrom(a), rodTop(S, D, a), 24), part.statics, { edges: false, mat: rodMat });
   for (const g of a.gears) {
     const G = D.gears[g.id];
     const geom = a.drumH ? gearGeometry(G, { hole: D.drum[a.id].rIn }) : gearGeometry(G, { hole: (G.bore || 0) / 2, arms: armsOf(G, innerOf(g.id)) });
@@ -3622,7 +3626,7 @@ const shopCutter = () => (PROJECT.shop && +PROJECT.shop.cutter) || 1;
 function gearSpec(gp) {
   const layers = gp.gears.map(gid => {
     const G = D.gears[gid], mates = (G.partners || []).map(p => D.gears[p]).filter(q => !q.plain && !G.plain);
-    return { label: G.label, m: G.m, z: G.z, x: G.x || 0, pa: PA_DEG, t: G.t, z0: G.z0, ...(G.plain ? { plain: true, rp: G.rp } : {}),
+    return { label: G.label, m: G.m, z: G.z, x: G.x || 0, pa: PA_DEG, ...(GEAR_THIN ? { thin: GEAR_THIN } : {}), t: G.t, z0: G.z0, ...(G.plain ? { plain: true, rp: G.rp } : {}),
              windows: armsOf(G, innerOf(gid)), mates: mates.map(q => ({ a: G.rp + q.rp, ra: q.ra, rb: q.rb, label: q.label })) };
   });
   return { id: gp.pid, name: gp.name, at: D.pos[gp.arbor].slice(), phase: D.psi[gp.gears[0]] || 0, bore: Math.max(0, ...gp.gears.map(g => D.gears[g].bore || 0)),
@@ -3668,7 +3672,7 @@ function gearPreview(gp, r) {
   fromFar.forEach((gid, i) => {
     const G = D.gears[gid];
     if (G.plain) { h += G.t; return; }
-    const drawn = outline(computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0 }));
+    const drawn = outline(computeGear({ module: G.m, teeth: G.z, pressure_angle: PA_DEG, shift: G.x || 0, thin: GEAR_THIN }));
     const a = Math.PI / G.z, rm = G.rf + 0.4 * (G.ra - G.rf), cx = rm * Math.cos(a), cy = rm * Math.sin(a), w = 1.35 * G.m;
     const box = [[cx - w, cy - w], [cx + w, cy - w], [cx + w, cy + w], [cx - w, cy + w]];
     let plate;
@@ -4189,6 +4193,7 @@ const BUILT_IN = [
   { id: 'beta2-aligned', name: 'Beta 2 · intermediates on the centre line', file: 'projects/beta2-aligned.json' },
   { id: 'beta2-layered', name: 'Beta 2 · layered (plates that host the train)', file: 'projects/beta2-layered.json' },
   { id: 'beta2-haute', name: 'Beta 2 · haute (plates and bridges)', file: 'projects/beta2-haute.json' },
+  { id: 'beta2-fits', name: 'Beta 2 · fit coupon (cut this first)', file: 'projects/beta2-fits.json' },
   { id: 'air-size-study', name: 'Air size study', file: 'projects/air-size-study.json' },
   { id: 'hemistitch-slava', name: 'Hemistitch + Slava donor', file: 'projects/hemistitch-slava.json' },
   { id: 'hemistitch-prototype', name: 'Hemistitch prototype', file: 'projects/hemistitch-prototype.json' },

@@ -1,6 +1,7 @@
 # Beta 2 (2026-11-23): Claude starts two projects from Adam's brief, as numbers the sim and the resolver take from there.
 #   sim/projects/air-size-study.json   gear pairs at module 0.6, 0.5 and 0.4 between three 1/8" plates: the first Air cut from the sim
 #   sim/projects/beta2.json            the hand-set Hemistitch's train (crown worm -> intermediate -> minute and hour discs), first layout
+#   sim/projects/beta2-fits.json       the fit coupon (fits.py): every Beta 2 fit at a few sizes, cut before the main plate
 # Re-run to regenerate both (it overwrites them). Every hole names a fit, so the press-fit test's sizes drop into the table once.
 import json, math, os, time
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -457,3 +458,8 @@ if __name__ == '__main__':
         json.dump(s5, open(os.path.join(OUT, 'beta2-layered.json'), 'w'), indent=1)
     print('beta2-layered:', json.dumps({k: v for k, v in rep5.items() if k not in ('problems', 'notes')}, default=str))
     print('  ' + '\n  '.join(rep5['notes']))
+    import fits
+    s6 = fits.build({'rrect': rrect, 'sketch': sketch, 'poly_dots': poly_dots, 'FITS_DELRIN': FITS_DELRIN})
+    s6['savedAt'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+    json.dump(s6, open(os.path.join(OUT, 'beta2-fits.json'), 'w'), indent=1)
+    print('beta2-fits: written')

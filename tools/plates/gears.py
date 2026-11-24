@@ -18,11 +18,11 @@ DRILL_MAX = 3.2       # a bore this size or smaller is a drilled hole (its own t
 SPECK = 0.005         # mm: only plate under 10 µm wide comes down (tooth tips are cut as drawn; see resolve.floors_from)
 SEG = 0.02            # mm: arcs (plain wheels, the arms' windows, a milled bore) drawn with chords this long at most
 
-def involute(m, z, x=0.0, pa_deg=20.0, at=(0.0, 0.0), phase=0.0):
-    """the sim's involute spur gear outline (involute.js computeGear + outline), anticlockwise, and its circles"""
+def involute(m, z, x=0.0, pa_deg=20.0, at=(0.0, 0.0), phase=0.0, thin=0.0):
+    """the sim's involute spur gear outline (involute.js computeGear + outline), anticlockwise, and its circles; thin: mm off each tooth at the pitch circle"""
     pa = math.radians(pa_deg)
     rp = m * z / 2; rb = rp * math.cos(pa); ra = rp + m * (1 + x); rf = rp - m * (1.25 - x)
-    half = math.pi / (2 * z) + 2 * x * math.tan(pa) / z + (math.tan(pa) - pa)
+    half = math.pi / (2 * z) + 2 * x * math.tan(pa) / z + (math.tan(pa) - pa) - thin / (2 * rp)
     t0 = math.sqrt((rf / rb) ** 2 - 1) if rf > rb else 0.0
     t1 = math.sqrt((ra / rb) ** 2 - 1)
     flank = [(rb * math.sqrt(1 + t * t), -half + t - math.atan(t)) for t in np.linspace(t0, t1, N_FLANK + 1)]
@@ -60,7 +60,7 @@ def windows(c, w, phase=0.0):
 
 def layer_outline(L, at, phase):
     if L.get('plain'): return arc(at, L['rp'], 0, 2 * math.pi)[:-1], {'rp': L['rp'], 'ra': L['rp'], 'rf': L['rp'], 'pointed': False, 'crowded': False}
-    return involute(L['m'], int(L['z']), L.get('x') or 0.0, L.get('pa') or 20.0, at, phase)
+    return involute(L['m'], int(L['z']), L.get('x') or 0.0, L.get('pa') or 20.0, at, phase, L.get('thin') or 0.0)
 
 def stack(spec):
     """the layers far face first, the face milled, the thickness: each layer must stand inside the one under it"""

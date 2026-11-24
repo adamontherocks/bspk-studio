@@ -6,10 +6,11 @@
 
   // shift: profile shift x (in modules). + moves the teeth outward and thickens them (pinions, against undercut),
   // − the opposite; a mesh with shifts x and −x keeps its usual centre distance.
+  // thin: mm taken off each tooth's thickness at the pitch circle (half a mesh's backlash; both gears of a mesh thinned alike).
   function computeGear(s) {
     const m = s.module, z = Math.round(s.teeth), pa = s.pressure_angle * Math.PI / 180, x = s.shift || 0;
     const rp = m * z / 2, rb = rp * Math.cos(pa), ra = rp + m * (1 + x), rf = rp - m * (1.25 - x);
-    const half = Math.PI / (2 * z) + 2 * x * Math.tan(pa) / z + (Math.tan(pa) - pa);
+    const half = Math.PI / (2 * z) + 2 * x * Math.tan(pa) / z + (Math.tan(pa) - pa) - (s.thin || 0) / (2 * rp);
     const t0 = rf > rb ? Math.sqrt((rf / rb) ** 2 - 1) : 0;
     const t1 = Math.sqrt((ra / rb) ** 2 - 1);
     const flank = [];
