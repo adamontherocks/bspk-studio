@@ -78,26 +78,21 @@ def plan():
             if ch.get('widths'): cuts.extend(chf.edge_wedges(outline, ch, zc, into))   # widths by side: one wedge per face, meeting in ridges
             else:                                                     # one width: keep the outline drafted in over it, at its angle
                 cc = min(ch['size'] * math.tan(math.radians(ch.get('angle') or 45.0)), T); op = SP(outline); tp = 90 - (ch.get('angle') or 45.0)
-                part['keep'] = ([prism(op, lo - E, hi - cc), draft(op, hi - cc, hi + E, tp)] if zc == hi else [prism(op, lo + cc, hi + E), draft(op, lo + cc, lo - E, tp)])
+                if cc >= T - 1e-6: part['keep'] = [draft(op, lo - E, hi, tp)] if zc == hi else [draft(op, hi, lo - E, tp)]   # (all through the part: the draft alone)
+                else: part['keep'] = ([prism(op, lo - E, hi - cc), draft(op, hi - cc, hi + E, tp)] if zc == hi else [prism(op, lo + cc, hi + E), draft(op, lo + cc, lo - E, tp)])
         return part
-    parts = [flat_part('D9', 'Faceplate-and-body'), flat_part('D10', 'Crystal'), flat_part('D11', 'Dial-plate')]
-    plq, side = g['scr'][:4], g['scr'][4:]
-    # lug plate: the frame and its four lugs (one two-view part)
-    lugs = []
+    parts = [flat_part('D9', 'Faceplate'), flat_part('D10', 'Crystal'), flat_part('D11', 'Dial-plate')]
+    # the case middle and its four lugs, one piece: the ring with all its cuts (the back bevel's wedges among them), then the lugs fused on
+    # (so the bevel can't take them), then their spring bar holes drilled through from the outer faces
+    mid = flat_part('D12', 'Case-middle-with-lugs')
+    ey, ez = g['eye']; mid['add'], mid['cuts2'] = [], []
     for sx in (-1, 1):
         for sy in (-1, 1):
             prof = [[round(sy * u, 4), round(v, 4)] for u, v in g['side']]
-            lugs.append({'kind': 'xprism', 'ring': prof, 'x0': case.LUG_X[0] if sx > 0 else -case.LUG_X[1], 'x1': case.LUG_X[1] if sx > 0 else -case.LUG_X[0]})
-    eye_y = case.H / 2 + case.EYE_OUT; eye_z = z['frame0'] + case.EYE_R
-    lc = [prism(g['cav'].buffer(-1.0), z['frame0'] - E, z['back'] + E), prism(g['cav'], z['back'] - 0.8, z['back'] + E), prism(g['well'], z['back'] - 0.6, z['back'] + E)]
-    for x, y in side: lc += [cyl(x, y, 0.9, z['frame0'] - E, z['back'] + E), cyl(x, y, 1.6, z['frame0'] - E, z['frame0'] + 0.9)]
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            lc.append({'kind': 'xcyl', 'y': sy * eye_y, 'z': eye_z, 'r': case.HOLE / 2, 'x0': -case.LUG_X[1] - 1 if sx < 0 else case.LUG_X[0] - 0.01,
-                       'x1': -case.LUG_X[0] + 0.01 if sx < 0 else case.LUG_X[1] + 1})
-    for x, y in plq: lc += [cyl(x, y, 1.15, z['frame0'] - E, zr + E), cyl(x, y, 2.2, z['frame0'] - E, z['frame0'] + 0.9)]   # the plaque screws: M2x12 up through each riser
-    parts.append({'id': 'D12', 'name': 'Lug-plate-with-lugs', 'solid': [prism(g['frame'], z['frame0'], z['back'])] + lugs, 'cuts': lc})
-    # back plate
+            mid['add'].append({'kind': 'xprism', 'ring': prof, 'x0': case.LUG_X[0] if sx > 0 else -case.LUG_X[1], 'x1': case.LUG_X[1] if sx > 0 else -case.LUG_X[0]})
+            mid['cuts2'].append({'kind': 'xcyl', 'y': sy * ey, 'z': ez, 'r': case.HOLE / 2, 'x0': -case.LUG_X[1] - 1 if sx < 0 else case.LUG_X[0] - 0.01,
+                                 'x1': -case.LUG_X[0] + 0.01 if sx < 0 else case.LUG_X[1] + 1})
+    parts.append(mid)
     parts.append(flat_part('D13', 'Back-plate'))
     # Beta 2's discs (hands): blanks, numerals V-carved after
     for nm, c in (('minute', (10.4, 0.0)), ('hour', (-10.4, 0.0))):
@@ -147,6 +142,8 @@ def build(parts, outdir):
             if not one.isValid() or len(one.Solids()) != len(body.Solids()):     # (OCC sometimes fumbles many cuts at once: one at a time holds)
                 for c in cs: body = body.cut(c).clean()
             else: body = one
+        if p.get('add'): body = body.fuse(*[solid(o) for o in p['add']]).clean()
+        if p.get('cuts2'): body = body.cut(*[solid(o) for o in p['cuts2']]).clean()
         base = os.path.join(outdir, f"{p['id']}-{p['name']}")
         ok = body.isValid(); bb = body.BoundingBox()   # (both before the STL: meshing it can upset OCC's checker and loosen its box on a sound solid)
         cq.exporters.export(cq.Workplane('XY').add(body), base + '.step')
