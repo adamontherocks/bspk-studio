@@ -9,6 +9,10 @@
 # Everything that goes in from the back must pass the cavity, so the only shoulder is the faceplate's lip: lip -> crystal -> dial plate ->
 # movement -> back plate -> lug plate, clamped by four back screws threading up into the body; four front screws thread down into the same
 # through-tapped holes (AXIS's two-direction screws) and hold the badges later.
+# Lugs (Adam, 2026-11-25: "lugs going up, not drooping... an etched space in the side of the main case the lugs could slide into"): each lug
+# rises from the lug plate into a slot in the body, open to the 12 or 6 face and keyed there, so the strap's pull goes into the body; outside
+# it drops 45° onto its eye. The lug plate is a two-view part (plan outline x side profile, for the 4th axis); the sim shows its frame and four
+# lug profiles. The screws sit on the octagon's chamfer corners, clear of the slots.
 # Heights in Beta 2 · layered's frame: the movement from -3.6625 (back face) to 7.45 (plates), discs 7.75..9.3375.
 import copy, math
 from shapely.geometry import Point, Polygon, box
@@ -22,6 +26,8 @@ LIP = 1.1                       # the faceplate's lip over the crystal's edge, a
 BACK_T = 0.8                    # back plate (1/32" acrylic: a display back, or delrin)
 W, H, CH = 54.0, 48.0, 9.0      # the body: wider than tall (the render), its octagon's chamfers
 LUG_X = (12.0, 15.5)            # lug inner and outer faces (a 24 mm strap)
+RISE, SLOT_Y0 = 6.5, 17.9       # Adam (lugs up): each lug rises this far into a slot cut up into the body from its back, open to the 12/6 face
+EYE_R, EYE_OUT, HOLE = 2.5, 2.7, 1.2    # the lug's eye (spring bar boss) just outside the body: radius, its centre this far out, bar hole
 
 def rrect(w, h, r, c=(0.0, 0.0)): return box(c[0] - w / 2 + r, c[1] - h / 2 + r, c[0] + w / 2 - r, c[1] + h / 2 - r).buffer(r, 64)
 def octagon():
@@ -55,11 +61,17 @@ def build(layered_scene, info, helpers):
     well = box(crown_x0 - 0.3, -(crown_r + 0.3), W / 2 + 2.0, crown_r + 0.3)
     slit = box(HX, -(neck_r + 0.2), crown_x0, neck_r + 0.2)
     # the screws: four through-tapped holes in the shoulders, back screws up into them, front screws down into them
-    scr = [(sx * 14.5, sy * 20.6) for sx in (-1, 1) for sy in (-1, 1)]
+    scr = [(sx * 19.0, sy * 19.0) for sx in (-1, 1) for sy in (-1, 1)]      # (on the chamfer corners, clear of the lug slots)
     # ---- the lug plate: a frame under the body walls, a rabbet for the back plate, four lugs (their droop is the side profile, K below)
-    lug_len = 7.5
-    lugs = [rrect(LUG_X[1] - LUG_X[0], lug_len + 3.0, 1.75, (sx * (LUG_X[0] + LUG_X[1]) / 2, sy * (H / 2 + lug_len / 2 - 1.5))) for sx in (-1, 1) for sy in (-1, 1)]
-    frame = unary_union([body] + lugs).buffer(0)
+    frame = body
+    # each lug's side profile (y out from the centre, z up): riser up the slot, 45° down onto the eye, the eye, back along the plate's bottom
+    eye_y, eye_z = H / 2 + EYE_OUT, z_frame0 + EYE_R
+    zr = z_back + RISE
+    tp = (eye_y + EYE_R * math.cos(math.radians(45)), eye_z + EYE_R * math.sin(math.radians(45))); cc = tp[0] + tp[1]
+    lug_side = [(SLOT_Y0, z_back), (SLOT_Y0, zr), (cc - zr, zr)] + [(eye_y + EYE_R * math.cos(math.radians(a)), eye_z + EYE_R * math.sin(math.radians(a))) for a in range(45, -91, -5)] \
+               + [(H / 2, z_frame0), (H / 2, z_back)]
+    slots = [box(min(sx * LX, sx * LX2) - 0.1, min(sy * (SLOT_Y0 - 0.1), sy * (H / 2 + 2.0)), max(sx * LX, sx * LX2) + 0.1, max(sy * (SLOT_Y0 - 0.1), sy * (H / 2 + 2.0)))
+             for sx in (-1, 1) for sy in (-1, 1) for LX, LX2 in [LUG_X]]
     kn = [400]
     def newk(): kn[0] += 1; return f'K{kn[0]}'
     sks, parts = [], []
@@ -79,7 +91,9 @@ def build(layered_scene, info, helpers):
           pocket('Cavity: the movement, dial plate and crystal go in from the back', cav, 'front', z_lip0 - z_back, 2),
           pocket('Crown well (open to the back: the crown drops in with the movement)', well, 'front', zw + crown_r + 0.3 - z_back, 3),
           pocket('Stem slit (open to the back)', slit, 'front', zw + neck_r + 0.2 - z_back, 4)]
-    vy = (18.3, 20.2, 22.1); n = 5
+    n = 5
+    for sl in slots: bc.append(pocket('Lug slot (open to the back and the 12/6 face: the lug rises into it)', sl, 'front', RISE + 0.1, n)); n += 1
+    vy = (18.3, 20.2, 22.1)
     for sy in (-1, 1):
         for y in vy: bc.append(pocket('Vent (the shoulders\' three slots)', stadium(-10.0, 10.0, sy * y, 1.0), 'back', 0.8, n)); n += 1
     for s in scr: bc.append(hole('pilot', 'M2 thread, through (back screw up, front screw down)', s, 1.6, 'back', n, fit='m2_tap')); n += 1
@@ -98,15 +112,19 @@ def build(layered_scene, info, helpers):
           pocket('Relief under the crown', well, 'back', 0.6, 3)]
     n = 4
     for s in scr: fc.append(hole('clear', 'Back screw: M2 wafer head in a counterbore from the wrist side', s, 2.3, 'front', n, seat={'d': 4.4, 'depth': 0.9}, fit='m2_clear')); n += 1
-    part('D12', 'Lug plate (black delrin): a frame under the body walls with the four lugs. Here flat; the lugs\' droop toward the wrist is the side profile '
-                '(sketch "Lug side profile"): cut as a two-view part on the 4th axis', frame, z_frame0, TT, fc)
+    part('D12', 'Lug plate (black delrin, cut as one two-view part on the 4th axis: plan outline x side profile): its frame under the body walls, '
+                'a rabbet for the back plate; its four lugs are D14-D17', frame, z_frame0, TT, fc)
     part('D13', 'Back plate (1/32" clear acrylic, a display back; or delrin): in the lug plate\'s rabbet, the movement sits on it', insert, z_back - BACK_T, BACK_T, [])
-    # the lugs' side profile (on the 3 o'clock lug's outer face): down from the frame to the spring bar, for Adam to shape
-    yb, zf0, zf1 = H / 2 - 3.0, z_frame0, z_back
-    side = [(yb, zf1), (H / 2, zf1), (H / 2 + 3.5, zf1 - 1.1), (H / 2 + 6.2, zf1 - 2.9), (H / 2 + 7.3, zf1 - 4.4), (H / 2 + 6.9, zf1 - 5.9),
-            (H / 2 + 5.6, zf1 - 6.3), (H / 2 + 4.2, zf1 - 5.3), (H / 2 + 2.0, zf0 - 0.9), (H / 2, zf0), (yb, zf0)]
-    sks.append({'id': newk(), 'name': 'Lug side profile (the lugs droop to the strap: the second view of the lug plate; spring bar at the round end)',
-                'plane': {'axis': 'x', 'offset': LUG_X[1]}, 'closed': True, 'points': [{'u': round(u, 4), 'v': round(v, 4), 'smooth': 1 <= i <= 8} for i, (u, v) in enumerate(side)]})
+    # the four lugs (part of the lug plate): the side profile drawn on the lug's inner-x face plane, grown across its width
+    side = lug_side
+    for i, (sx, sy) in enumerate([(1, 1), (-1, 1), (1, -1), (-1, -1)]):
+        k = newk(); pts = [(sy * u, v) for u, v in side]
+        if sy < 0: pts = pts[::-1]
+        sks.append({'id': k, 'name': f'Lug {i + 1} side profile', 'plane': {'axis': 'x', 'offset': round(LUG_X[0] if sx > 0 else -LUG_X[1], 4)}, 'closed': True,
+                    'points': [{'u': round(u, 4), 'v': round(v, 4), 'smooth': False} for u, v in pts]})
+        parts.append({'id': f'D{14 + i}', 'name': f'Lug {i + 1} ({"3" if sx > 0 else "9"} o\'clock side, {"12" if sy > 0 else "6"} o\'clock end): part of the lug plate. It rises {RISE} into its slot in the body and drops 45° onto its eye',
+                      'sketch': k, 'thickness': round(LUG_X[1] - LUG_X[0], 4), 'grow': 'plus', 'mill': 'back', 'minWall': 0.6,
+                      'cuts': [{'id': 'h1', 'kind': 'clear', 'name': f'Spring bar hole Ø{HOLE}', 'at': [round(sy * eye_y, 4), round(eye_z, 4)], 'd': HOLE, 'from': 'back', 'depth': None}]})
     st['sketches'] = st['sketches'] + sks
     st['drawn'] = st['drawn'] + parts
     # ---- the project
@@ -120,11 +138,12 @@ def build(layered_scene, info, helpers):
                                                  '(face/body, calibre, lug plate, back plate) and notes (one-piece stepped crystal, dial plate, stem slit).']
     P['plate']['z'] = round(z_frame0 - 1.5, 4)
     P['groups']['drawn'] = 'Movement plates, stem and case'
-    case_ids = ['D9', 'D10', 'D11', 'D12', 'D13']
+    case_ids = ['D9', 'D10', 'D11', 'D12', 'D13', 'D14', 'D15', 'D16', 'D17']
     P['focus'] = [{'id': 'case', 'label': 'The case: faceplate and body, crystal, dial plate, lug plate, back plate', 'parts': case_ids + ['D6']},
                   {'id': 'inside', 'label': 'Inside the case: Beta 2 under the dial plate', 'parts': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D11', 'D12', 'D13', 'minute', 'hour', 'a1', 'a2', 'b', 'e']},
-                  {'id': 'stack', 'label': 'Everything', 'parts': ['D%d' % i for i in range(1, 14)]}] + [f for f in P['focus'] if f['id'] in ('train',)]
-    report = {'z': {'lug plate': (round(z_frame0, 4), round(z_back, 4)), 'back plate': (round(z_back - BACK_T, 4), round(z_back, 4)), 'movement': (z_back, z_plates),
+                  {'id': 'stack', 'label': 'Everything', 'parts': ['D%d' % i for i in range(1, 18)]}] + [f for f in P['focus'] if f['id'] in ('train',)]
+    report = {'lugs': {'riser_top': round(zr, 4), 'eye': (round(eye_y, 3), round(eye_z, 3), EYE_R), 'lug_to_lug': round(2 * (eye_y + EYE_R), 2)},
+              'z': {'lug plate': (round(z_frame0, 4), round(z_back, 4)), 'back plate': (round(z_back - BACK_T, 4), round(z_back, 4)), 'movement': (z_back, z_plates),
                     'discs': (7.75, round(z_disc1, 4)), 'dial plate': (round(z_dial0, 4), round(z_dial1, 4)), 'crystal': (round(z_cry0, 4), round(z_cry1, 4)),
                     'body': (z_back, round(z_top, 4))},
               'total': round(z_top - z_frame0, 3), 'disc_to_crystal': round(z_cry0 - z_disc1, 3), 'window': [round(v, 2) for v in window.bounds],
