@@ -16,7 +16,7 @@
 # share their walls, and solid booleans on coincident faces crawl); slabs with walls as the raw dots (12,000 edges a face: over an
 # hour); spline fitting (an invalid solid on a plain pill outline).
 #   python3 export_step.py SCENE.json PID OUTDIR
-import json, os, re, subprocess, sys, time
+import json, math, os, re, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 ROOT = os.path.dirname(os.path.dirname(HERE))
 VENV_PY = os.path.join(ROOT, '.venv', 'bin', 'python')
@@ -100,9 +100,13 @@ def plan(J, pid):
         b = chf.bevel(L['path'], cc, L['z'], -1 if L['z'] == max(zf, zb) else 1, z0) if cc > 1e-4 else None
         if b: chamfers.append({'op': b, 'path': L['path'], 'size': cc, 'face': L['from'], 'z0': z0})
     edge = None
-    if d.get('chamfer') and d['chamfer'].get('size', 0) > 0:
-        face_e = 'back' if d['chamfer'].get('face', 'back') == 'back' else 'front'
-        edge = {'size': min(d['chamfer']['size'], T), 'z': zb if face_e == 'back' else zf, 'face': face_e, 'outline': res['outline']}
+    ch = d.get('chamfer')
+    if ch and (ch.get('size', 0) > 0 or ch.get('widths')):    # the part's own edge: one width (any angle), or widths by side (one wedge per face)
+        face_e = 'back' if ch.get('face', 'back') == 'back' else 'front'; ze = zb if face_e == 'back' else zf
+        by_side = bool(ch.get('widths')); straight = len(res['outline']) <= 48     # (per-side widths as one wedge per face: straight-sided outlines only;
+        edge = {'size': ch.get('size') or 0, 'angle': ch.get('angle') or 45.0, 'z': ze, 'face': face_e, 'outline': res['outline'],   #  on arcs, hundreds of nearly coplanar
+                'wedges': chf.edge_wedges(res['outline'], ch, ze, -1 if ze == max(zf, zb) else 1) if by_side and straight else None,    #  wedges take minutes to cut)
+                'skipped': by_side and not straight}
     holes = []
     for c in d.get('cuts') or []:
         own = c['kind'] in DRILLED and c.get('d') and c['d'] <= DRILL_MAX
@@ -159,7 +163,8 @@ def build_dxf(job, base):
     for ch in job.get('chamfers') or []:
         msp.add_lwpolyline(ch['path'], close=True, dxfattribs={'layer': f"CHAMFER45_{ch['size']:.3f}_{ch['face'].upper()}" + (f"_ON_{ch['z0']:.3f}" if ch['z0'] > 1e-6 else '')})
     if job.get('edge'):
-        msp.add_lwpolyline(job['edge']['outline'], close=True, dxfattribs={'layer': f"CHAMFER45_{job['edge']['size']:.3f}_{job['edge']['face'].upper()}_EDGE"})
+        e = job['edge']
+        msp.add_lwpolyline(e['outline'], close=True, dxfattribs={'layer': f"CHAMFER{e['angle']:g}_" + ('BY_SIDE' if e.get('wedges') else f"{e['size']:.3f}") + f"_{e['face'].upper()}_EDGE"})
     doc.saveas(base + '.dxf')
     return {'dxf': base + '.dxf', 'layers': sorted({e.dxf.layer for e in msp})}
 
@@ -188,10 +193,14 @@ def build(job, base, single):
     for ch in job.get('chamfers') or []:      # the chamfers: ruled lofts (tools/plates/chamfer.py), cut with the holes
         tools.append(cq.Solid.makeLoft([cq.Wire.makePolygon([cq.Vector(*q) for q in ch['op'][k]], close=True) for k in ('w0', 'w1')], True))
     if tools: body = body.cut(*tools)          # all holes in one cut (one at a time rebuilt the whole plate each time: 15 holes, 66 s)
-    if job.get('edge'):                       # the part's own edge chamfer: keep the outline drafted 45° in over it
-        e = job['edge']; zlo, zhi = job['z']; c = e['size']; f0 = cq.Face.makeFromWires(cq.Wire.makePolygon([cq.Vector(x, y, 0) for x, y in e['outline']], close=True))
-        if abs(e['z'] - zhi) < 1e-9: keep = cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, zhi - c - zlo + 0.02)).translate(cq.Vector(0, 0, zlo - 0.01)).fuse(cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, c + 0.01), taper=45).translate(cq.Vector(0, 0, zhi - c)))
-        else: keep = cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, zhi - zlo - c + 0.02)).translate(cq.Vector(0, 0, zlo + c - 0.01)).fuse(cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, -(c + 0.01)), taper=45).translate(cq.Vector(0, 0, zlo + c)))
+    if job.get('edge') and job['edge'].get('wedges'):     # the part's own edge chamfer, widths by side: one wedge per face, meeting in ridges
+        body = body.cut(*[cq.Solid.extrudeLinear(cq.Face.makeFromWires(cq.Wire.makePolygon([cq.Vector(*q) for q in w['pts']], close=True)), cq.Vector(*w['vec']))
+                          for w in job['edge']['wedges']])
+    elif job.get('edge') and not job['edge'].get('skipped'):   # the part's own edge chamfer, one width: keep the outline drafted in over it at its angle
+        e = job['edge']; zlo, zhi = job['z']; c = e['size'] * math.tan(math.radians(e['angle'])); tp = 90 - e['angle']
+        f0 = cq.Face.makeFromWires(cq.Wire.makePolygon([cq.Vector(x, y, 0) for x, y in e['outline']], close=True))
+        if abs(e['z'] - zhi) < 1e-9: keep = cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, zhi - c - zlo + 0.02)).translate(cq.Vector(0, 0, zlo - 0.01)).fuse(cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, c + 0.01), taper=tp).translate(cq.Vector(0, 0, zhi - c)))
+        else: keep = cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, zhi - zlo - c + 0.02)).translate(cq.Vector(0, 0, zlo + c - 0.01)).fuse(cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, -(c + 0.01)), taper=tp).translate(cq.Vector(0, 0, zlo + c)))
         body = body.intersect(keep)
     cq.exporters.export(cq.Workplane('XY').add(body), base + '.step')
     cq.exporters.export(cq.Workplane('XY').add(body), base + '.stl', tolerance=0.005, angularTolerance=0.05)
@@ -207,6 +216,7 @@ def build(job, base, single):
                    + (f", {F['specks']} µm specks of floor where tapers end taken into the wall" if F.get('specks') else '')
                    + f"; {bb.xlen:.2f} × {bb.ylen:.2f} mm, {job['T']:g} thick; volume {V:,.1f} mm³ (before the drilled holes {V0:,.1f}; the resolved tiers give {job['volume_exact']:,.1f}, {dv:+.3f}%); "
                    + ("valid, checked by reading the file back" if ok else "NOT valid" + (" once written and read back" if mem else ""))
+                   + ("; its edge chamfer (widths by side) isn't in the solid: on a curved outline that's hundreds of wedges (the DXF has its layer)" if (job.get('edge') or {}).get('skipped') else '')
                    + f"; {time.time() - t0:.1f} s"}
 
 SOLID_PIECES = 20000  # fitted wall pieces: more than this, the solid isn't tried (the main plate has about 800, the motion-works plate 3,200)

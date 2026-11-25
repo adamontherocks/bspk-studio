@@ -797,6 +797,20 @@ Adam's next journey: the 1988 AMC Hemistitch H-88 "Spectrum" (his Meshy model an
     - **Small chamfers:** vents 0.2 (webs 0.5 at the top), counterbores 0.2, outer rim 0.5.
   - **Export.** `tools/h88/export_case.py` now builds the faceplate, crystal, dial and back plate from the sim's own cut lists, so the STEP is what the sim draws. The lug plate is still built from the case geometry. All parts read back valid, one solid each, and their STLs are closed.
   - **Images.** `exports/h88-chamfers-v1.png` (the render beside the model's corner) and `exports/h88-chamfers-sections-v1.png`. In the y = 0 section, the model's slope from the ring up to the rib now matches the window chamfer.
+- **H-88 exterior: heavy chamfers (2026-11-25).** Adam showed it in the sim by pulling the faceplate's top outline in and bending its joining edges on the 6 o'clock face and the 4:30 corner (his edit is kept in `exports/h88-adam-chamfer-demo-2026-11-25.json`): "exterior chamfers that stop this from being a brick and start making it architecturally interesting and more watch like... i know these are heavy chamfer but this is what the design calls for... i tell you what looks good, you decide how to make it fit and makeable... lets go big." His edit measured about 48°: 6.3 in at 6 o'clock from about mid-height, 4.9 at the corner, the 3 o'clock face left straight.
+  - **The exterior.** The walls stand straight from the back, then fall in on one 45° chamfer per face to a smaller top deck. Widths: 6.0 at 12 and 6 (from z 6.64), 4.8 at the corners (from z 7.84), a 0.5 break at 3 and 9. The body's octagon is sharp now, so the faces meet in crisp ridges.
+    - **Cutting it.** Each face is a straight pass of a ½" 90° chamfer mill (¼" collet), run past its ends, so its neighbours meet in true ridges. No 3D surfacing.
+    - **The limits.** The corner width keeps a 1.0 flat between the exterior chamfer and the window's bezel. The walls at the top of the cavity stay 5.8 at 12/6, 1.85 at the corners and 4.3 at 3/9. At 3 and 9 the window's bezel, the rib, the rail and the crown leave no room for more.
+  - **What moved.**
+    - The eight front screw seats fell on the chamfers, so all eight screws come from the back. The four plaque screws (M2×12, now at x ±16, y ±19.6) come up through the lug risers, drilled Ø2.3 and counterbored, into the body above the slots; the lugs grew to 4.0 thick so the risers keep 0.85 walls. The four side screws (M1.6) go into blind tapped holes.
+    - The vents went onto the deck behind the plaques: three rows, 0.8 wide, ±9.
+    - The rails shortened to ±4.0, inside the sides' flat.
+    - The corner facets went: the big corner chamfers replace them.
+    - The front now carries no screw heads.
+  - **The sim.** A part's edge chamfer takes an angle and widths by side (`d.chamfer = {face, size, angle, widths: [[facing°, width]...]}`). Each face's skin is a strip along its edge, run past its ends and trimmed where a neighbour lies deeper, so faces of different widths meet in true ridges. Wall strips run down to the deepest band. Two side fixes:
+    - A long wall edge is now drawn only where it changes; it used to draw the crown well's height across the whole 3 o'clock wall.
+    - The plate exporter takes the angle, and widths by side as wedges on straight-sided outlines. On curved outlines it says it left the per-side chamfer out of the STEP; hundreds of near-coplanar wedges took minutes.
+  - **Checks.** All case STEPs read back valid, one solid each, with closed STLs, and no two case parts overlap. Images: `exports/h88-exterior-v1.png`, with renders, the deck against Adam's outline in plan, and the profiles.
 - **Not yet:** the side slots and their red inserts, the badges (AMC, HEMISTITCH) and the red inner frame, the body's stock (14.5 tall: 5/8" faced, or plates). The sim's checks don't cover the case parts yet; the stack was checked by numbers.
 
 ### Files

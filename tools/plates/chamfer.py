@@ -65,3 +65,41 @@ def bevel(path, c, z_face, into, z0=0.0, removed_inside=True, under=0.05, E=0.01
     p, o = r
     zA = z_face + into * (z0 + c + under); zB = z_face + into * (z0 - E)
     return {'kind': 'loft', 'w0': [[x, y, zA] for x, y in o[-under]], 'w1': [[x, y, zB] for x, y in o[c + E]]}
+
+def width_of(ch):
+    """a part's edge chamfer's width for an edge facing `deg` degrees (as the sim's chamferWidthOf): ch['widths'] = [[deg, w], ...]
+    round the compass, read between; else ch['size']"""
+    t = sorted([((float(a) % 360 + 360) % 360, max(0.0, float(w))) for a, w in (ch.get('widths') or [])])
+    if not t: return lambda deg: float(ch.get('size') or 0)
+    def f(deg):
+        a = (deg % 360 + 360) % 360
+        for (d0, w0), (d1, w1) in zip(t, t[1:] + [(t[0][0] + 360, t[0][1])]):
+            aa = a + 360 if a < d0 and d0 == t[0][0] else a
+            if d0 - 1e-9 <= aa <= d1 + 1e-9: return w0 if d1 - d0 < 1e-9 else w0 + (w1 - w0) * (aa - d0) / (d1 - d0)
+        return t[0][1]
+    return f
+
+def edge_wedges(outline, ch, z_face, into, E=0.01):
+    """a part's edge chamfer (any angle, widths by side) as one wedge per edge, each the half-space above that face's chamfer plane,
+    run on past the edge's ends: cut together they leave the faces meeting in true ridges. Ops {'kind': 'pprism', 'pts', 'vec'}."""
+    tan = math.tan(math.radians(ch.get('angle') or 45.0)); wof = width_of(ch)
+    p = [(float(x), float(y)) for x, y in outline]
+    if len(p) > 48:                     # a curved outline: its arcs as chords within 5 µm, so it isn't hundreds of wedges (each its own face)
+        from shapely.geometry import Polygon as _P
+        p = [tuple(q) for q in _P(p).buffer(0).simplify(0.005).exterior.coords[:-1]]
+    if area(p) < 0: p.reverse()                                  # anticlockwise: outward normals on the right
+    ops = []; wmax = max([wof(a) for a in range(0, 360, 5)] + [0.0]); span = 2 * wmax + 1.0   # (run on past each end far enough to meet its neighbours, no further)
+    for (x0, y0), (x1, y1) in zip(p, p[1:] + p[:1]):
+        L = math.hypot(x1 - x0, y1 - y0)
+        if L < 1e-9: continue
+        tx, ty = (x1 - x0) / L, (y1 - y0) / L; nx, ny = ty, -tx       # outward
+        w = wof(math.degrees(math.atan2(ny, nx)))
+        if w <= 1e-6: continue
+        X = 2.0 + w; up = 1.0
+        # the section across the edge (s: out from the deck line, h: up from the face, signed into the part): along the chamfer plane
+        # from just inside the deck line out past the outline, then up and back
+        sec = [(-0.02, 0.02 * tan), (w + X, -(w + X) * tan), (w + X, up), (-0.02, up)]
+        bx, by = x0 - nx * w - tx * span, y0 - ny * w - ty * span        # the deck line, run back past the edge's start
+        pts = [[bx + nx * s_, by + ny * s_, z_face - into * h] for s_, h in sec]
+        ops.append({'kind': 'pprism', 'pts': pts, 'vec': [tx * 2 * span + tx * L, ty * 2 * span + ty * L, 0.0]})
+    return ops

@@ -72,9 +72,13 @@ def plan():
             b = chf.bevel(L['path'], cc, L['zc'], L['into'], zz) if cc > 1e-4 else None
             if b: cuts.append(b)
         part = {'id': pid, 'name': name, 'solid': [zp(outline, lo, hi)], 'cuts': cuts}
-        if d.get('chamfer') and d['chamfer'].get('size', 0) > 0:      # the outline's edge on one face: what's kept is the outline, drafted 45° in over the chamfer
-            cc = min(d['chamfer']['size'], T); zc = zb if d['chamfer'].get('face', 'back') == 'back' else zf; op = SP(outline)
-            part['keep'] = ([prism(op, lo - E, hi - cc), draft(op, hi - cc, hi + E, 45)] if zc == hi else [prism(op, lo + cc, hi + E), draft(op, lo + cc, lo - E, 45)])
+        ch = d.get('chamfer')
+        if ch and (ch.get('size', 0) > 0 or ch.get('widths')):      # the outline's edge on one face
+            zc = zb if ch.get('face', 'back') == 'back' else zf; into = -1 if zc == hi else 1
+            if ch.get('widths'): cuts.extend(chf.edge_wedges(outline, ch, zc, into))   # widths by side: one wedge per face, meeting in ridges
+            else:                                                     # one width: keep the outline drafted in over it, at its angle
+                cc = min(ch['size'] * math.tan(math.radians(ch.get('angle') or 45.0)), T); op = SP(outline); tp = 90 - (ch.get('angle') or 45.0)
+                part['keep'] = ([prism(op, lo - E, hi - cc), draft(op, hi - cc, hi + E, tp)] if zc == hi else [prism(op, lo + cc, hi + E), draft(op, lo + cc, lo - E, tp)])
         return part
     parts = [flat_part('D9', 'Faceplate-and-body'), flat_part('D10', 'Crystal'), flat_part('D11', 'Dial-plate')]
     plq, side = g['scr'][:4], g['scr'][4:]
@@ -91,7 +95,7 @@ def plan():
         for sy in (-1, 1):
             lc.append({'kind': 'xcyl', 'y': sy * eye_y, 'z': eye_z, 'r': case.HOLE / 2, 'x0': -case.LUG_X[1] - 1 if sx < 0 else case.LUG_X[0] - 0.01,
                        'x1': -case.LUG_X[0] + 0.01 if sx < 0 else case.LUG_X[1] + 1})
-    for x, y in plq: lc.append(cyl(x, y, 0.8, zr - 5.5, zr + E))          # the plaque screws' threads (M2x14 reaches 5.1), 5.5 deep into each riser
+    for x, y in plq: lc += [cyl(x, y, 1.15, z['frame0'] - E, zr + E), cyl(x, y, 2.2, z['frame0'] - E, z['frame0'] + 0.9)]   # the plaque screws: M2x12 up through each riser
     parts.append({'id': 'D12', 'name': 'Lug-plate-with-lugs', 'solid': [prism(g['frame'], z['frame0'], z['back'])] + lugs, 'cuts': lc})
     # back plate
     parts.append(flat_part('D13', 'Back-plate'))
