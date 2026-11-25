@@ -1965,7 +1965,7 @@ function chamferSkins(feats, opens, outline, T) {
       if (M.from === f.from && M.D <= f.z0 + 1e-6) continue;          // a cut it sits in (or a shallower one above it)
       ex.push(M.path);
       (f.exM || (f.exM = [])).push({ path: M.path, D: M.D, through });
-      if (M.D < f.z0 + f.c - 1e-6 && M.from === f.from && !out.warn.includes(M.c.id)) {   // a shallower cut in the chamfer's band: drawn as if deeper (reported)
+      if (!f.rim && M.D < f.z0 + f.c - 1e-6 && M.from === f.from && !out.warn.includes(M.c.id)) {   // a shallower cut in a cut's chamfer band: drawn as if deeper (reported; a part's edge chamfer draws its pockets true)
         const c1 = new C.Clipper(), s1 = [];
         c1.AddPath(sameWay(toClip(M.path)), C.PolyType.ptSubject, true); c1.AddPath(sameWay(toClip(f.o)), C.PolyType.ptClip, true);
         c1.Execute(C.ClipType.ctIntersection, s1, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
