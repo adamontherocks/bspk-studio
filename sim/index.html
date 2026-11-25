@@ -1861,7 +1861,7 @@ function chamferFeats(d, k, T, outline) {
     const cc = Math.min(size, D - z0);
     if (!(cc > 1e-4)) continue;
     const lp = chamferLoop(path, cc, true);
-    if (lp) feats.push({ cut: c, from: L.from, z0, c: cc, ...lp, rim: false });
+    if (lp) feats.push({ cut: c, from: L.from, z0, c: cc, D, ...lp, rim: false });
   }
   if (d.chamfer && (d.chamfer.size > 0 || Array.isArray(d.chamfer.widths))) {
     // its angle from the face (45° unless set) and its width: one for all, or by the way each edge faces (d.chamfer.widths: [degrees,
@@ -1888,6 +1888,23 @@ function chamferWidthOf(ch) {   // a part's edge chamfer's width for an edge fac
     const [dl, wl] = t[t.length - 1], [df, wf] = [t[0][0] + 360, t[0][1]], aa = a < t[0][0] ? a + 360 : a;
     return wl + (wf - wl) * (aa - dl) / (df - dl);
   };
+}
+function splitBy(a, b, o, p) {   // [t0, t1, inside the band] stretches of a-b, cut where it crosses either loop
+  const ts = [0, 1];
+  for (const loop of [o, p]) for (let i = 0; i < loop.length; i++) {
+    const c = loop[i], d = loop[(i + 1) % loop.length], r = [b[0] - a[0], b[1] - a[1]], sv = [d[0] - c[0], d[1] - c[1]], den = r[0] * sv[1] - r[1] * sv[0];
+    if (Math.abs(den) < 1e-12) continue;
+    const t = ((c[0] - a[0]) * sv[1] - (c[1] - a[1]) * sv[0]) / den, u = ((c[0] - a[0]) * r[1] - (c[1] - a[1]) * r[0]) / den;
+    if (t > 1e-6 && t < 1 - 1e-6 && u >= -1e-9 && u <= 1 + 1e-9) ts.push(t);
+  }
+  ts.sort((x, y) => x - y);
+  const out = [];
+  for (let i = 0; i + 1 < ts.length; i++) {
+    if (ts[i + 1] - ts[i] < 1e-7) continue;
+    const tm = (ts[i] + ts[i + 1]) / 2, m = [a[0] + (b[0] - a[0]) * tm, a[1] + (b[1] - a[1]) * tm];
+    out.push([ts[i], ts[i + 1], pointIn(m, p) && !pointIn(m, o)]);
+  }
+  return out;
 }
 function pointIn(pt, poly) {
   let ins = false;
@@ -1944,6 +1961,7 @@ function chamferSkins(feats, opens, outline, T) {
       if (M.from !== f.from && !through) continue;
       if (M.from === f.from && M.D <= f.z0 + 1e-6) continue;          // a cut it sits in (or a shallower one above it)
       ex.push(M.path);
+      (f.exM || (f.exM = [])).push({ path: M.path, D: M.D, through });
       if (M.D < f.z0 + f.c - 1e-6 && M.from === f.from && !out.warn.includes(M.c.id)) {   // a shallower cut in the chamfer's band: drawn as if deeper (reported)
         const c1 = new C.Clipper(), s1 = [];
         c1.AddPath(sameWay(toClip(M.path)), C.PolyType.ptSubject, true); c1.AddPath(sameWay(toClip(f.o)), C.PolyType.ptClip, true);
@@ -2052,6 +2070,16 @@ function chamferSkins(feats, opens, outline, T) {
             for (const [t0, t1, bottom] of bottomsAlong(f, a, b, true)) if (bottom > f.z0 + q.H + 1e-6) strip(f, q, a, b, t0, t1, bottom, [-q.N[0], -q.N[1], 0]);
             continue;
           }
+          if (own === 0 && !f.rim && f.D > f.z0 + f.c + 1e-6) {   // its foot inside a part's edge chamfer band: the wall under it, down to the cut's floor
+            for (const g of feats) {
+              if (!g.rim || g.from !== f.from) continue;
+              for (const [t0, t1, inB] of splitBy(a, b, g.o, g.p)) if (inB) {
+                const P = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], A2 = P(t0), B2 = P(t1), s0 = sOf(f, f.z0 + f.c), s1 = sOf(f, f.D), wn = [-q.N[0], -q.N[1], 0];
+                out.tris.push([[A2[0], A2[1], s0, ...wn], [B2[0], B2[1], s0, ...wn], [B2[0], B2[1], s1, ...wn]], [[A2[0], A2[1], s0, ...wn], [B2[0], B2[1], s1, ...wn], [A2[0], A2[1], s1, ...wn]]);
+                out.lines.push([[A2[0], A2[1], s0], [B2[0], B2[1], s0]]);
+              }
+            }
+          }
           if ((own === 3 || own === 1) && !f.rim) {   // a side edge (a corner of the outline): a line where it's a real crease
             const n0 = f.N[(q.i - 1 + f.p.length) % f.p.length], n1 = f.N[q.i], n2 = f.N[(q.i + 1) % f.p.length];
             const nb = own === 3 ? n0 : n2;
@@ -2065,6 +2093,48 @@ function chamferSkins(feats, opens, outline, T) {
         const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, lft = [-dy / L, dx / L];
         const outward = inPiece([m[0] + lft[0] * 1e-3, m[1] + lft[1] * 1e-3]) ? [-lft[0], -lft[1]] : lft;
         for (const [t0, t1, bottom] of bottomsAlong(f, a, b, false)) strip(f, q, a, b, t0, t1, bottom, [outward[0], outward[1], 0]);
+      }
+    }
+  }
+  // where another cut opens a part's edge chamfer band out to the outline (a rail open to the side): its floor in the band, and the
+  // outline's wall under that floor down to the band's foot (the slabs draw nothing in the band: the skins and these close it)
+  for (const f of feats) {
+    if (!f.rim || !f.exM) continue;
+    const faceOut = f.from === 'back' ? 1 : -1;
+    for (const M of f.exM) {
+      if (M.through || M.D >= f.c - 1e-6) continue;          // (below the band the slabs draw it)
+      const c1 = new C.Clipper(), s1 = [];
+      c1.AddPath(sameWay(toClip(M.path)), C.PolyType.ptSubject, true); c1.AddPath(sameWay(toClip(outline)), C.PolyType.ptClip, true);
+      c1.Execute(C.ClipType.ctIntersection, s1, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+      const tree = new C.PolyTree(), c2 = new C.Clipper();
+      if (s1.length) { c2.AddPaths(s1, C.PolyType.ptSubject, true); c2.AddPath(sameWay(toClip(f.o)), C.PolyType.ptClip, true); c2.Execute(C.ClipType.ctDifference, tree, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero); }
+      const sF = sOf(f, M.D), up = [0, 0, faceOut];
+      const walk = node => { for (const o of node.Childs()) {
+        const outer = V2(o.Contour()), holes = o.Childs().map(h => V2(h.Contour())), all = outer.concat(...holes);
+        for (const t of THREE.ShapeUtils.triangulateShape(outer.map(q => new THREE.Vector2(q[0], q[1])), holes.map(h => h.map(q => new THREE.Vector2(q[0], q[1])))))
+          out.tris.push(t.map(ix => [all[ix][0], all[ix][1], sF, ...up]));
+        for (const loop of [outer, ...holes]) for (let e = 0; e < loop.length; e++) {
+          const a = loop[e], b = loop[(e + 1) % loop.length], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+          if (distToLoop(m, f.o) > 3e-4) out.lines.push([[a[0], a[1], sF], [b[0], b[1], sF]]);   // (where it meets the slabs' floor under the deck: no edge)
+        }
+        for (const h of o.Childs()) walk(h);
+      } };
+      walk(tree);
+      for (let i = 0; i < f.p.length; i++) {
+        const a = f.p[i], b = f.p[(i + 1) % f.p.length], wn = [-f.N[i][0], -f.N[i][1], 0], ts = [0, 1];
+        for (let j = 0; j < M.path.length; j++) {
+          const c = M.path[j], d = M.path[(j + 1) % M.path.length], r = [b[0] - a[0], b[1] - a[1]], sv = [d[0] - c[0], d[1] - c[1]], den = r[0] * sv[1] - r[1] * sv[0];
+          if (Math.abs(den) < 1e-12) continue;
+          const t = ((c[0] - a[0]) * sv[1] - (c[1] - a[1]) * sv[0]) / den, u = ((c[0] - a[0]) * r[1] - (c[1] - a[1]) * r[0]) / den;
+          if (t > 1e-6 && t < 1 - 1e-6 && u >= -1e-9 && u <= 1 + 1e-9) ts.push(t);
+        }
+        ts.sort((x, y) => x - y);
+        for (let j = 0; j + 1 < ts.length; j++) {
+          const tm = (ts[j] + ts[j + 1]) / 2, P = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+          if (ts[j + 1] - ts[j] < 1e-7 || !pointIn(P(tm), M.path)) continue;
+          const A = P(ts[j]), B = P(ts[j + 1]), s1b = sOf(f, f.c);
+          out.tris.push([[A[0], A[1], sF, ...wn], [B[0], B[1], sF, ...wn], [B[0], B[1], s1b, ...wn]], [[A[0], A[1], sF, ...wn], [B[0], B[1], s1b, ...wn], [A[0], A[1], s1b, ...wn]]);
+        }
       }
     }
   }
