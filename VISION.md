@@ -747,6 +747,17 @@ Adam called Beta 2 · layered good and asked for a fine-tooth review before cutt
 - **The fit coupon** (`sim/projects/beta2-fits.json`, `tools/beta2/fits.py`): one 1/8" plate to cut before the main plate. Bearing bores 5.94–6.02, rod pressed 2.90–2.99 and turning 3.04–3.12, M2 taps 1.5–1.7 and clearances 2.2–2.4, three wells with 1/16" plugs at 0.05/0.10/0.15 a side, and the minute pinion and transfer wheel with three holes for the wheel (exact, then about 0.05 and 0.10 of backlash). Read from the notch, smallest first.
 - **The resolver dropped small whole parts:** islands under TOWER_A (40 mm²) come down, and the collar (20 mm²) was all island. A part under twice TOWER_A now isn't an island of itself.
 - **Checked:** layered.check (no problems, no breaks, bearings clear); cutter reach and walls per plate; all six plates resolved; every screw on the resolved plates; the sim: no collisions or interference. The tiny split-wall marks left (window ends, outline joints) appear on a fresh resolve of the approved version too.
+
+### 2026-11-24 (late) — Beta 2 · layered: disc bridges, discs as hands (K268, K269, P28, P29)
+
+Adam didn't like the minute collar. He sketched two bridges (K268 from the transfer plate, K269 from the top plate) to the minute and hour arbors, with the discs mounted on the arbors above the movement, "more traditional: the discs are the hands, the arbor posts the pinions". Then he asked how to save the height: "2 mm is a mountain in a watch". Built:
+- **Two mirrored 1/16" bridges set flush into the transfer plate and the top plate** (5.86..7.45), so they add no height. Each has a round boss (r 2.6, as A1's and A2's pads) about its arbor's top pivot (plain delrin, no bearing), a round anchor (r 2.8) about its screw 12 out on the line Adam drew (45° below the centre line, outward), and concave flanks tangent to both, 3.0 at the waist. A bearing would have needed a 1/8" bridge standing 1.6 above the plates: plain pivots are what keep them flush.
+- **The minute pinion drops 0.3** (3.98..5.56), level with the transfer and crown wheels, and turns 0.3 under its bridge. So the bridge keeps the minute arbor from lifting, and **the collar is gone**. It still clears the worm by 0.3.
+- **The discs ride 0.3 above the plates and bridges** on their arbors' posts (7.75..9.34, still 1/16": Adam found 1 mm too flimsy). The movement itself is unchanged (11.1 from the back face to the top of the plates); the hands add 1.89, for 13.0 to the top of the discs.
+- **Screws:** the bridges take M2 wafer heads (Ø4, under 0.8 tall) in Ø4.4 x 0.9 counterbores. The minute bridge's anchor screw also clamps the transfer plate and the secondary plate (M2x10), so the transfer plate's SE screw went; the hour bridge's goes through the top plate (M2x6).
+- The worm's window now counts as the worm's own opening in the no-breaks rule (its sides are 0.45 out from the worm's room, under the crown arbor's worm wheel).
+- **Later (Adam):** turn a shoulder on the arbors on the 4th axis and epoxy the press fit, so each disc has a shelf to sit on.
+- **Checked:** layered.check (no problems, no breaks); cutter reach and walls per plate; all seven plates resolved; every screw on the resolved plates, including the bridges'; the sim: no collisions or interference.
 ### Files
 
 - `sim/index.html` — the editable watch train (the clock beta), plus pins, part records, autosave, scene files, the report, label padlocks and the quick-edit box. ~2,400 lines.

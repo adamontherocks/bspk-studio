@@ -18,6 +18,10 @@
 # A2's top pivot, lowered to the pad under the discs, the mirror of the transfer plate's arms to A1. The minute arbor gets a collar under
 # the back face; the worm window's deep corners are opened to r 1.05 (the 2 mm end mill); fins beside bearing seats come down to the
 # seat; wells 0.10 a side; 0.05 of backlash per mesh (teeth thinned); bearings are solids in the clash check.
+# Bridges and hands (Adam's K268, K269, P28, P29): two mirrored 1/16" bridges set flush into the transfer plate and the top plate carry the
+# minute and hour arbors' top pivots (plain delrin); the minute pinion drops 0.3 (level with the transfer and crown wheels) to turn under
+# its bridge, which also keeps it from lifting (no collar). The arbors run on up as posts and the discs (1/16") ride 0.3 over the plates,
+# like hands over a dial: 1.89 more height, the movement itself unchanged.
 import copy, math
 from shapely.geometry import Point, Polygon, LineString, box as sbox
 from shapely.ops import unary_union
@@ -30,7 +34,8 @@ DISC_AX = 0.3      # under the discs
 WELL = 0.10        # a plate sitting in another's well: the well is this much bigger (0.10 a side: the Air's tolerance; the arbors locate the plates)
 BACKLASH = 0.05    # each mesh's backlash: half off each gear's teeth at the pitch circle (rules.backlash)
 R_DEEP = 1.05      # inside corners deeper than the small cutters reach: the 2 mm end mill's radius, and a little
-COLLAR_D, COLLAR_GAP = 5.0, 0.1    # the minute arbor's collar under the back face (1/16" delrin, pressed on its rod)
+BOSS_R, ANCHOR_R, WAIST = 2.6, 2.8, 3.0   # the disc bridges: pivot boss (as A1's and A2's pads), round anchor about its screw, narrowest width
+WAFER_D, WAFER_DEPTH = 4.4, 0.9    # an M2 wafer head (Ø4, under 0.8 tall) in a counterbore: what a 1/16" bridge can hold
 SLIVER = 0.5       # strips narrower than twice this are lowered into the floor beside them
 HEAD_R, HEAD_H = 1.9, 1.3
 CB_D, CB_DEPTH = 4.2, 1.4            # counterbore for an M2 cheese head (fit m2_cb)
@@ -131,12 +136,13 @@ def build(aligned_scene, info, helpers):
         'second intermediate pinion': ('a2', A2, ra(13, .3), zA2w + TW, zA2w + TS),
         'hour wheel': ('hour', H, ra(26, -.3), zHw, zHw + TT),
         'transfer wheel': ('b', B, ra(18, -.3), zBw, zBw + TT),
-        'minute pinion': ('minute', M, ra(12, .3), zBw + 0.3, zBw + 0.3 + TT),
+        'minute pinion': ('minute', M, ra(12, .3), zBw, zBw + TT),          # (level with the wheels it meshes: it turns under its bridge)
         'crown arbor worm wheel': ('e', E, ra(15, .15), zw - TT / 2, zw + TT / 2),
         'crown arbor wheel': ('e', E, ra(18, -.3), zBw, zBw + TT)}
     MESH = {frozenset(p) for p in [('transfer pinion', 'first intermediate wheel'), ('first intermediate pinion', 'second intermediate wheel'),
                                    ('second intermediate pinion', 'hour wheel'), ('minute pinion', 'transfer wheel'), ('minute pinion', 'crown arbor wheel')]}
-    discs = {'hour disc': ('hour', H, 9.5, z_top, z_hi), 'minute disc': ('minute', M, 9.5, z_top, z_hi)}
+    z_d = z_hi + DISC_AX                                       # 7.75: the discs ride 0.3 over the plates and bridges, on their arbors
+    discs = {'hour disc': ('hour', H, 9.5, z_d, z_d + TT), 'minute disc': ('minute', M, 9.5, z_d, z_d + TT)}
     arbor_at = {'minute': M, 'hour': H, 'a1': A1, 'a2': A2, 'b': B, 'e': E}
     names = {'a1': 'first intermediate', 'a2': 'second intermediate', 'hour': 'hour arbor', 'b': 'transfer arbor', 'minute': 'minute arbor', 'e': 'crown arbor'}
     wa, wb = E[0] - 2.5, E[0] + 2.5; x0 = wa - 0.6; jr = 0.9; wro = 3.25; xc = HX + 2.0
@@ -156,7 +162,7 @@ def build(aligned_scene, info, helpers):
     for n, (a, c, r, z0, z1) in list(G.items()) + list(discs.items()): zt_of[a] = max(zt_of.get(a, -99), z1)
     rod_top = dict(zt_of); rod_top['a1'] = z_top - DISC_AX               # A1's rod runs up into the transfer plate's pad
     rod_top['a2'] = z_top - DISC_AX                                      # and A2's into the top plate's pad (its mirror)
-    rod_bottom = {'minute': z_bot - COLLAR_GAP - TT}                     # the minute rod runs on through the back face into its collar
+    rod_bottom = {}
     for a, c in arbor_at.items(): things.append((f'{a} rod', a, C(c, 1.5, 48), z_bot, rod_top[a], GAP, 0.0))
 
     # ---- footprints
@@ -176,6 +182,28 @@ def build(aligned_scene, info, helpers):
         'ne': dict(id='ne', zb=z_tp, zt=z_hi, F=F_N, pivots=[], holds=[], mill='front', T=TS, stock='1/8"'),   # (milled from underneath)
         'top': dict(id='top', zb=z_tp, zt=z_hi, F=Polygon(), pivots=['a2'], holds=[], mill='back', T=TS, stock='1/8"'),
     }
+    # ---- the disc bridges (Adam's K268, K269): mirrored, from the transfer plate (minute) and the top plate (hour) to the arbors' top
+    # pivots, flush with the plates' tops. Each is a round boss about its arbor and a round anchor about its screw, 12 apart on the line
+    # Adam drew (45° below the disc's centre line, outward), joined by concave flanks: arcs tangent to both circles, WAIST at the narrowest.
+    def bridge(cb, ca):
+        D = math.dist(cb, ca); u = ((ca[0] - cb[0]) / D, (ca[1] - cb[1]) / D); nv = (-u[1], u[0])
+        def geo(R):
+            x = ((R + BOSS_R) ** 2 - (R + ANCHOR_R) ** 2 + D * D) / (2 * D); h = math.sqrt(max(0.0, (R + BOSS_R) ** 2 - x * x))
+            return 2 * (h - R), x, h
+        lo, hi = 0.3, 500.0
+        for _ in range(200):
+            mid = (lo + hi) / 2
+            if geo(mid)[0] > WAIST: hi = mid
+            else: lo = mid
+        R = (lo + hi) / 2; _, x, h = geo(R)
+        P1 = (cb[0] + x * u[0] + h * nv[0], cb[1] + x * u[1] + h * nv[1]); P2 = (cb[0] + x * u[0] - h * nv[0], cb[1] + x * u[1] - h * nv[1])
+        g = U([C(cb, BOSS_R, 256), C(ca, ANCHOR_R, 256)]).convex_hull.difference(C(P1, R, 512)).difference(C(P2, R, 512))
+        return largest(g.buffer(0)), R
+    S_m = (M[0] + 12.0 * math.cos(math.radians(-45)), M[1] + 12.0 * math.sin(math.radians(-45)))
+    S_h = (-S_m[0], S_m[1])
+    F_bm, R_flank = bridge(M, S_m); F_bh, _ = bridge(H, S_h)
+    plates['bm'] = dict(id='bm', zb=z_hi - TT, zt=z_hi, F=F_bm, pivots=['minute'], holds=[], mill='back', T=TT, stock='1/16"', screws=[S_m])
+    plates['bh'] = dict(id='bh', zb=z_hi - TT, zt=z_hi, F=F_bh, pivots=['hour'], holds=[], mill='back', T=TT, stock='1/16"', screws=[S_h])
 
     def solid(X, z):
         cut = U([p for n, p, face, f in X['pockets'] if face == 'through' or (face == 'top' and f <= z + 1e-9) or (face == 'bottom' and f >= z - 1e-9)])
@@ -217,7 +245,7 @@ def build(aligned_scene, info, helpers):
                 if wp.area > 3.0: pk.append(('window over the crown arbor wheel', wp, 'through', None))
         X['pockets'] = pk + X.get('lowered', [])
     LOW2 = Polygon()
-    for k in ('main', 'sec', 'tp', 'ne'): make_pockets(plates[k])
+    for k in ('main', 'sec', 'tp', 'ne', 'bm', 'bh'): make_pockets(plates[k])
     # the hour side's top plate: the main plate's top face on the hour side (and along the north edge to the NE plate, P5), clear of the
     # transfer and NE plates by a 0.05 joint; its corners rounded (the main plate's corners under them come down to match: the ledge rule)
     deck = solid(plates['main'], z_top - 1e-6).intersection(sbox(-HX - 1, -HY - 1, 3.0, HY + 1))   # (the main plate's top face ends at the step, 2.65)
@@ -232,8 +260,7 @@ def build(aligned_scene, info, helpers):
     F_T = F_L.union(closed.intersection(near)).intersection(O).difference(U([F_P.buffer(WELL, 64), F_N.buffer(WELL, 64)]))
     # the discs' floor rings on the hour side (the main plate's surface 0.3 under the discs) become the top plate's too, lowered with the
     # arms: the plate's inner edge is then the wheels' rooms, one wall with the main plate's under it, and its well cuts no groove beside a disc
-    zf = z_top - DISC_AX
-    ring = solid(plates['main'], zf - 1e-6).difference(solid(plates['main'], zf + 1e-6)).intersection(U([dH, dM])).intersection(sbox(-HX - 1, -HY - 1, 3.0, HY + 1))
+    ring = solid(plates['main'], z_top - 1e-6).intersection(U([dH, dM])).intersection(sbox(-HX - 1, -HY - 1, 3.0, HY + 1))
     ring = U([q for q in pieces(ring.buffer(0)) if q.area > 0.5 and q.buffer(1e-3).intersects(F_T)])
     F_T = F_T.union(ring.buffer(1e-4)).difference(U([F_P.buffer(WELL, 64), F_N.buffer(WELL, 64)]))
     slot2 = sbox(-xi2, A2[1], xi2, HY + 1).difference(C(A2, 2.6, 256)).difference(F_L)
@@ -242,7 +269,7 @@ def build(aligned_scene, info, helpers):
     LOW2 = F_T.difference(F_L).buffer(0)
     plates['top']['F'] = F_T
     make_pockets(plates['top'])
-    for k in ('main', 'sec', 'tp', 'ne'): make_pockets(plates[k])
+    for k in ('main', 'sec', 'tp', 'ne', 'bm', 'bh'): make_pockets(plates[k])
     # ---- the ledge rule: any strip of a plate under 1 mm wide, showing from above (not under a plate that rests on it) beside a floor or
     # an edge, comes down to that floor. Run from each plate's highest floor down, so a strip steps down with the floor it borders.
     lowered_log = {}
@@ -299,7 +326,7 @@ def build(aligned_scene, info, helpers):
     if fins: make_pockets(main)
     # ---- screws
     def tap_ok(z_seat, s): return floor_at(main, C(s, TAP_SOLID, 32)) >= z_seat - 1e-9 and z_seat - z_bot >= TAP_DEPTH
-    def keep(X): return BOSS + 0.6 if X['id'] == 'ne' else CB_KEEP      # (pan heads on the NE plate's factory face: Ø4)
+    def keep(X): return BOSS + 0.6 if X['id'] == 'ne' else WAFER_D / 2 + 0.6 if X['id'] in ('bm', 'bh') else CB_KEEP   # (pan heads on the NE plate: Ø4)
     def path_ok(X, s):
         if floor_at(X, C(s, keep(X), 32)) < X['zt'] - 1e-9: return None
         if X['id'] in ('tp', 'ne'):
@@ -311,6 +338,14 @@ def build(aligned_scene, info, helpers):
             return ('main', X['zb']) if tap_ok(X['zb'], s) else None
         if X['id'] == 'sec': return ('main', z_cap) if tap_ok(z_cap, s) else None
         if X['id'] == 'top': return ('main', X['zb']) if tap_ok(X['zb'], s) else None
+        if X['id'] in ('bm', 'bh'):     # through the plate it's set into (whole round the screw under the bridge's well), then on as that plate's
+            Y = plates['tp'] if X['id'] == 'bm' else plates['top']
+            if not Y['F'].buffer(-TAP_SOLID).contains(Point(s)) or floor_at(Y, C(s, TAP_SOLID, 32)) < X['zb'] - 1e-9: return None
+            sec = plates['sec']
+            if X['id'] == 'bm' and sec['F'].buffer(-TAP_SOLID).contains(Point(s)):
+                if floor_at(sec, C(s, TAP_SOLID, 32)) < Y['zb'] - 1e-9: return None
+                return ('main', z_cap) if tap_ok(z_cap, s) else None
+            return ('main', Y['zb']) if tap_ok(Y['zb'], s) else None
         return None
     def pick(X, n, spacing=7.0, region=None):
         inner = X['F'].buffer(-(CB_KEEP if X['id'] != 'ne' else HEAD_R + 0.2))
@@ -349,7 +384,7 @@ def build(aligned_scene, info, helpers):
             cand = [q for q in cand if inner.contains(Point(q)) and path_ok(X, q)]
             if cand: out.append(min(cand, key=lambda q: math.dist(q, (tx, ty))))
         return out
-    plates['tp']['screws'] = pick_near(plates['tp'], [(0.0, -13.4), (20.0, -10.5)])
+    plates['tp']['screws'] = pick_near(plates['tp'], [(0.0, -13.4)])         # (and the minute bridge's anchor screw, which clamps it too)
     plates['ne']['screws'] = pick(plates['ne'], 2, spacing=4.5)
     exposed_sec = plates['sec']['F'].difference(U([plates['tp']['F'], plates['ne']['F']]).buffer(WELL + CB_KEEP))
     plates['sec']['screws'] = pick(plates['sec'], 2, region=exposed_sec)
@@ -357,7 +392,7 @@ def build(aligned_scene, info, helpers):
     plates['main']['screws'] = []
     G_ = dict(G=G, MESH=MESH, discs=discs, things=things, arbor_at=arbor_at, rod_top=rod_top, plates=plates, solid=solid, floor_at=floor_at,
               bearings=bearings, bore_notes=bore_notes, z_bot=z_bot, z_top=z_top, z_cap=z_cap, z_tp=z_tp, z_hi=z_hi, path_ok=path_ok, O=O,
-              rests_on=rests_on, worm=(worm_plan, zw - wro, zw + wro), step=step, rod_bottom=rod_bottom)
+              rests_on=rests_on, worm=(worm_plan, zw - wro, zw + wro), step=step, rod_bottom=rod_bottom, worm_window=open_w)
     problems, notes = check(G_)
     notes = anchor_notes + [f'ledge rule: {k} {v:.2f} mm² lowered' for k, v in lowered_log.items()] + [f'fins beside bearing seats: {fins:.2f} mm² lowered',
              f'worm window (main plate): one wall, sides 0.45 out from the worm\'s room, corners r {R_DEEP}'] + notes
@@ -365,14 +400,16 @@ def build(aligned_scene, info, helpers):
     # ---- the parts
     outline_pts = rrect(0.0, 0.0, 2 * HX, 2 * HY, 4.0)
     sks, drawn = [], []
-    PID = {'main': 'D1', 'sec': 'D2', 'tp': 'D3', 'ne': 'D4', 'top': 'D5'}
-    TITLE = {'main': 'Main plate', 'sec': 'Secondary plate', 'tp': 'Transfer plate', 'ne': 'NE plate', 'top': 'Top plate'}
+    PID = {'main': 'D1', 'sec': 'D2', 'tp': 'D3', 'ne': 'D4', 'top': 'D5', 'bm': 'D7', 'bh': 'D8'}
+    TITLE = {'main': 'Main plate', 'sec': 'Secondary plate', 'tp': 'Transfer plate', 'ne': 'NE plate', 'top': 'Top plate', 'bm': 'Minute bridge', 'bh': 'Hour bridge'}
     NAME = {
         'main': 'Main plate (3/8" black delrin, milled from the top): high on the hour side, stepped down on the minute side for the secondary plate; a recess for every wheel at its own height, bearings on the recess floors',
         'sec': 'Secondary plate (1/8" black delrin, milled from the top): the cradle: holds the stem down, pivots the crown, transfer and minute arbors, one unbroken floor under every top-layer wheel; NE and SE corners',
-        'tp': 'Transfer plate (1/8" black delrin, milled from the top): along the south and east walls, flush with the discs; the first intermediate\'s top pivot on twin arms lowered to its pad from the round anchor foot',
-        'ne': 'NE plate (1/8" black delrin, milled from underneath so its top stays the factory face): fills the NE corner up to the discs\' tops, a ceiling over the crown arbor\'s wheel and a crescent window onto it',
-        'top': 'Top plate, hour side (1/8" black delrin, milled from the top, flush with the discs; along the north edge to the NE plate; twin arms down to the second intermediate\'s top pivot, lowered to its pad under the discs: the mirror of the transfer plate\'s arms)',
+        'tp': 'Transfer plate (1/8" black delrin, milled from the top): along the south and east walls; the first intermediate\'s top pivot on twin arms lowered to its pad from the round anchor foot; the minute bridge set flush into it',
+        'ne': 'NE plate (1/8" black delrin, milled from underneath so its top stays the factory face): fills the NE corner to the plates\' top, a ceiling over the crown arbor\'s wheel and a crescent window onto it',
+        'top': 'Top plate, hour side (1/8" black delrin, milled from the top; along the north edge to the NE plate; twin arms down to the second intermediate\'s top pivot, lowered to its pad: the mirror of the transfer plate\'s arms; the hour bridge set flush into it)',
+        'bm': 'Minute bridge (1/16" black delrin, set flush into the transfer plate): the minute arbor\'s top pivot, over its pinion (which it keeps from lifting); the minute disc rides 0.3 above it. Adam\'s K268, made exact',
+        'bh': 'Hour bridge (1/16" black delrin, set flush into the top plate): the hour arbor\'s top pivot; the hour disc rides 0.3 above it. Adam\'s K269, made exact (the mirror of the minute bridge)',
     }
     kn = [199]
     def newk(): kn[0] += 1; return f'K{kn[0]}'
@@ -405,14 +442,18 @@ def build(aligned_scene, info, helpers):
             hole('rod', 'Crown arbor: plain delrin bushing under its worm wheel', E, 3.08, fit='rod_free', axis='e')
         for a in X['pivots']: hole('rod', f'Pivot, {names[a]} (plain delrin)', arbor_at[a], 3.08, fit='rod_free', axis=a)
         for s in X['screws']:
+            if key in ('bm', 'bh'): hole('clear', 'M2 through, wafer head (Ø4, under 0.8 tall) in a counterbore', s, 2.3, fit='m2_clear', seat={'d': WAFER_D, 'depth': WAFER_DEPTH}); continue
             if key == 'ne': hole('clear', 'M2 through (pan head on the factory face)', s, 2.3, fit='m2_clear')
             else: hole('clear', 'M2 through, cheese head in a counterbore', s, 2.3, fit='m2_cb', seat={'d': CB_D, 'depth': CB_DEPTH})
+        for Y, under in (('bm', 'tp'), ('bh', 'top')):
+            if key == under:
+                for s in plates[Y]['screws']: hole('clear', f'M2 through (the {TITLE[Y].lower()}\'s screw)', s, 2.3, fit='m2_clear')
         if key == 'sec':
-            for Y in ('tp', 'ne'):
+            for Y in ('tp', 'ne', 'bm'):
                 for s in plates[Y]['screws']:
                     if X['F'].contains(Point(s)): hole('clear', f'M2 through (the {TITLE[Y].lower()}\'s screw)', s, 2.3, fit='m2_clear')
         if key == 'main':
-            for Y in ('sec', 'tp', 'ne', 'top'):
+            for Y in ('sec', 'tp', 'ne', 'top', 'bm', 'bh'):
                 for s in plates[Y]['screws']: hole('pilot', f'M2 thread ({TITLE[Y].lower()})', s, 1.6, fit='m2_tap')
         drawn.append({'id': pid, 'name': NAME[key], 'sketch': k, 'thickness': X['T'], 'grow': 'plus', 'mill': X['mill'], 'minWall': 0.6, 'cuts': cuts})
     stem = copy.deepcopy(next(d for d in st['drawn'] if d.get('turn'))); stem['id'] = 'D6'
@@ -422,13 +463,6 @@ def build(aligned_scene, info, helpers):
         if abs(p['u'] - old_x0) < 1e-3: p['u'] = round(x0, 4)
         elif abs(p['u'] - (old_x0 + 0.2)) < 1e-3: p['u'] = round(x0 + 0.2, 4)
     drawn.append(stem)
-    # the minute arbor's collar: 1/16" delrin pressed on its rod COLLAR_GAP under the back face, so the arbor can't lift out (P: review)
-    kc = newk(); zc0 = rod_bottom['minute']
-    sks.append(sketch(kc, 'Minute collar outline', 'z', round(zc0, 5), poly_dots(C(M, COLLAR_D / 2, 128))))
-    drawn.append({'id': 'D7', 'name': 'Minute collar (1/16" black delrin, pressed on the minute rod 0.1 under the back face: the minute arbor can\'t lift out)',
-                  'sketch': kc, 'thickness': TT, 'grow': 'plus', 'mill': 'back', 'minWall': 0.6,
-                  'cuts': [{'id': 'h1', 'kind': 'rod', 'name': 'Bore, pressed on the minute rod', 'at': [round(M[0], 4), round(M[1], 4)], 'd': FITS['rod_press']['d'],
-                            'from': 'back', 'depth': None, 'fit': 'rod_press', 'axis': 'minute'}]})
     st['sketches'] = [ksk] + sks
     st['drawn'] = drawn
     st['fits'] = FITS
@@ -437,29 +471,36 @@ def build(aligned_scene, info, helpers):
     P['blurb'] = (P['blurb'].split(' Module 0.6')[0] + ' Module 0.6, black delrin, brass rods. Plates in layers, each hosting the wheels at its own heights: '
                   'the 3/8" main plate high on the hour side and stepped down on the minute side; a 1/8" secondary plate on that step, the cradle that holds the stem down, '
                   'carries the crown, transfer and minute arbors and gives every top-layer wheel one unbroken floor; a 1/8" transfer plate along the south and east walls whose twin arms '
-                  'carry the first intermediate down from a round anchor foot; a 1/8" NE plate; and the hour side\'s top plate, all flush with the discs. '
-                  f'Movement {2 * HX:.1f} x {2 * HY:.1f} mm, {z_hi - z_bot:.2f} mm from the back of the main plate to the top of the discs.')
+                  'carry the first intermediate down from a round anchor foot; a 1/8" NE plate; and the hour side\'s top plate, all flush. Two mirrored 1/16" bridges set flush into '
+                  'the transfer plate and the top plate carry the minute and hour arbors\' top pivots, and the discs ride 0.3 above them on the arbors, like hands over a dial. '
+                  f'Movement {2 * HX:.1f} x {2 * HY:.1f} mm: {z_hi - z_bot:.2f} mm from the back of the main plate to the top of the plates, {z_d + TT - z_bot:.2f} to the top of the discs.')
     P['source'] = list(P.get('source') or []) + ['Layered plates: Claude, 2026-11-24, from Adam\'s modification lists on Beta 2 · haute, then his 19 markup notes and sketches K55 and K56 (the cradle, '
                                                  'no breaks under wheels, the anchor merge, no ledges).']
-    P['rules']['rod'] = {'d': 3.0, 'from': round(z_bot, 4), 'top': {'a1': round(rod_top['a1'], 5), 'a2': round(rod_top['a2'], 5)},
-                         'bottom': {a: round(z, 5) for a, z in rod_bottom.items()}}
+    P['rules']['rod'] = {'d': 3.0, 'from': round(z_bot, 4), 'top': {'a1': round(rod_top['a1'], 5), 'a2': round(rod_top['a2'], 5)}}
     P['rules']['backlash'] = BACKLASH
-    P['plate']['z'] = round(rod_bottom['minute'] - 0.5, 4)
+    P['plate']['z'] = round(z_bot - 1.5, 4)
+    for hd in P['defaults']['hands'].values(): hd['z'] = round(z_d, 5); hd['t'] = TT
+    for hd in P.get('hands') or []:
+        if hd['id'] == 'hour_disc': hd['role'] = 'Ø19 black delrin, numerals V-carved and filled; pressed on the hour arbor\'s post 0.3 above the hour bridge, like a hand over a dial. Turns the same way as the minute disc (four reductions).'
+        if hd['id'] == 'minute_disc': hd['role'] = 'Ø19 black delrin, numerals V-carved and filled; pressed on the minute arbor\'s post 0.3 above the minute bridge, like a hand over a dial.'
     stg = P['defaults']['stages']
     stg['s_ba1'] = {'m': m, 'z': round(zA1w, 5), 'dz': dz_bp}
     stg['s_a1a2'] = {'m': m, 'z': round(zA2w, 5), 'dz': round((zA1w + TW) - (zA2w + TW / 2 - TP / 2), 5)}
     stg['s_a2h'] = {'m': m, 'z': round(zHw, 5), 'dz': round((zA2w + TW) - (zHw + TT / 2 - TP / 2), 5)}
+    stg['s_mb'] = {'m': m, 'z': round(zBw, 5), 'dz': 0.0}; stg['s_em'] = {'m': m, 'z': round(zBw, 5), 'dz': 0.0}   # (the minute pinion level with both wheels)
     for a in P['arbors']:
         if a['id'] == 'hour': a['role'] = 'Turns once in 12 hours; its wheel runs low in the main plate (under the first intermediate\'s pinion level), the hour disc pressed on its rod above.'
         if a['id'] == 'a1': a['role'] = ('On the centre line. Its 22-tooth wheel is driven by the transfer pinion; its 11-tooth pinion drives the second intermediate. One piece of 1/8" delrin, '
                                          'deep in the main plate (bearing below), its top pivot in the transfer plate\'s pad on twin arms.')
         if a['id'] == 'a2': a['role'] = ('On the centre line, north of A1. Its 22-tooth wheel, 0.3 over A1\'s wheel, is driven by A1\'s pinion; its 13-tooth pinion drives the hour wheel. '
                                          'One piece of 1/8" delrin; one bearing down on A1\'s floor (P27), its top pivot in the top plate\'s pad on twin arms.')
-        if a['id'] == 'minute': a['role'] = (a.get('role') or '') + ' A collar under the back face keeps it from lifting out.'
+        if a['id'] == 'minute': a['role'] = ('Turns once an hour. Its 12-tooth pinion, level with the transfer and crown wheels, takes the crown and drives the transfer arbor; it turns in plain delrin '
+                                             '(the main plate, the secondary plate) and its top pivot is in the minute bridge, which keeps it from lifting. Its rod runs on up as the minute disc\'s post.')
+        if a['id'] == 'hour': a['role'] = 'Turns once in 12 hours: two bearings in the main plate under its wheel, its top pivot in the hour bridge; its rod runs on up as the hour disc\'s post.'
         if a['id'] == 'b': a['role'] = 'Under the minute disc\'s lower edge: its wheel is driven by the minute pinion and turns on the secondary plate\'s floor; its pinion drives the first intermediate. Pivots: a bearing in the main plate, the secondary plate under its wheel.'
     P['groups']['drawn'] = 'Plates and stem'
-    P['focus'] = [{'id': 'train', 'label': 'Crown → E → minute → transfer → first and second intermediate → hour', 'parts': ['e', 'minute', 'b', 'a1', 'a2', 'hour', 'D6', 'D7']},
-                  {'id': 'stack', 'label': 'The plates only', 'parts': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7']},
+    P['focus'] = [{'id': 'train', 'label': 'Crown → E → minute → transfer → first and second intermediate → hour', 'parts': ['e', 'minute', 'b', 'a1', 'a2', 'hour', 'D6']},
+                  {'id': 'stack', 'label': 'The plates and bridges', 'parts': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8']},
                   {'id': 'under', 'label': 'Under the top layer: main and secondary plates, train', 'parts': ['D1', 'D2', 'D6', 'minute', 'b', 'a1', 'a2', 'hour', 'e']},
                   {'id': 'main', 'label': 'Main plate and train', 'parts': ['D1', 'D6', 'minute', 'b', 'a1', 'a2', 'hour', 'e']}]
     report = {'z': {k: (round(X['zb'], 4), round(X['zt'], 4)) for k, X in plates.items()}, 'screws': {k: X['screws'] for k, X in plates.items()},
@@ -522,8 +563,9 @@ def check(G_):
     for X in ps:
         for s in X['screws']:
             if not G_['path_ok'](X, s): out.append(f"{X['id']} plate: screw {s} has no solid path into the main plate")
-        through = len(X['screws']) + (sum(1 for Y in ('tp', 'ne') for q in plates[Y]['screws'] if X['F'].contains(Point(q))) if X['id'] == 'sec' else 0)
-        if X['id'] != 'main' and through < 2: out.append(f"{X['id']} plate is held by {through} screw(s)")
+        over = {'sec': ('tp', 'ne', 'bm'), 'tp': ('bm',), 'top': ('bh',)}.get(X['id'], ())
+        through = len(X['screws']) + sum(1 for Y in over for q in plates[Y]['screws'] if X['F'].contains(Point(q)))
+        if X['id'] not in ('main', 'bm', 'bh') and through < 2: out.append(f"{X['id']} plate is held by {through} screw(s)")
     held = {a: [] for a in arbor_at}
     for a, nb, f, b in G_['bore_notes']: held[a] += ['main plate bearing'] * nb
     held['minute'].append('main plate bushing'); held['e'].append('main plate bushing')
@@ -547,7 +589,7 @@ def check(G_):
         for n2, (a2, c2, r2, s2, e2) in G.items():
             if n2 == n: continue
             if frozenset((n, n2)) in MESH or e2 <= z0 + 1e-6: allowed.append(C(c2, r2 + GAP))
-        if w1 <= z0 + 1e-6 or n == 'crown arbor worm wheel': allowed.append(worm_g.buffer(GAP))   # (the worm turns under them, or meshes it)
+        if w1 <= z0 + 1e-6 or n == 'crown arbor worm wheel': allowed += [worm_g.buffer(GAP), G_['worm_window']]   # (the worm turns under them, or meshes it: its window)
         allowedU = U(allowed).buffer(0.3, 64).buffer(-0.3, 64)       # (a gap under 0.6 between two allowed openings is one opening: a fin there comes down)
         brk = C(c, r).difference(U(sup)).difference(allowedU)
         if brk.area > 0.05:
