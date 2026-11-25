@@ -2,6 +2,7 @@
 #   sim/projects/air-size-study.json   gear pairs at module 0.6, 0.5 and 0.4 between three 1/8" plates: the first Air cut from the sim
 #   sim/projects/beta2.json            the hand-set Hemistitch's train (crown worm -> intermediate -> minute and hour discs), first layout
 #   sim/projects/beta2-fits.json       the fit coupon (fits.py): every Beta 2 fit at a few sizes, cut before the main plate
+#   sim/projects/h88-case.json         the H-88 Spectrum case around Beta 2 · layered (tools/h88/case.py)
 # Re-run to regenerate both (it overwrites them). Every hole names a fit, so the press-fit test's sizes drop into the table once.
 import json, math, os, time
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -458,6 +459,12 @@ if __name__ == '__main__':
         json.dump(s5, open(os.path.join(OUT, 'beta2-layered.json'), 'w'), indent=1)
     print('beta2-layered:', json.dumps({k: v for k, v in rep5.items() if k not in ('problems', 'notes')}, default=str))
     print('  ' + '\n  '.join(rep5['notes']))
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'h88'))
+    import case as h88
+    s7, rep7, _ = h88.build(s5, info, {'sketch': sketch, 'poly_dots': poly_dots})
+    s7['savedAt'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+    json.dump(s7, open(os.path.join(OUT, 'h88-case.json'), 'w'), indent=1)
+    print('h88-case:', json.dumps(rep7, default=str))
     import fits
     s6 = fits.build({'rrect': rrect, 'sketch': sketch, 'poly_dots': poly_dots, 'FITS_DELRIN': FITS_DELRIN})
     s6['savedAt'] = time.strftime('%Y-%m-%dT%H:%M:%S')
