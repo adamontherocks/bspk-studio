@@ -100,8 +100,8 @@ def build(layered_scene, info, helpers):
     eye_y, eye_z = H / 2 + EYE_OUT, z_frame0 + EYE_R
     zr = z_back + RISE
     tp = (eye_y + EYE_R * math.cos(math.radians(45)), eye_z + EYE_R * math.sin(math.radians(45))); cc = tp[0] + tp[1]
-    lug_side = [(SLOT_Y0, z_back), (SLOT_Y0, zr), (cc - zr, zr)] + [(eye_y + EYE_R * math.cos(math.radians(a)), eye_z + EYE_R * math.sin(math.radians(a))) for a in range(45, -91, -5)] \
-               + [(H / 2, z_frame0), (H / 2, z_back)]
+    lug_side = [(SLOT_Y0, z_frame0), (SLOT_Y0, zr), (cc - zr, zr)] + [(eye_y + EYE_R * math.cos(math.radians(a)), eye_z + EYE_R * math.sin(math.radians(a))) for a in range(45, -91, -5)]
+    # (down to the lug plate's back all along: at the octagon's corners the frame's edge is the chamfer, so the lug fills under its riser)
     slots = [box(min(sx * LX, sx * LX2) - 0.1, min(sy * (SLOT_Y0 - 0.1), sy * (H / 2 + 2.0)), max(sx * LX, sx * LX2) + 0.1, max(sy * (SLOT_Y0 - 0.1), sy * (H / 2 + 2.0)))
              for sx in (-1, 1) for sy in (-1, 1) for LX, LX2 in [LUG_X]]
     kn = [400]
