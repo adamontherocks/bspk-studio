@@ -22,7 +22,13 @@ TT, TS = 1.5875, 3.175
 CLR = 0.2                       # movement to cavity, all round
 DIAL_T = 2.38                   # 3/32" (or 1/8" faced from the back): the discs' tops 0.49 under the crystal
 CRYSTAL_T, CRYSTAL_STEP = 1.0, 0.6     # 1 mm acrylic; its edge 0.4 thick under the lip
-LIP = 1.1                       # the faceplate's lip over the crystal's edge, all round
+LIP = 1.1                       # (the first trace's lip; the window is now the render's octagon, below)
+# The viewing area (Adam: "that's a design feature that really makes this 1980s"), measured off the render with its discs 20.8 apart (as
+# Beta 2's): an octagon 43.4 x 24.2, 45° chamfers 5.8 on the leg; the AMC and HEMISTITCH plaques bite 1.1 into its top and bottom edges
+# across their 25 mm faces, with 45° ends; a thin red line runs round it just inside the edge (on the dial plate, engraved and filled).
+WIN_HW, WIN_HH, WIN_CH = 21.7, 12.1, 5.8
+PLQ_HW, PLQ_BITE = 12.5, 1.1
+RED_IN, RED_W, RED_D = 0.4, 0.7, 0.3
 BACK_T = 0.8                    # back plate (1/32" acrylic: a display back, or delrin)
 W, H, CH = 54.0, 48.0, 9.0      # the body: wider than tall (the render), its octagon's chamfers
 LUG_X = (12.0, 15.5)            # lug inner and outer faces (a 24 mm strap)
@@ -34,7 +40,13 @@ def octagon():
     pts = [(W / 2 - CH, H / 2), (-(W / 2 - CH), H / 2), (-W / 2, H / 2 - CH), (-W / 2, -(H / 2 - CH)), (-(W / 2 - CH), -H / 2),
            (W / 2 - CH, -H / 2), (W / 2, -(H / 2 - CH)), (W / 2, H / 2 - CH)]
     return Polygon(pts).buffer(-1.0, 32, join_style=1).buffer(1.0, 64, join_style=1)     # (its corners r 1)
-def stadium(x0, x1, y, w): return box(x0 + w / 2, y - w / 2, x1 - w / 2, y + w / 2).buffer(w / 2, 32)
+def stadium(x0, x1, y, w):
+    from shapely.geometry import LineString
+    return LineString([(x0 + w / 2, y), (x1 - w / 2, y)]).buffer(w / 2, 32)
+def halves(ring):
+    """a ring as two C-shaped pieces (a pocket's sketch is one outline, no holes)"""
+    big = 200.0
+    return [g for g in (ring.intersection(box(-big, -big, 0.0, big)), ring.intersection(box(0.0, -big, big, big))) if not g.is_empty]
 
 def build(layered_scene, info, helpers):
     sketch, poly_dots = helpers['sketch'], helpers['poly_dots']
@@ -53,7 +65,12 @@ def build(layered_scene, info, helpers):
     # ---- outlines
     cav = rrect(2 * HX + 2 * CLR, 2 * HY + 2 * CLR, 4.0 + CLR)          # the movement + 0.2: everything from the back passes it
     insert = rrect(2 * HX + 2 * CLR - 0.2, 2 * HY + 2 * CLR - 0.2, 4.0 + CLR - 0.1)   # crystal, dial plate, back plate: 0.1 inside it
-    window = rrect(2 * HX + 2 * CLR - 2 * LIP, 2 * HY + 2 * CLR - 2 * LIP, 4.0 + CLR - LIP + 0.5)   # what shows: the crystal's raised centre
+    def oct_(hw, hh, ch): return Polygon([(hw - ch, hh), (-(hw - ch), hh), (-hw, hh - ch), (-hw, -(hh - ch)), (-(hw - ch), -hh), (hw - ch, -hh), (hw, -(hh - ch)), (hw, hh - ch)])
+    win_oct = oct_(WIN_HW, WIN_HH, WIN_CH)
+    yb = WIN_HH - PLQ_BITE
+    plaques = [Polygon([(-PLQ_HW, sy * yb), (PLQ_HW, sy * yb), (PLQ_HW + 3.0, sy * (yb + 3.0)), (-PLQ_HW - 3.0, sy * (yb + 3.0))]) for sy in (1, -1)]
+    window = win_oct.difference(unary_union(plaques)).buffer(-0.3, 32, join_style=1).buffer(0.3, 64, join_style=1)   # (its inside corners r 0.3 for the cutter)
+    red = win_oct.buffer(-RED_IN, join_style=2).difference(win_oct.buffer(-(RED_IN + RED_W), join_style=2))
     boss = window.buffer(-0.1, 64)
     body = octagon()
     discs = [(10.4, 0.0), (-10.4, 0.0)]
@@ -79,6 +96,7 @@ def build(layered_scene, info, helpers):
         k = newk(); sks.append(sketch(k, f'{name.split(" (")[0]} outline', 'z', round(z0, 5), poly_dots(outline)))
         parts.append({'id': pid, 'name': name, 'sketch': k, 'thickness': round(t, 5), 'grow': 'plus', 'mill': mill, 'minWall': 0.6, 'cuts': cuts})
     def pocket(name, poly, frm, depth, hid):
+        if list(getattr(poly, 'interiors', [])): raise ValueError(f'{name}: a pocket with a hole (cut it as halves)')
         k = newk(); sks.append(sketch(k, name, 'z', 0.0, poly_dots(poly)))
         return {'id': f'h{hid}', 'kind': 'pocket', 'name': name, 'sketch': k, 'from': frm, 'depth': None if depth is None else round(depth, 4)}
     def hole(kind, name, at, d, frm, hid, depth=None, seat=None, fit=None):
@@ -100,9 +118,11 @@ def build(layered_scene, info, helpers):
     for s in scr: bc.append(hole('clear', 'Front screw head: M2 wafer in a counterbore', s, 4.4, 'back', n, depth=0.9)); n += 1
     part('D9', 'Faceplate and body (black delrin, 5/8" faced to %.2f; milled from the front, then the back): the window and its lip, vents and front screws on the front; '
                'the movement\'s cavity, the crown well and the stem slit from the back' % T_body, body, z_back, T_body, bc)
-    cry = [pocket('Step: the edge 0.4 thick, under the faceplate\'s lip', insert.difference(boss), 'back', CRYSTAL_STEP, 1)]
+    cry = [pocket('Step: the edge 0.4 thick, under the faceplate\'s lip', hp, 'back', CRYSTAL_STEP, 1 + i) for i, hp in enumerate(halves(insert.difference(boss)))]
     part('D10', 'Crystal (1 mm clear acrylic, one piece, the movement\'s shape): its raised centre fills the window, its stepped edge sits under the lip; glued in from the back', insert, z_cry0, CRYSTAL_T, cry)
     dc = [hole('clear', f'Disc aperture ({nm})', c, 19.6, 'back', i + 1) for i, (c, nm) in enumerate(zip(discs, ('minute', 'hour')))]
+    dc += [pocket('Red line (engraved, filled red): just inside the window, round under the plaques', hp, 'back', RED_D, 7 + i) for i, hp in enumerate(halves(red))]
+    for i, y in enumerate((7.8, -7.8)): dc.append(hole('clear', 'Dial foot (a screw head between the discs, as the render)', (0.0, y), 2.4, 'back', 10 + i, depth=0.3))
     ne_heads = [(5.05, 13.4), (10.55, 13.9)]
     for i, s in enumerate(ne_heads): dc.append(hole('clear', 'Relief over the NE plate\'s pan head', s, 4.6, 'front', 3 + i, depth=1.8))
     part('D11', 'Dial plate (3/32" black delrin): the retention plate. It holds the crystal up against the lip and the movement down; the discs turn in its apertures, '
@@ -150,6 +170,6 @@ def build(layered_scene, info, helpers):
               'crown': {'x0': crown_x0, 'r': crown_r, 'below_back_face': round(z_back - (zw - crown_r), 3)}, 'screws': scr,
               'walls': {'side': round(W / 2 - (HX + CLR), 2), 'shoulder': round(H / 2 - (HY + CLR), 2),
                         'corner': round(body.exterior.distance(Point(HX + CLR - (4.0 + CLR) + (4.0 + CLR) / math.sqrt(2), HY + CLR - (4.0 + CLR) + (4.0 + CLR) / math.sqrt(2))), 2)}}
-    geo = dict(body=body, cav=cav, insert=insert, window=window, boss=boss, well=well, slit=slit, frame=frame, scr=scr, discs=discs, side=side,
+    geo = dict(win_oct=win_oct, plaques=plaques, red=red, body=body, cav=cav, insert=insert, window=window, boss=boss, well=well, slit=slit, frame=frame, scr=scr, discs=discs, side=side,
                z=dict(back=z_back, plates=z_plates, dial=(z_dial0, z_dial1), cry=(z_cry0, z_cry1), lip0=z_lip0, top=z_top, frame0=z_frame0, disc1=z_disc1), crown=(crown_x0, crown_r, zw))
     return S, report, geo
