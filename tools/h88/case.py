@@ -68,8 +68,8 @@ BACK_T = 0.8                    # back plate (1/32" acrylic: a display back, or 
 # sat where the exterior chamfers now fall, so the same eight positions are screwed from the back: up through each lug riser into the
 # body (they clamp the lugs into it), and into the body's sides (they clamp the lug plate).
 W, H, CH = 54.5, 49.2, 12.8     # the body (the render's)
-LUG_X = (14.0, 18.0)            # lug inner and outer faces: the render's lugs, at the octagon's corners (a 28 mm strap); 4.0 thick, so the screw
-                                #  coming up through each riser (Ø2.3) keeps 0.85 walls
+LUG_X = (11.0, 15.0)            # lug inner and outer faces: a 22 mm strap (Adam: "that needs to be a normal number like 20-22mm"; the render's lugs
+                                #  sat out at the octagon's corners, 28 apart), so the lugs sit under the 12 and 6 faces; 4.0 thick
 RISE, SLOT_Y0 = 6.5, 17.5       # Adam (lugs up): each lug rises this far into a slot cut up into the body from its back, open to the 12/6 face
 PLQ_SCR = (16.0, 19.6)          # the plaque screws (M2, from the back): up through each lug riser's centre into the body above its slot
 SIDE_SCR = (24.65, 9.0)         # the side-rail screws (M1.6, the render's spots)
@@ -89,7 +89,7 @@ BEVEL_ANGLE = 67.5              # the back bevel (Adam's 9 o'clock edit): 22.5°
 BEVEL_W = {'12/6': 2.8, 'corner': 1.2, '3/9': 2.8}   # its width at the back plate's bottom (the corner walls are 3.05)
 SCREW_XY = [(x, sy * 19.0) for x in (-12.0, 0.0, 12.0) for sy in (1, -1)]   # the six M2 screws: in the 12 and 6 walls
 DOWEL_XY, DOWEL_D, DOWEL_DEPTH = [(25.1, -7.0), (-25.1, 7.0)], 1.5, 3.0     # faceplate to case middle (clear of the crown's well)
-HORN_IN = 20.5                  # each lug's root runs this far in (inside the ring's wall, under the octagon's corner)
+HORN_IN = 21.0                  # each lug's root runs this far in (inside the ring's wall, under the octagon's corner)
 
 def rrect(w, h, r, c=(0.0, 0.0)): return box(c[0] - w / 2 + r, c[1] - h / 2 + r, c[0] + w / 2 - r, c[1] + h / 2 - r).buffer(r, 64)
 def octagon():

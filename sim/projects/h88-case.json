@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-25T16:26:01",
+ "savedAt": "2026-11-25T16:32:06",
  "state": {
   "pos": {
    "minute": [
@@ -300254,12 +300254,12 @@
     "name": "Lug 1 side profile",
     "plane": {
      "axis": "x",
-     "offset": 14.0
+     "offset": 11.0
     },
     "closed": true,
     "points": [
      {
-      "u": 20.5,
+      "u": 21.0,
       "v": 5.0,
       "smooth": false
      },
@@ -300409,7 +300409,7 @@
       "smooth": false
      },
      {
-      "u": 20.5,
+      "u": 21.0,
       "v": -1.7875,
       "smooth": false
      }
@@ -300420,12 +300420,12 @@
     "name": "Lug 2 side profile",
     "plane": {
      "axis": "x",
-     "offset": -18.0
+     "offset": -15.0
     },
     "closed": true,
     "points": [
      {
-      "u": 20.5,
+      "u": 21.0,
       "v": 5.0,
       "smooth": false
      },
@@ -300575,7 +300575,7 @@
       "smooth": false
      },
      {
-      "u": 20.5,
+      "u": 21.0,
       "v": -1.7875,
       "smooth": false
      }
@@ -300586,12 +300586,12 @@
     "name": "Lug 3 side profile",
     "plane": {
      "axis": "x",
-     "offset": 14.0
+     "offset": 11.0
     },
     "closed": true,
     "points": [
      {
-      "u": -20.5,
+      "u": -21.0,
       "v": -1.7875,
       "smooth": false
      },
@@ -300741,7 +300741,7 @@
       "smooth": false
      },
      {
-      "u": -20.5,
+      "u": -21.0,
       "v": 5.0,
       "smooth": false
      }
@@ -300752,12 +300752,12 @@
     "name": "Lug 4 side profile",
     "plane": {
      "axis": "x",
-     "offset": -18.0
+     "offset": -15.0
     },
     "closed": true,
     "points": [
      {
-      "u": -20.5,
+      "u": -21.0,
       "v": -1.7875,
       "smooth": false
      },
@@ -300907,7 +300907,7 @@
       "smooth": false
      },
      {
-      "u": -20.5,
+      "u": -21.0,
       "v": 5.0,
       "smooth": false
      }
