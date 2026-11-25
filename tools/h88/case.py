@@ -27,7 +27,11 @@ LIP = 1.1                       # (the first trace's lip; the window is now the 
 # Beta 2's): an octagon 43.4 x 24.2, 45° chamfers 5.8 on the leg; the AMC and HEMISTITCH plaques bite 1.1 into its top and bottom edges
 # across their 25 mm faces, with 45° ends; a thin red line runs round it just inside the edge (on the dial plate, engraved and filled).
 WIN_HW, WIN_HH, WIN_CH = 21.7, 12.1, 5.8
-PLQ_HW, PLQ_BITE = 12.5, 1.1
+# The plaques are a design element (Adam: "extend into the viewing area a little more... may even touch the top-down edges of the discs, that's
+# part of the look"): each plaque's face comes down to the discs' edge (9.5 from the centre line), tangent to both discs' tops, and its 45°
+# ends meet the window's top edge 1.5 short of the octagon's chamfer, as in the render.
+DISC_R = 9.5
+PLQ_HW, PLQ_BITE = 11.8, WIN_HH - DISC_R
 RED_IN, RED_W, RED_D = 0.4, 0.7, 0.3
 BACK_T = 0.8                    # back plate (1/32" acrylic: a display back, or delrin)
 W, H, CH = 54.0, 48.0, 9.0      # the body: wider than tall (the render), its octagon's chamfers
