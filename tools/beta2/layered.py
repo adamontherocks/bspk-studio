@@ -35,7 +35,8 @@ WELL = 0.10        # a plate sitting in another's well: the well is this much bi
 BACKLASH = 0.05    # each mesh's backlash: half off each gear's teeth at the pitch circle (rules.backlash)
 R_DEEP = 1.05      # inside corners deeper than the small cutters reach: the 2 mm end mill's radius, and a little
 BOSS_R, ANCHOR_R, WAIST = 2.6, 2.8, 3.0   # the disc bridges: pivot boss (as A1's and A2's pads), round anchor about its screw, narrowest width
-WAFER_D, WAFER_DEPTH = 4.4, 0.9    # an M2 wafer head (Ø4, under 0.8 tall) in a counterbore: what a 1/16" bridge can hold
+WAFER_D, WAFER_DEPTH = 4.4, 0.9
+MOV_CH, MOV_R = 4.5, 1.5            # the movement's corners: 45° chamfers 4.5 on the leg, rounded r 1.5 (the H-88 case's octagon, 2026-11-25)    # an M2 wafer head (Ø4, under 0.8 tall) in a counterbore: what a 1/16" bridge can hold
 SLIVER = 0.5       # strips narrower than twice this are lowered into the floor beside them
 HEAD_R, HEAD_H = 1.9, 1.3
 CB_D, CB_DEPTH = 4.2, 1.4            # counterbore for an M2 cheese head (fit m2_cb)
@@ -166,7 +167,9 @@ def build(aligned_scene, info, helpers):
     for a, c in arbor_at.items(): things.append((f'{a} rod', a, C(c, 1.5, 48), z_bot, rod_top[a], GAP, 0.0))
 
     # ---- footprints
-    O = Polygon([(q['u'], q['v']) for q in rrect(0.0, 0.0, 2 * HX, 2 * HY, 4.0)])
+    # the outline: chamfered at the corners to follow the H-88 case's octagon (3 mm of case wall at the corners), rounded r 1.5
+    O = Polygon([(HX - MOV_CH, HY), (-(HX - MOV_CH), HY), (-HX, HY - MOV_CH), (-HX, -(HY - MOV_CH)), (-(HX - MOV_CH), -HY), (HX - MOV_CH, -HY),
+                 (HX, -(HY - MOV_CH)), (HX, HY - MOV_CH)]).buffer(-MOV_R, 64, join_style=1).buffer(MOV_R, 64, join_style=1)
     zA1w_ = C(A1, G['first intermediate wheel'][2] + GAP); zA2w_ = C(A2, G['second intermediate wheel'][2] + GAP)
     zA1p_ = C(A1, G['first intermediate pinion'][2] + GAP)
     dH, dM = C(H, 9.5 + GAP), C(M, 9.5 + GAP)
@@ -398,7 +401,7 @@ def build(aligned_scene, info, helpers):
              f'worm window (main plate): one wall, sides 0.45 out from the worm\'s room, corners r {R_DEEP}'] + notes
 
     # ---- the parts
-    outline_pts = rrect(0.0, 0.0, 2 * HX, 2 * HY, 4.0)
+    outline_pts = poly_dots(O)
     sks, drawn = [], []
     PID = {'main': 'D1', 'sec': 'D2', 'tp': 'D3', 'ne': 'D4', 'top': 'D5', 'bm': 'D7', 'bh': 'D8'}
     TITLE = {'main': 'Main plate', 'sec': 'Secondary plate', 'tp': 'Transfer plate', 'ne': 'NE plate', 'top': 'Top plate', 'bm': 'Minute bridge', 'bh': 'Hour bridge'}

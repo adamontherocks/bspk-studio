@@ -34,9 +34,16 @@ DISC_R = 9.5
 PLQ_HW, PLQ_BITE = 11.8, WIN_HH - DISC_R
 RED_IN, RED_W, RED_D = 0.4, 0.7, 0.3
 BACK_T = 0.8                    # back plate (1/32" acrylic: a display back, or delrin)
-W, H, CH = 54.0, 48.0, 9.0      # the body: wider than tall (the render), its octagon's chamfers
-LUG_X = (12.0, 15.5)            # lug inner and outer faces (a 24 mm strap)
-RISE, SLOT_Y0 = 6.5, 17.9       # Adam (lugs up): each lug rises this far into a slot cut up into the body from its back, open to the 12/6 face
+# The body's outline and screws, measured off the render at Beta 2's disc spacing (Adam: "compare the exterior profile including its chamfers
+# as well as the screw location"): an octagon 54.5 x 49.2 with 45° chamfers 12.8 on the leg; Beta 2's own corners are chamfered 4.5 to
+# match, so the corner walls stay 3.0. Eight front screws where the render has them: four at the plaques' ends, over the lugs, threading
+# down into the lug risers (they clamp the lugs into the body), 1.8 further out than the render so they keep a wall to Beta 2's cavity; and
+# four on the side rails (M1.6, low heads), through-tapped, with four back screws coming up into the same holes to clamp the lug plate.
+W, H, CH = 54.5, 49.2, 12.8     # the body (the render's)
+LUG_X = (14.0, 17.5)            # lug inner and outer faces: the render's lugs, at the octagon's corners (a 28 mm strap)
+RISE, SLOT_Y0 = 6.5, 17.5       # Adam (lugs up): each lug rises this far into a slot cut up into the body from its back, open to the 12/6 face
+PLQ_SCR = (15.75, 19.1)         # the plaque screws (M2): over each lug riser's centre, into it
+SIDE_SCR = (24.65, 9.0)         # the side-rail screws (M1.6, the render's spots)
 EYE_R, EYE_OUT, HOLE = 2.5, 2.7, 1.2    # the lug's eye (spring bar boss) just outside the body: radius, its centre this far out, bar hole
 
 def rrect(w, h, r, c=(0.0, 0.0)): return box(c[0] - w / 2 + r, c[1] - h / 2 + r, c[0] + w / 2 - r, c[1] + h / 2 - r).buffer(r, 64)
@@ -67,8 +74,10 @@ def build(layered_scene, info, helpers):
     z_top = z_cry1                                     # the faceplate's front, flush with the crystal
     z_frame0 = z_back - TT                             # the lug plate under the body walls
     # ---- outlines
-    cav = rrect(2 * HX + 2 * CLR, 2 * HY + 2 * CLR, 4.0 + CLR)          # the movement + 0.2: everything from the back passes it
-    insert = rrect(2 * HX + 2 * CLR - 0.2, 2 * HY + 2 * CLR - 0.2, 4.0 + CLR - 0.1)   # crystal, dial plate, back plate: 0.1 inside it
+    main = next(d for d in st['drawn'] if d['id'] == 'D1'); kmain = next(k for k in st['sketches'] if k['id'] == main['sketch'])
+    mov = Polygon([(p['u'], p['v']) for p in kmain['points']]).buffer(0)          # Beta 2's outline (its corners chamfered 4.5, as the case)
+    cav = mov.buffer(CLR, 64, join_style=1)                                          # the movement + 0.2: everything from the back passes it
+    insert = mov.buffer(CLR - 0.1, 64, join_style=1)                                 # crystal, dial plate, back plate: 0.1 inside it
     def oct_(hw, hh, ch): return Polygon([(hw - ch, hh), (-(hw - ch), hh), (-hw, hh - ch), (-hw, -(hh - ch)), (-(hw - ch), -hh), (hw - ch, -hh), (hw, -(hh - ch)), (hw, hh - ch)])
     win_oct = oct_(WIN_HW, WIN_HH, WIN_CH)
     yb = WIN_HH - PLQ_BITE
@@ -82,7 +91,9 @@ def build(layered_scene, info, helpers):
     well = box(crown_x0 - 0.3, -(crown_r + 0.3), W / 2 + 2.0, crown_r + 0.3)
     slit = box(HX, -(neck_r + 0.2), crown_x0, neck_r + 0.2)
     # the screws: four through-tapped holes in the shoulders, back screws up into them, front screws down into them
-    scr = [(sx * 19.0, sy * 19.0) for sx in (-1, 1) for sy in (-1, 1)]      # (on the chamfer corners, clear of the lug slots)
+    plq = [(sx * PLQ_SCR[0], sy * PLQ_SCR[1]) for sx in (-1, 1) for sy in (-1, 1)]
+    side_scr = [(sx * SIDE_SCR[0], sy * SIDE_SCR[1]) for sx in (-1, 1) for sy in (-1, 1)]
+    scr = plq + side_scr
     # ---- the lug plate: a frame under the body walls, a rabbet for the back plate, four lugs (their droop is the side profile, K below)
     frame = body
     # each lug's side profile (y out from the centre, z up): riser up the slot, 45° down onto the eye, the eye, back along the plate's bottom
@@ -118,8 +129,11 @@ def build(layered_scene, info, helpers):
     vy = (18.3, 20.2, 22.1)
     for sy in (-1, 1):
         for y in vy: bc.append(pocket('Vent (the shoulders\' three slots)', stadium(-10.0, 10.0, sy * y, 1.0), 'back', 0.8, n)); n += 1
-    for s in scr: bc.append(hole('pilot', 'M2 thread, through (back screw up, front screw down)', s, 1.6, 'back', n, fit='m2_tap')); n += 1
-    for s in scr: bc.append(hole('clear', 'Front screw head: M2 wafer in a counterbore', s, 4.4, 'back', n, depth=0.9)); n += 1
+    for s in plq:
+        bc.append(hole('clear', 'Plaque screw, M2: clear down to the lug riser (it threads into the riser and clamps the lug)', s, 2.3, 'back', n, depth=round(z_top - (z_back + RISE), 4), seat={'d': 4.4, 'depth': 0.9}, fit='m2_clear')); n += 1
+    for s in side_scr:
+        bc.append(hole('pilot', 'Side-rail screw, M1.6: tapped through (front screw down, back screw up)', s, 1.25, 'back', n)); n += 1
+        bc.append(hole('clear', 'Side-rail screw head (M1.6, low)', s, 3.2, 'back', n, depth=0.5)); n += 1
     part('D9', 'Faceplate and body (black delrin, 5/8" faced to %.2f; milled from the front, then the back): the window and its lip, vents and front screws on the front; '
                'the movement\'s cavity, the crown well and the stem slit from the back' % T_body, body, z_back, T_body, bc)
     cry = [pocket('Step: the edge 0.4 thick, under the faceplate\'s lip', hp, 'back', CRYSTAL_STEP, 1 + i) for i, hp in enumerate(halves(insert.difference(boss)))]
@@ -135,7 +149,7 @@ def build(layered_scene, info, helpers):
           pocket('Rabbet for the back plate', cav, 'back', BACK_T, 2),
           pocket('Relief under the crown', well, 'back', 0.6, 3)]
     n = 4
-    for s in scr: fc.append(hole('clear', 'Back screw: M2 wafer head in a counterbore from the wrist side', s, 2.3, 'front', n, seat={'d': 4.4, 'depth': 0.9}, fit='m2_clear')); n += 1
+    for s in side_scr: fc.append(hole('clear', 'Back screw, M1.6: up into the side rail\'s tapped hole (head in a counterbore from the wrist side)', s, 1.8, 'front', n, seat={'d': 3.2, 'depth': 0.9})); n += 1
     part('D12', 'Lug plate (black delrin, cut as one two-view part on the 4th axis: plan outline x side profile): its frame under the body walls, '
                 'a rabbet for the back plate; its four lugs are D14-D17', frame, z_frame0, TT, fc)
     part('D13', 'Back plate (1/32" clear acrylic, a display back; or delrin): in the lug plate\'s rabbet, the movement sits on it', insert, z_back - BACK_T, BACK_T, [])
@@ -173,7 +187,9 @@ def build(layered_scene, info, helpers):
               'total': round(z_top - z_frame0, 3), 'disc_to_crystal': round(z_cry0 - z_disc1, 3), 'window': [round(v, 2) for v in window.bounds],
               'crown': {'x0': crown_x0, 'r': crown_r, 'below_back_face': round(z_back - (zw - crown_r), 3)}, 'screws': scr,
               'walls': {'side': round(W / 2 - (HX + CLR), 2), 'shoulder': round(H / 2 - (HY + CLR), 2),
-                        'corner': round(body.exterior.distance(Point(HX + CLR - (4.0 + CLR) + (4.0 + CLR) / math.sqrt(2), HY + CLR - (4.0 + CLR) + (4.0 + CLR) / math.sqrt(2))), 2)}}
+                        'corner': round(min(body.exterior.distance(Point(q)) for q in cav.exterior.coords), 2),
+                        'plaque screw to cavity': round(cav.exterior.distance(Point(plq[1])) - 1.15, 2),
+                        'side screw to cavity / outside': (round(cav.exterior.distance(Point(side_scr[3])) - 0.625, 2), round(body.exterior.distance(Point(side_scr[3])) - 0.625, 2))}}
     geo = dict(win_oct=win_oct, plaques=plaques, red=red, body=body, cav=cav, insert=insert, window=window, boss=boss, well=well, slit=slit, frame=frame, scr=scr, discs=discs, side=side,
                z=dict(back=z_back, plates=z_plates, dial=(z_dial0, z_dial1), cry=(z_cry0, z_cry1), lip0=z_lip0, top=z_top, frame0=z_frame0, disc1=z_disc1), crown=(crown_x0, crown_r, zw))
     return S, report, geo
