@@ -1749,10 +1749,7 @@ function cutLayers(c, k, T) {
   if (!at || !(c.d > 0)) return [];
   const out = [{ iv: iv(0, D), path: ring(at[0], at[1], c.d / 2) }];
   if (c.seat && c.seat.d > c.d && c.seat.depth > 0) out.push({ iv: iv(0, Math.min(D, c.seat.depth)), path: ring(at[0], at[1], c.seat.d / 2) });
-  if (c.csk && c.csk.d > c.d) {   // a 90° countersink, drawn as 4 steps (the export makes it a true cone)
-    const h = (c.csk.d - c.d) / 2;
-    for (let i = 0; i < 4; i++) out.push({ iv: iv(h * i / 4, h * (i + 1) / 4), path: ring(at[0], at[1], c.csk.d / 2 - h * (i + 0.5) / 4) });
-  }
+  // (a 90° countersink is a chamfer on the hole's rim: drawn as a true cone by the chamfer skins, chamferFeats below)
   return out;
 }
 const CLIP = 1e4;   // Clipper works in integers: 0.1 µm
@@ -1779,6 +1776,259 @@ function plateSection(outline, cutPaths) {
   return { shapes, loops };
 }
 const loopKey = L => L.map(p => `${Math.round(p.X / 10)},${Math.round(p.Y / 10)}`).sort().join(';');
+// ---------- chamfers (2026-11-25, Adam: "this requires chamfers", the H-88 case's front) ----------
+// A 45° chamfer on a cut's rim (cut.chamfer, its width = its depth) or on a part's outer edge (d.chamfer = { face, size }): what a
+// 90° chamfer mill or V-bit cuts following the edge. The opening grows by the chamfer at the top and the wall slopes in to the drawn
+// outline that far down. It starts where the cut meets material: the face, or the floor of the cut it sits in. Corners are mitred
+// (sharp), as V-carving leaves them. A countersink is the same thing on a hole's rim. Drawn as:
+//   - its band (the outline grown by the chamfer) taken out of the slabs it spans, so no slab leaves a ledge under it, and
+//   - a skin: one flat face per edge of the outline, from the grown outline at the top to the outline at the chamfer's depth, clipped
+//     to the part and to the other cuts. Where two chamfers overlap the deeper one wins (what the cutter leaves: the faces meet in a
+//     ridge or valley); where a chamfer runs out through the part's outline or into a deeper cut, a strip of wall closes it.
+const area2 = p => { let a = 0; for (let i = 0; i < p.length; i++) { const q = p[i], r = p[(i + 1) % p.length]; a += q[0] * r[1] - r[0] * q[1]; } return a / 2; };
+function lineX(a, b, c, d) {   // where line a-b meets line c-d (null if parallel)
+  const r = [b[0] - a[0], b[1] - a[1]], s = [d[0] - c[0], d[1] - c[1]], den = r[0] * s[1] - r[1] * s[0];
+  if (Math.abs(den) < 1e-12) return null;
+  const t = ((c[0] - a[0]) * s[1] - (c[1] - a[1]) * s[0]) / den;
+  return [a[0] + t * r[0], a[1] + t * r[1]];
+}
+// The loop turned so the removed side is on its left (a pocket's inside; outside a part's outline), points closer than 0.1 µm and
+// straight-through points dropped, and its mitred offset `c` toward the material, vertex for vertex. An edge that would turn round in
+// the offset (shorter than the corners eat) is folded away: its neighbours' lines meet instead, as the cutter's path does.
+function chamferLoop(path, c, removedInside) {
+  let p = [];
+  for (const q of path) if (!p.length || Math.hypot(q[0] - p[p.length - 1][0], q[1] - p[p.length - 1][1]) > 1e-4) p.push([q[0], q[1]]);
+  while (p.length > 2 && Math.hypot(p[0][0] - p[p.length - 1][0], p[0][1] - p[p.length - 1][1]) <= 1e-4) p.pop();
+  if (p.length < 3) return null;
+  if ((area2(p) > 0) !== removedInside) p.reverse();
+  for (let guard = 0; guard < 400 && p.length >= 3; guard++) {
+    const n = p.length, N = [];
+    let straight = -1;
+    for (let i = 0; i < n; i++) {
+      const a = p[(i - 1 + n) % n], b = p[i], q = p[(i + 1) % n];
+      const cr = (b[0] - a[0]) * (q[1] - b[1]) - (b[1] - a[1]) * (q[0] - b[0]), dt = (b[0] - a[0]) * (q[0] - b[0]) + (b[1] - a[1]) * (q[1] - b[1]);
+      if (Math.abs(cr) < 1e-9 && dt > 0) { straight = i; break; }
+    }
+    if (straight >= 0) { p.splice(straight, 1); continue; }
+    for (let i = 0; i < n; i++) { const a = p[i], b = p[(i + 1) % n], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; N.push([(b[1] - a[1]) / L, -(b[0] - a[0]) / L]); }
+    const o = p.map((v, i) => { const n1 = N[(i - 1 + n) % n], n2 = N[i], kk = Math.max(0.05, 1 + n1[0] * n2[0] + n1[1] * n2[1]); return [v[0] + c * (n1[0] + n2[0]) / kk, v[1] + c * (n1[1] + n2[1]) / kk]; });
+    let bad = -1;
+    for (let i = 0; i < n && bad < 0; i++) { const j = (i + 1) % n; if ((p[j][0] - p[i][0]) * (o[j][0] - o[i][0]) + (p[j][1] - p[i][1]) * (o[j][1] - o[i][1]) <= 0) bad = i; }
+    if (bad < 0) return { p, o, N };
+    const i = bad, j = (i + 1) % n, X = lineX(p[(i - 1 + n) % n], p[i], p[j], p[(j + 1) % n]) || [(p[i][0] + p[j][0]) / 2, (p[i][1] + p[j][1]) / 2];
+    p = p.flatMap((v, m) => (m === i ? [X] : m === j ? [] : [v]));
+  }
+  return null;
+}
+// The chamfers on a flat part: one entry per chamfered cut (or countersunk hole) and one for the part's own edge.
+//   { cut, from, z0 (where it starts, from its face), c (its size), p (the loop, removed side left), o (the grown loop), N, rim }
+function chamferFeats(d, k, T, outline) {
+  const C = ClipperLib, ring = (cx, cy, r) => Array.from({ length: 72 }, (_, i) => [cx + r * Math.cos(i * Math.PI / 36), cy + r * Math.sin(i * Math.PI / 36)]);
+  const opens = [];
+  for (const c of d.cuts || []) {
+    const D = c.depth == null ? T : Math.min(T, Math.max(0, c.depth)), from = c.from === 'back' ? 'back' : 'front';
+    if (c.kind === 'pocket') {
+      const kk = S.sketches.find(x => x.id === c.sketch);
+      if (kk && kk.closed && kk.points.length >= 3 && kk.plane.axis === k.plane.axis) opens.push({ c, from, D, path: outlinePoints(kk).slice(0, -1).map(q => [q[0], q[1]]) });
+    } else {
+      const at = cutCenter(c, k);
+      if (!at || !(c.d > 0)) continue;
+      const seat = c.seat && c.seat.d > c.d && c.seat.depth > 0;
+      opens.push({ c, from, D: seat ? Math.min(D, c.seat.depth) : D, path: ring(at[0], at[1], (seat ? c.seat.d : c.d) / 2), hole: ring(at[0], at[1], c.d / 2), holeD: D });
+    }
+  }
+  const inside = (inner, outer) => {   // inner wholly inside outer
+    const cl = new C.Clipper(), sol = [];
+    cl.AddPath(toClip(inner), C.PolyType.ptSubject, true); cl.AddPath(sameWay(toClip(outer)), C.PolyType.ptClip, true);
+    cl.Execute(C.ClipType.ctDifference, sol, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+    return sol.reduce((s, q) => s + Math.abs(C.Clipper.Area(q)), 0) < 1e-4 * CLIP * CLIP;
+  };
+  const feats = [];
+  for (const L of opens) {
+    const c = L.c; let size = c.chamfer > 0 ? c.chamfer : 0, path = L.path, D = L.D;
+    if (!(size > 0) && c.csk && c.csk.d > c.d && L.hole) { size = (c.csk.d - c.d) / 2; path = L.hole; D = L.holeD; }
+    if (!(size > 0)) continue;
+    let z0 = 0;
+    for (const M of opens) if (M !== L && M.from === L.from && M.D < D - 1e-6 && M.D > z0 && inside(path, M.path)) z0 = M.D;
+    const cc = Math.min(size, D - z0);
+    if (!(cc > 1e-4)) continue;
+    const lp = chamferLoop(path, cc, true);
+    if (lp) feats.push({ cut: c, from: L.from, z0, c: cc, ...lp, rim: false });
+  }
+  if (d.chamfer && d.chamfer.size > 0) {
+    const cc = Math.min(d.chamfer.size, T), lp = chamferLoop(outline, cc, false);
+    if (lp) feats.push({ cut: null, from: d.chamfer.face === 'front' ? 'front' : 'back', z0: 0, c: cc, ...lp, rim: true });
+  }
+  return { feats, opens };
+}
+function pointIn(pt, poly) {
+  let ins = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a[1] > pt[1]) !== (b[1] > pt[1]) && pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins;
+  }
+  return ins;
+}
+function distToLoop(pt, poly) {
+  let m = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length], dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy;
+    const t = L2 ? Math.max(0, Math.min(1, ((pt[0] - a[0]) * dx + (pt[1] - a[1]) * dy) / L2)) : 0;
+    m = Math.min(m, Math.hypot(pt[0] - a[0] - t * dx, pt[1] - a[1] - t * dy));
+  }
+  return m;
+}
+// The skins, their wall strips and their lines, in the part's plane (u, v) and depth s from its front face (0) to its back (T).
+// Returns { tris: [[u, v, s, nu, nv, ns] x 3]..., lines: [[u, v, s], [u, v, s]]..., warn: [] } with each triangle's outward
+// direction given by (nu, nv, ns) (s pointing toward the back face).
+function chamferSkins(feats, opens, outline, T) {
+  const C = ClipperLib, out = { tris: [], lines: [], warn: [] };
+  const sOf = (f, depth) => (f.from === 'back' ? T - depth : depth);
+  const quads = [];
+  feats.forEach((f, fi) => {
+    const n = f.p.length;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, poly = [f.p[i], f.p[j], f.o[j], f.o[i]];
+      const xs = poly.map(q => q[0]), ys = poly.map(q => q[1]);
+      quads.push({ f, fi, i, poly, N: f.N[i], P0: f.p[i], box: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] });
+    }
+  });
+  const depthAt = (q, x, y) => q.f.z0 + q.f.c - ((x - q.P0[0]) * q.N[0] + (y - q.P0[1]) * q.N[1]);   // from the feature's face
+  // what each feature is clipped by: the part's outline, and the openings of other cuts (from either face if they go through)
+  const exclOf = new Map();
+  feats.forEach(f => {
+    const ex = [];
+    for (const M of opens) {
+      if (f.cut && M.c === f.cut) continue;
+      const through = M.D >= T - 1e-6;
+      if (M.from !== f.from && !through) continue;
+      if (M.from === f.from && M.D <= f.z0 + 1e-6) continue;          // a cut it sits in (or a shallower one above it)
+      ex.push(M.path);
+      if (M.D < f.z0 + f.c - 1e-6 && M.from === f.from && !out.warn.includes(M.c.id)) {   // a shallower cut in the chamfer's band: drawn as if deeper (reported)
+        const c1 = new C.Clipper(), s1 = [];
+        c1.AddPath(sameWay(toClip(M.path)), C.PolyType.ptSubject, true); c1.AddPath(sameWay(toClip(f.o)), C.PolyType.ptClip, true);
+        c1.Execute(C.ClipType.ctIntersection, s1, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+        const c2 = new C.Clipper(), s2 = [];
+        if (s1.length) { c2.AddPaths(s1, C.PolyType.ptSubject, true); c2.AddPath(sameWay(toClip(f.p)), C.PolyType.ptClip, true); c2.Execute(C.ClipType.ctDifference, s2, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero); }
+        if (s2.reduce((a, q) => a + Math.abs(C.Clipper.Area(q)), 0) > 1e-3 * CLIP * CLIP) out.warn.push(M.c.id);
+      }
+    }
+    exclOf.set(f, ex);
+  });
+  const overlap = (a, b) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+  const pieces = [];
+  for (const q of quads) {
+    const cl = new C.Clipper();
+    cl.AddPath(toClip(q.poly), C.PolyType.ptSubject, true);
+    cl.AddPath(sameWay(toClip(outline)), C.PolyType.ptClip, true);
+    let sol = [];
+    cl.Execute(C.ClipType.ctIntersection, sol, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+    if (!sol.length) continue;
+    const ex = exclOf.get(q.f);
+    // the parts of other chamfers' faces that lie deeper here (the deeper one wins)
+    const deeper = [];
+    for (const r of quads) {
+      if (r === q || r.f.from !== q.f.from || !overlap(q.box, r.box)) continue;
+      if (r.f === q.f && (Math.abs(r.i - q.i) <= 1 || Math.abs(r.i - q.i) === q.f.p.length - 1)) continue;
+      // the half-plane where r is deeper than q: (depth_r - depth_q)(x, y) > 0, a linear function a x + b y + g
+      const a = -r.N[0] + q.N[0], b = -r.N[1] + q.N[1];
+      const g = (r.f.z0 + r.f.c + r.P0[0] * r.N[0] + r.P0[1] * r.N[1]) - (q.f.z0 + q.f.c + q.P0[0] * q.N[0] + q.P0[1] * q.N[1]);
+      const L = Math.hypot(a, b), cx = (q.box[0] + q.box[2]) / 2, cy = (q.box[1] + q.box[3]) / 2, R = 4 * (q.box[2] - q.box[0] + q.box[3] - q.box[1]) + 1;
+      let half;
+      if (L < 1e-9) { if (g <= 1e-9) continue; half = [[cx - R, cy - R], [cx + R, cy - R], [cx + R, cy + R], [cx - R, cy + R]]; }
+      else {
+        const ux = a / L, uy = b / L, t0 = -(g + a * cx + b * cy) / L;   // the boundary line's offset from the centre along (ux, uy)
+        const bx = cx + ux * t0, by = cy + uy * t0, vx = -uy, vy = ux;
+        half = [[bx + vx * R, by + vy * R], [bx - vx * R, by - vy * R], [bx - vx * R + ux * R, by - vy * R + uy * R], [bx + vx * R + ux * R, by + vy * R + uy * R]];
+      }
+      const c2 = new C.Clipper(), s2 = [];
+      c2.AddPath(toClip(r.poly), C.PolyType.ptSubject, true); c2.AddPath(sameWay(toClip(half)), C.PolyType.ptClip, true);
+      c2.Execute(C.ClipType.ctIntersection, s2, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+      deeper.push(...s2);
+    }
+    if (ex.length || deeper.length) {
+      const c3 = new C.Clipper(), tree = new C.PolyTree();
+      c3.AddPaths(sol, C.PolyType.ptSubject, true);
+      if (ex.length) c3.AddPaths(ex.map(p => sameWay(toClip(p))), C.PolyType.ptClip, true);
+      if (deeper.length) c3.AddPaths(deeper.map(p => sameWay(p)), C.PolyType.ptClip, true);
+      c3.Execute(C.ClipType.ctDifference, tree, C.PolyFillType.pftNonZero, C.PolyFillType.pftNonZero);
+      const walk = node => { for (const o of node.Childs()) { pieces.push({ q, outer: o.Contour(), holes: o.Childs().map(h => h.Contour()) }); for (const h of o.Childs()) walk(h); } };
+      walk(tree);
+    } else for (const s of sol) pieces.push({ q, outer: s, holes: [] });
+  }
+  const V2 = c => c.map(pp => [pp.X / CLIP, pp.Y / CLIP]);
+  // a wall strip's bottom: the slabs' wall resumes under the deepest band over that stretch of the edge, so the edge is split where it
+  // crosses any other chamfer's band (a long straight edge can run in and out of several)
+  const bands = feats.map(g => ({ g, loop: g.o }));
+  const bottomsAlong = (f, a, b, rimOnly) => {
+    const ts = [0, 1];
+    for (const { g, loop } of bands) {
+      if (g === f || g.from !== f.from || (rimOnly && g.rim)) continue;
+      for (let i = 0; i < loop.length; i++) {
+        const c = loop[i], d = loop[(i + 1) % loop.length], r = [b[0] - a[0], b[1] - a[1]], sv = [d[0] - c[0], d[1] - c[1]], den = r[0] * sv[1] - r[1] * sv[0];
+        if (Math.abs(den) < 1e-12) continue;
+        const t = ((c[0] - a[0]) * sv[1] - (c[1] - a[1]) * sv[0]) / den, u = ((c[0] - a[0]) * r[1] - (c[1] - a[1]) * r[0]) / den;
+        if (t > 1e-6 && t < 1 - 1e-6 && u >= -1e-9 && u <= 1 + 1e-9) ts.push(t);
+      }
+    }
+    ts.sort((x, y) => x - y);
+    const out2 = [];
+    for (let i = 0; i + 1 < ts.length; i++) {
+      if (ts[i + 1] - ts[i] < 1e-7) continue;
+      const tm = (ts[i] + ts[i + 1]) / 2, m = [a[0] + (b[0] - a[0]) * tm, a[1] + (b[1] - a[1]) * tm];
+      let bottom = f.z0 + f.c;
+      for (const g of feats) if (g !== f && g.from === f.from && g.z0 + g.c > bottom && !(rimOnly && g.rim)
+        && (g.rim ? pointIn(m, outline) && !pointIn(m, g.o) : pointIn(m, g.o) || distToLoop(m, g.o) < 3e-4)) bottom = g.z0 + g.c;
+      out2.push([ts[i], ts[i + 1], bottom]);
+    }
+    return out2;
+  };
+  const strip = (f, q, a, b, t0, t1, bottom, wn) => {   // a stretch of wall from the skin down to `bottom`
+    const P = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], A = P(t0), B = P(t1), sB = sOf(f, bottom);
+    const sA = sOf(f, depthAt(q, A[0], A[1])), sBb = sOf(f, depthAt(q, B[0], B[1]));
+    if (Math.abs(sB - sA) < 1e-5 && Math.abs(sB - sBb) < 1e-5) return;
+    out.tris.push([[A[0], A[1], sA, ...wn], [B[0], B[1], sBb, ...wn], [B[0], B[1], sB, ...wn]], [[A[0], A[1], sA, ...wn], [B[0], B[1], sB, ...wn], [A[0], A[1], sB, ...wn]]);
+  };
+  const onSeg = (m, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy, t = L2 ? Math.max(0, Math.min(1, ((m[0] - a[0]) * dx + (m[1] - a[1]) * dy) / L2)) : 0; return Math.hypot(m[0] - a[0] - t * dx, m[1] - a[1] - t * dy) < 3e-4; };
+  for (const pc of pieces) {
+    const q = pc.q, f = q.f, outer = V2(pc.outer), holes = pc.holes.map(V2);
+    if (Math.abs(area2(outer)) < 1e-8) continue;
+    const faceOut = f.from === 'back' ? 1 : -1;
+    const nrm = [-q.N[0] / Math.SQRT2, -q.N[1] / Math.SQRT2, faceOut / Math.SQRT2];
+    const tri = THREE.ShapeUtils.triangulateShape(outer.map(pp => new THREE.Vector2(pp[0], pp[1])), holes.map(h => h.map(pp => new THREE.Vector2(pp[0], pp[1]))));
+    const all = outer.concat(...holes);
+    for (const t of tri) out.tris.push(t.map(ix => { const pp = all[ix]; return [pp[0], pp[1], sOf(f, depthAt(q, pp[0], pp[1])), ...nrm]; }));
+    // the piece's edges: its own (on the skin face's edges), on the outline or another cut (a wall strip under it), or where it meets
+    // a deeper chamfer (a ridge or valley line)
+    for (const loop of [outer, ...holes]) {
+      const inPiece = mm => pointIn(mm, outer) && !holes.some(h => pointIn(mm, h));
+      for (let e = 0; e < loop.length; e++) {
+        const a = loop[e], b = loop[(e + 1) % loop.length], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        const qp = q.poly, own = [0, 1, 2, 3].find(s => onSeg(m, qp[s], qp[(s + 1) % 4]));
+        const A = [a[0], a[1], sOf(f, depthAt(q, a[0], a[1]))], B = [b[0], b[1], sOf(f, depthAt(q, b[0], b[1]))];
+        if (own !== undefined) {
+          if (own === 0 && f.rim) {        // a part's edge chamfer's foot, on the outline: close the wall under it where a deeper chamfer's band hollows it
+            for (const [t0, t1, bottom] of bottomsAlong(f, a, b, true)) if (bottom > f.z0 + f.c + 1e-6) strip(f, q, a, b, t0, t1, bottom, [-q.N[0], -q.N[1], 0]);
+            continue;
+          }
+          if (own === 3 || own === 1) {   // a side edge (a corner of the outline): a line where it's a real crease
+            const n0 = f.N[(q.i - 1 + f.p.length) % f.p.length], n1 = f.N[q.i], n2 = f.N[(q.i + 1) % f.p.length];
+            const nb = own === 3 ? n0 : n2;
+            if (nb[0] * n1[0] + nb[1] * n1[1] < Math.cos(30 * Math.PI / 180)) out.lines.push([A, B]);
+          }
+          continue;
+        }
+        const onWall = distToLoop(m, outline) < 3e-4 || exclOf.get(f).some(p => distToLoop(m, p) < 3e-4);
+        out.lines.push([A, B]);
+        if (!onWall) continue;
+        const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, lft = [-dy / L, dx / L];
+        const outward = inPiece([m[0] + lft[0] * 1e-3, m[1] + lft[1] * 1e-3]) ? [-lft[0], -lft[1]] : lft;
+        for (const [t0, t1, bottom] of bottomsAlong(f, a, b, false)) strip(f, q, a, b, t0, t1, bottom, [outward[0], outward[1], 0]);
+      }
+    }
+  }
+  return out;
+}
 // A curved wall is many flat facets; shading each flat made bands (Adam, 2026-11-21). Facets that meet at less than a crease angle
 // share their normals, so a curved wall shades as one smooth surface while floors, tops and real corners stay crisp.
 function creaseNormals(geo, deg) {
@@ -1840,8 +2090,14 @@ function buildPlate(part, d, k) {
   clearPart(part);
   part.bbox = null;
   const T = d.thickness, [f0, f1] = faceOffsets(d, k), dir = Math.sign(f1 - f0) || 1, ax = k.plane.axis;
-  const { outline, layers } = plateLayers(d, k);
-  const cutsAt = [0, T, ...layers.flatMap(l => l.iv)].map(s => Math.min(T, Math.max(0, s))).sort((a, b) => a - b)
+  const { outline, layers: layers0 } = plateLayers(d, k);
+  // chamfers: each one's band comes out of the slabs it spans (a part's own edge chamfer insets the outline there); skins drawn below
+  const { feats, opens } = window.ClipperLib ? chamferFeats(d, k, T, outline) : { feats: [], opens: [] };
+  const ivF = (f, a, b) => (f.from === 'back' ? [T - b, T - a] : [a, b]);
+  const layers = layers0.concat(feats.filter(f => !f.rim).map(f => ({ iv: ivF(f, f.z0, f.z0 + f.c), path: f.o })));
+  const rims = feats.filter(f => f.rim).map(f => ({ iv: ivF(f, 0, f.c), path: f.o }));
+  const outlineAt = mid => { const r = rims.find(x => x.iv[0] <= mid && x.iv[1] >= mid); return r ? r.path : outline; };
+  const cutsAt = [0, T, ...layers.flatMap(l => l.iv), ...rims.flatMap(r => r.iv)].map(s => Math.min(T, Math.max(0, s))).sort((a, b) => a - b)
     .filter((s, i, a) => i === 0 || s - a[i - 1] > 1e-6);
   const eu = new THREE.Vector3(...planeToModel(ax, 0, 1, 0)), ev = new THREE.Vector3(...planeToModel(ax, 0, 0, 1));
   const en = new THREE.Vector3(...planeToModel(ax, 1, 0, 0));
@@ -1849,7 +2105,7 @@ function buildPlate(part, d, k) {
   const slabs = [];
   for (let i = 0; i < cutsAt.length - 1; i++) {
     const a = cutsAt[i], b = cutsAt[i + 1], mid = (a + b) / 2;
-    const sec = plateSection(outline, layers.filter(l => l.iv[0] <= mid && l.iv[1] >= mid).map(l => l.path));
+    const sec = plateSection(outlineAt(mid), layers.filter(l => l.iv[0] <= mid && l.iv[1] >= mid).map(l => l.path));
     slabs.push({ a, b, sec, keys: new Set(sec.loops.map(loopKey)) });
     if (!sec.shapes.length) continue;
     const geo = new THREE.ExtrudeGeometry(sec.shapes, { depth: b - a, bevelEnabled: false, curveSegments: 1 });
@@ -1898,7 +2154,20 @@ function buildPlate(part, d, k) {
     const g = indexOf(other), x1 = p.X / CLIP, y1 = p.Y / CLIP, x2 = q.X / CLIP, y2 = q.Y / CLIP;
     return near(g, x1 + (x2 - x1) * 0.25, y1 + (y2 - y1) * 0.25) && near(g, (x1 + x2) / 2, (y1 + y2) / 2) && near(g, x1 + (x2 - x1) * 0.75, y1 + (y2 - y1) * 0.75);
   };
-  const seg = (p, q, s) => { const A = toModel(p.X / CLIP, p.Y / CLIP, s), B = toModel(q.X / CLIP, q.Y / CLIP, s); ep.push(A.x, A.y, A.z, B.x, B.y, B.z); };
+  // A chamfer's band leaves slab edges at its foot that lie under its skin (the grown outline, and the part's outline where the band
+  // runs out through it): not edges of the part. Its own outline there is (the chamfer's foot).
+  const feet = feats.map(f => ({ f, s: f.from === 'back' ? T - (f.z0 + f.c) : f.z0 + f.c }));
+  const hidden = (p, q, s) => {
+    if (!feet.length) return false;
+    const m = [(p.X + q.X) / 2 / CLIP, (p.Y + q.Y) / 2 / CLIP];
+    for (const { f, s: sf } of feet) {
+      if (Math.abs(sf - s) > 1e-6 || distToLoop(m, f.p) < 3e-4) continue;
+      const onO = distToLoop(m, f.o) < 3e-4, inP = pointIn(m, f.p), inO = pointIn(m, f.o);
+      if (onO || (f.rim ? inP && !inO : inO && !inP)) return true;   // (the band: between the outline and the grown one)
+    }
+    return false;
+  };
+  const seg = (p, q, s) => { if (hidden(p, q, s)) return; const A = toModel(p.X / CLIP, p.Y / CLIP, s), B = toModel(q.X / CLIP, q.Y / CLIP, s); ep.push(A.x, A.y, A.z, B.x, B.y, B.z); };
   // Walls check (2026-11-22, Adam: "walls and surfaces should have continuous smooth surfaces"; then: "taper to nothing is
   // intentional.... thats two walls merging to a seamless transition"). An edge drawn within SPLIT of the neighbouring slab's
   // outline is one of two things, told apart by how the gap between the two walls runs along it (as tools/crescent/tapers.py):
@@ -1947,7 +2216,7 @@ function buildPlate(part, d, k) {
     const n = L.length, atFloor = !!other && floors.has((+s).toFixed(4)), g = other ? indexOf(other) : null, cand = new Array(n).fill(false);
     for (let j = 0; j < n; j++) {
       const p = L[j], q = L[(j + 1) % n];
-      if (shared(other, p, q)) continue;
+      if (shared(other, p, q) || hidden(p, q, s)) continue;
       if (atFloor && gapAt(g, (p.X + q.X) / 2 / CLIP, (p.Y + q.Y) / 2 / CLIP) < SPLIT) cand[j] = true; else seg(p, q, s);
     }
     const runs = [], s0 = cand.indexOf(false); let cur = null;
@@ -1981,6 +2250,26 @@ function buildPlate(part, d, k) {
       if (!wholeAbove) sideEdges(L, sl.b, above);
     }
   });
+  // the chamfers' skins and wall strips, and their lines (corners, ridges, where they run out through a wall)
+  part.chamferWarn = [];
+  if (feats.length) {
+    const sk = chamferSkins(feats, opens, outline, T), pos = [];
+    const want = (nu, nv, ns) => eu.clone().multiplyScalar(nu).add(ev.clone().multiplyScalar(nv)).add(en.clone().multiplyScalar(dir * ns)).normalize();
+    for (const t of sk.tris) {
+      const P = t.map(v => toModel(v[0], v[1], v[2])), w = want(t[0][3], t[0][4], t[0][5]);
+      const fn = P[1].clone().sub(P[0]).cross(P[2].clone().sub(P[0]));
+      for (const i of (fn.dot(w) < 0 ? [0, 2, 1] : [0, 1, 2])) pos.push(P[i].x, P[i].y, P[i].z);
+    }
+    if (pos.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      geo.computeVertexNormals();
+      creaseNormals(geo, 35);                   // (a countersink's cone shades smooth; the faces of a straight chamfer stay crisp)
+      addMesh(part, geo, part.statics, { edges: false, mat: part.mat });
+    }
+    for (const [A, B] of sk.lines) { const a = toModel(...A), b = toModel(...B); ep.push(a.x, a.y, a.z, b.x, b.y, b.z); }
+    part.chamferWarn = sk.warn;
+  }
   if (ep.length) {
     const eg = new THREE.BufferGeometry();
     eg.setAttribute('position', new THREE.Float32BufferAttribute(ep, 3));
@@ -2063,7 +2352,7 @@ function syncDrawn() {
     }
     const p = parts[d.id], k = sketchOf(d);
     const cutKey = (d.cuts || []).map(c => [c, c.axis && S.pos[c.axis], c.kind === 'pocket' && (S.sketches.find(x => x.id === c.sketch) || {}).points]);
-    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey, d.twist, d.twistAt, d.place, d.mill, d.minWall, d.cutter, d.resolved ? d.resolved.at + '|' + d.resolved.key : '', d.turn, d.worm, d.flutes]);
+    const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey, d.twist, d.twistAt, d.place, d.mill, d.minWall, d.cutter, d.resolved ? d.resolved.at + '|' + d.resolved.key : '', d.turn, d.worm, d.flutes, d.chamfer]);
     if (p.key !== key) { buildDrawn(p, d, k); applyPlace(p, d); p.key = key; rebuilt = true; }
   }
   return rebuilt;
@@ -3353,6 +3642,18 @@ function renderSelected() {
     if (!k || !isFlat(d, k)) el.appendChild(para('pin', 'Holes and pockets need a flat part: no back outline of its own, no dot depths and no joining-edge dots.'));
     else if (!window.ClipperLib) el.appendChild(para('pin', 'Holes and pockets need the Clipper library, which didn’t load (no internet?). They’re kept and show again once it loads.'));
     else {
+      const ec = document.createElement('div');   // the part's own outer edge, chamfered 45° on one face
+      ec.className = 'row';
+      ec.innerHTML = `<label class="field-l" style="flex:1" title="45° chamfer round the part's outline on one face">Edge chamfer mm<input class="txt" type="number" step="0.05" min="0" data-ec="size" placeholder="none" value="${d.chamfer && d.chamfer.size > 0 ? +(d.chamfer.size * sc).toFixed(3) : ''}"></label>
+        <label class="field-l" style="flex:1">On the<select data-ec="face"><option value="back" ${!d.chamfer || d.chamfer.face !== 'front' ? 'selected' : ''}>back face</option><option value="front" ${d.chamfer && d.chamfer.face === 'front' ? 'selected' : ''}>front face</option></select></label>`;
+      ec.addEventListener('change', e => {
+        if (!e.target.dataset.ec) return;
+        const sz = +ec.querySelector('[data-ec="size"]').value, face = ec.querySelector('[data-ec="face"]').value === 'front' ? 'front' : 'back';
+        cancelPending();
+        if (!(sz > 0)) delete d.chamfer; else d.chamfer = { face, size: sz / sc };
+        commit({ text: `${nameOf(p.id)}: ${d.chamfer ? `edge chamfered ${f2(sz)} mm × 45° on the ${face} face` : 'edge no longer chamfered'}`, adapt: false });
+      });
+      el.appendChild(ec);
       for (const c of d.cuts || []) el.appendChild(cutCard(p.id, d, k, c));
       const add = document.createElement('div');
       add.className = 'row';
@@ -3501,6 +3802,7 @@ function addCut(pid, spec = {}) {
   c.depth = spec.depth !== undefined ? spec.depth : base.depth != null ? base.depth : null;
   c.seat = spec.seat !== undefined ? spec.seat : base.seat ? { ...base.seat } : null;
   c.csk = spec.csk !== undefined ? spec.csk : base.csk ? { ...base.csk } : null;
+  if (spec.chamfer > 0) c.chamfer = spec.chamfer;
   d.cuts = [...(d.cuts || []), c];
   commit({ text: `${nameOf(pid)}: added ${cutLabel(c)} (${cutSummary(c, k)})`, adapt: false });
   return c.id;
@@ -3530,6 +3832,7 @@ function cutSummary(c, k) {
   if (c.depth == null && c.from === 'back') bits.push('cut from the back');
   if (c.seat) bits.push(`seat Ø ${f2(c.seat.d * s)} × ${f2(c.seat.depth * s)}`);
   if (c.csk) bits.push(`countersunk Ø ${f2(c.csk.d * s)}`);
+  if (c.chamfer > 0) bits.push(`rim chamfered ${f2(c.chamfer * s)} × 45°`);
   if (c.axis && ARBOR[c.axis]) bits.push(`on the ${ARBOR[c.axis].name} axis`);
   return bits.join(' · ');
 }
@@ -3545,7 +3848,8 @@ function cutCard(pid, d, k, c) {
       ? `<label class="field-l" style="flex:1.4">Outline<select data-cutf="sketch">${sketches.map(x => `<option value="${x.id}" ${x.id === c.sketch ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>`
       : `<label class="field-l" style="flex:1">Ø mm<input class="txt" type="number" step="0.01" min="0" data-cutf="d" value="${+(c.d * sc).toFixed(3)}"></label>`}
       <label class="field-l" style="flex:1">Depth mm<input class="txt" type="number" step="0.01" min="0" data-cutf="depth" placeholder="through" value="${c.depth == null ? '' : +(c.depth * sc).toFixed(3)}"></label>
-      <label class="field-l" style="flex:1">From<select data-cutf="from"><option value="front" ${c.from !== 'back' ? 'selected' : ''}>front</option><option value="back" ${c.from === 'back' ? 'selected' : ''}>back</option></select></label></div>` +
+      <label class="field-l" style="flex:1">From<select data-cutf="from"><option value="front" ${c.from !== 'back' ? 'selected' : ''}>front</option><option value="back" ${c.from === 'back' ? 'selected' : ''}>back</option></select></label>
+      <label class="field-l" style="flex:1" title="45° chamfer on the rim, where the cut meets material (a V-bit or chamfer mill following the edge)">Chamfer mm<input class="txt" type="number" step="0.05" min="0" data-cutf="chamfer" placeholder="none" value="${c.chamfer > 0 ? +(c.chamfer * sc).toFixed(3) : ''}"></label></div>` +
     (c.kind === 'pocket' ? '' : `<div class="row">${ax === 'z' ? `<label class="field-l" style="flex:1.4">On axis<select data-cutf="axis"><option value="">free</option>${ARBOR_DEFS.map(a => `<option value="${a.id}" ${c.axis === a.id ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select></label>` : ''}
       <label class="field-l" style="flex:1">${U} mm<input class="txt" type="number" step="0.01" data-cutf="u" value="${+(at[0] * sc).toFixed(3)}" ${c.axis ? 'disabled' : ''}></label>
       <label class="field-l" style="flex:1">${V} mm<input class="txt" type="number" step="0.01" data-cutf="v" value="${+(at[1] * sc).toFixed(3)}" ${c.axis ? 'disabled' : ''}></label></div>`);
@@ -3556,6 +3860,7 @@ function cutCard(pid, d, k, c) {
     if (f === 'd' && raw !== '' && v > 0) changeCut(pid, c.id, x => { x.d = v / sc; }, `${name} Ø → ${f2(v)} mm`);
     else if (f === 'depth') changeCut(pid, c.id, x => { x.depth = raw === '' || !(v > 0) ? null : v / sc; }, `${name} ${raw === '' || !(v > 0) ? 'now goes through' : `depth → ${f2(v)} mm`}`);
     else if (f === 'from') changeCut(pid, c.id, x => { x.from = raw === 'back' ? 'back' : 'front'; }, `${name} now cut from the ${raw === 'back' ? 'back' : 'front'}`);
+    else if (f === 'chamfer') changeCut(pid, c.id, x => { if (raw === '' || !(v > 0)) delete x.chamfer; else x.chamfer = v / sc; }, `${name} ${raw === '' || !(v > 0) ? 'rim no longer chamfered' : `rim chamfer → ${f2(v)} mm × 45°`}`);
     else if (f === 'sketch') changeCut(pid, c.id, x => { x.sketch = raw; }, `${name} outline → ${(S.sketches.find(x => x.id === raw) || {}).name || raw}`);
     else if (f === 'axis') changeCut(pid, c.id, (x, kk) => { x.at = cutCenter(x, kk).slice(); if (raw && ARBOR[raw]) { x.axis = raw; x.at = cutCenter(x, kk).slice(); } else delete x.axis; },
       raw ? `${name} follows the ${ARBOR[raw].name} axis` : `${name} no longer follows an axis`);
@@ -3758,6 +4063,9 @@ function renderChecks() {
   items.push(split.length
     ? ['warn', `<b>Walls drawn twice</b>: one wall drawn as two copies across heights, running side by side or crossing, up to 0.3 mm apart (magenta lines in the view)<div class="mono">${split.map(([n, L]) => `${esc(n.split(' (')[0])}: ${f1(L)} mm`).join('<br>')}</div>${tTxt}`]
     : ['ok', `<b>Walls</b>: no wall is drawn twice across heights${tTxt}`]);
+  // Chamfers (see chamferSkins): a cut shallower than a chamfer that runs into its band is drawn as if it went deeper
+  const chw = partOrder.filter(id => parts[id] && (parts[id].chamferWarn || []).length).map(id => [nameOf(id), parts[id].chamferWarn]);
+  if (chw.length) items.push(['warn', `<b>Chamfers</b>: a cut shallower than a chamfer lies in its band (drawn as if it went deeper; the export cuts both exactly)<div class="mono">${chw.map(([n, w]) => `${esc(n.split(' (')[0])}: ${w.map(esc).join(', ')}`).join('<br>')}</div>`]);
   const mill = S.drawn.filter(d => millable(d, sketchOf(d)) && (d.cuts || []).length);   // every flat part with cuts goes to the machine
   if (mill.length) {
     const stale = mill.filter(d => machineState(d, sketchOf(d)) === 'stale'), none = mill.filter(d => !d.resolved), busy = mill.filter(d => RESOLVING.has(d.id));
@@ -3968,7 +4276,7 @@ function normalizeState(st) {
           ...(typeof c.fit === 'string' && /^[\w-]+$/.test(c.fit) ? { fit: c.fit } : {}),
           from: c.from === 'back' ? 'back' : 'front', depth: num(c.depth) && c.depth > 0 ? c.depth : null,
           seat: c.seat && num(c.seat.d) && num(c.seat.depth) && c.seat.d > 0 && c.seat.depth > 0 ? { d: c.seat.d, depth: c.seat.depth } : null,
-          csk: c.csk && num(c.csk.d) && c.csk.d > 0 ? { d: c.csk.d } : null }));
+          csk: c.csk && num(c.csk.d) && c.csk.d > 0 ? { d: c.csk.d } : null, ...(num(c.chamfer) && c.chamfer > 0 ? { chamfer: c.chamfer } : {}) }));
       const okRing = p => Array.isArray(p) && p.length >= 3 && p.every(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1]));
       const rv = d.resolved, resolved = rv && okRing(rv.outline) && Array.isArray(rv.tiers)
         ? { outline: rv.outline, tiers: rv.tiers.filter(t => t && num(t.depth) && t.depth > 0 && Array.isArray(t.paths)).map(t => ({ depth: t.depth, paths: t.paths.filter(okRing) })),
@@ -3976,6 +4284,7 @@ function normalizeState(st) {
             log: typeof rv.log === 'string' ? rv.log : '', ...(rv.shop && typeof rv.shop === 'object' ? { shop: { cutter: +rv.shop.cutter || 0, minWall: +rv.shop.minWall || 0 } } : {}) } : null;
       return { id: String(d.id), name: typeof d.name === 'string' && d.name ? d.name : String(d.id), sketch: String(d.sketch), thickness: d.thickness,
                ...(resolved ? { resolved } : {}), ...(num(d.minWall) && d.minWall >= 0 ? { minWall: d.minWall } : {}), ...(num(d.cutter) && d.cutter > 0 ? { cutter: d.cutter } : {}),
+               ...(d.chamfer && num(d.chamfer.size) && d.chamfer.size > 0 ? { chamfer: { face: d.chamfer.face === 'front' ? 'front' : 'back', size: d.chamfer.size } } : {}),
                grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges, ...(cuts.length ? { cuts } : {}), ...(d.mill === 'front' || d.mill === 'back' ? { mill: d.mill } : {}),
                ...(num(d.twist) && d.twist && Math.abs(d.twist) <= 36000 ? { twist: d.twist } : {}), ...(okXY(d.twistAt) ? { twistAt: d.twistAt.slice() } : {}),
                ...(d.place && Array.isArray(d.place.pivot) && d.place.pivot.length === 3 && d.place.pivot.every(num) && Array.isArray(d.place.axis) && d.place.axis.length === 3
@@ -4125,7 +4434,8 @@ function partRecord(id) {
     const mm = v => +(v * scale).toFixed(3);
     if (d.cuts && d.cuts.length) rec.cuts = d.cuts.map(c => ({ id: c.id, kind: c.kind, name: cutLabel(c), from: c.from, depth_mm: c.depth == null ? 'through' : mm(c.depth),
       ...(c.kind === 'pocket' ? { outline_sketch: c.sketch } : { d_mm: mm(c.d), at_mm: (cutCenter(c, k) || c.at).map(mm), ...(c.axis ? { on_axis: c.axis } : {}) }),
-      ...(c.seat ? { seat_mm: { d: mm(c.seat.d), depth: mm(c.seat.depth) } } : {}), ...(c.csk ? { countersink_d_mm: mm(c.csk.d) } : {}) }));
+      ...(c.seat ? { seat_mm: { d: mm(c.seat.d), depth: mm(c.seat.depth) } } : {}), ...(c.csk ? { countersink_d_mm: mm(c.csk.d) } : {}), ...(c.chamfer > 0 ? { rim_chamfer_45_mm: mm(c.chamfer) } : {}) }));
+    if (d.chamfer && d.chamfer.size > 0) rec.edge_chamfer_45 = { face: d.chamfer.face, size_mm: mm(d.chamfer.size) };
     Object.assign(rec, { thickness_mm: +(d.thickness * scale).toFixed(3), grows: growText(d, k), clashes_checked: false,
       outline: k ? { sketch: k.id, plane: { axis: k.plane.axis, offset_mm: +(k.plane.offset * scale).toFixed(3) }, closed: k.closed,
         faces_at_mm: faceOffsets(d, k).map(v => +(v * scale).toFixed(3)), points_mm: pts(k.points) } : null,

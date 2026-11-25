@@ -23,23 +23,24 @@ CLR = 0.2                       # movement to cavity, all round
 DIAL_T = 1.5875                 # 1/16": with the crystal glued into the faceplate, the dial only frames the discs (they ride 0.3 over it)
 DISC_TO_CRYSTAL = 0.3           # the discs' tops to the crystal's underside
 CRY_OUT, CRY_POCKET = 1.0, 1.1  # the crystal: the window's outline + 1.0 (Adam: cut to the viewing area, glued against a ledge); its pocket + 0.1
-# The front's relief (Adam: "plaques are flush. chamfers descend from there... keep the chamfers close to the model"), from the Meshy model's
-# height map at half its depth (sections across every feature): the shoulders (plaques, vents, plaque screws), the side-screw pads, the side
-# ribs and a band round the window are the flush top, its inner edges softened 0.5 x 45°; the ring round the window and the side rails are
-# RELIEF lower, the crystal's level, with a groove along each rib's outer foot. The octagon's corners are facets that fall from the band to
-# the outer edge (27° then 10° in the model, scaled to our tighter corners), each with a slot along its inner side down at the ring's level,
-# wrapping round the side screws' flush pads. The outer rim has a 0.5 break.
-RELIEF, RING = 2.0, 1.6         # the inner ring and side rails under the top; the ring's width round the window
-CF_W = 4.0                      # corner facet: its width in from the octagon's chamfer edge (the model's 5.2, scaled to our corners)
-CF_PROF = ((4.0, 0.0), (3.0, -0.55), (0.0, -1.25))  # its section (in from the edge, height from the top): the model's two slopes
-CF_S = (7.6, 18.1)              # its extent along the chamfer edge: from clear of the plaque screw's boss to the corner
-CF_SLOT = (1.9, 3.0, 9.8, 15.2) # its slot (in from the edge, from-to; along the edge, from-to), floor at the ring's level
-CF_SIM = 0.65                   # the sim draws the facet flat at about its mean depth (the STEP has the true slopes)
-BOSS_R = 2.8                    # the plaque screws' flush bosses (head 4.4 + 0.6 a side)
-RIB_X, SIDE_Y, SIDE_SLOT = (23.3, 24.3), 6.4, (24.7, 0.8, 0.4, 6.0)   # side rib (flush), side rail extent, its groove (x, width, depth, half-length)
-PAD_R = 2.4                     # the flush pads round the side-rail screws
-CH_FRAME = 0.5                  # 45° chamfer on the flush top's inner edges (the ring's outer wall, the plaques' faces and ends)
-BEVEL_RIM, BEVEL_WIN = 0.5, 0.3 # 45° bevels: the outer rim at the top, the window's edge at the ring (in the STEP; the sim draws straight walls)
+# The front's relief (Adam: "plaques are flush. chamfers descend from there... keep the chamfers close to the model", then, of the first
+# half-depth pass: "whats on the screen is ledges... this model requires chamfers... build geometry to the most reasonable chamferable
+# areas"). Levels from the Meshy model's height map at half its depth; every drop from the flush top is a 45° chamfer (the sim's
+# cut.chamfer, cut with a 90° chamfer mill or V-bit), sized to the room each one has:
+#   - the window: falls the whole RELIEF from the flush top (plaques, shoulders, ribs) to the crystal on a 45° chamfer, plaques included
+#     (a 1/4" or 6 mm 90° chamfer mill: a 1/8" one reaches about 1.4);
+#   - the side rails: RELIEF deep, their rib side and ends chamfered CH_RAIL, the rest of the wall straight;
+#   - the corner facets: a floor CF_DEPTH down along each of the octagon's chamfer edges, chamfered all round by its depth, with a slot in
+#     the floor down at the crystal's level;
+#   - the vents, counterbores and outer rim: small chamfers (CH_VENT, CH_CB, CH_RIM).
+RELIEF = 2.0                    # flush top to the crystal: the window's chamfer, and the side rails' depth
+CH_WIN = RELIEF                 # the window's chamfer: 45° all the way down to the crystal
+RIB_X = (RELIEF + 21.7, RELIEF + 22.7)            # the side rib, flush: from the window chamfer's top edge, 1.0 wide
+SIDE_Y, CH_RAIL = 5.8, 1.0      # the side rails: the floor's half-length (the end chamfers stop 0.6 short of the side screws' heads); rim chamfer
+CF_W, CF_DEPTH, CF_S = 3.0, 1.0, (8.6, 15.0)     # corner facets: the floor's width in from the octagon's chamfer edge, its depth, its extent along
+                                                 # the edge; chamfered all round 45° by its depth (the top edge 1.0 further in and longer)
+CF_SLOT = (1.5, 2.6, 9.8, 14.0) # the slot in each facet's floor (in from the edge, from-to; along the edge, from-to), down at the crystal's level
+CH_SLOT, CH_VENT, CH_CB, CH_RIM = 0.3, 0.2, 0.2, 0.5   # chamfers: the facet slots' rims, the vents, the screw counterbores, the outer rim
 CRYSTAL_T, CRYSTAL_STEP = 1.0, 0.6     # 1 mm acrylic; its edge 0.4 thick, glued up against the ledge
 LIP = 1.1                       # (the first trace's lip; the window is now the render's octagon, below)
 # The viewing area (Adam: "that's a design feature that really makes this 1980s"), measured off the render with its discs 20.8 apart (as
@@ -102,33 +103,26 @@ def build(layered_scene, info, helpers):
     win_oct = oct_(WIN_HW, WIN_HH, WIN_CH)
     yb = WIN_HH - PLQ_BITE
     plaques = [Polygon([(-PLQ_HW, sy * yb), (PLQ_HW, sy * yb), (PLQ_HW + 3.0, sy * (yb + 3.0)), (-PLQ_HW - 3.0, sy * (yb + 3.0))]) for sy in (1, -1)]
-    window = win_oct.difference(unary_union(plaques)).buffer(-0.3, 32, join_style=1).buffer(0.3, 64, join_style=1)   # (its inside corners r 0.3 for the cutter)
+    window = win_oct.difference(unary_union(plaques))   # (sharp: its chamfer's corners are crisp mitres; the end mill's radius in its 135° corners is 0.02 off)
     red = win_oct.buffer(-RED_IN, join_style=2).difference(win_oct.buffer(-(RED_IN + RED_W), join_style=2))
     boss = window.buffer(-0.1, 64)
     cry_out = window.buffer(CRY_OUT, 64, join_style=1).buffer(0.5, 64).buffer(-0.5, 64)   # the crystal: the window + 1.0 (its inside corners r 0.5, as cut)
     cry_pocket = window.buffer(CRY_POCKET, 64, join_style=1)                               # its pocket, up from the back to the ledge
     body = octagon()
-    # ---- the front's relief: the flush top; the ring round the window and the side rails at the crystal's level; the corner faces between
-    plq_zone = unary_union([Polygon([(-PLQ_HW, sy * yb), (PLQ_HW, sy * yb), (PLQ_HW + 12.0, sy * (yb + 12.0)), (-PLQ_HW - 12.0, sy * (yb + 12.0))]) for sy in (1, -1)])
-    ring = window.buffer(RING, 64, join_style=2).difference(window).difference(plq_zone)         # (cut by the plaques' 45° ends carried on)
-    ring_parts = [g for g in getattr(ring, 'geoms', [ring]) if g.area > 1e-3]
-    rails = [box(min(sx * RIB_X[1], sx * (W / 2 + 1.0)), -SIDE_Y, max(sx * RIB_X[1], sx * (W / 2 + 1.0)), SIDE_Y) for sx in (1, -1)]
-    def vstadium(x, y0, y1, w): return LineString([(x, y0 + w / 2), (x, y1 - w / 2)]).buffer(w / 2, 32)
-    side_slots = [vstadium(sx * SIDE_SLOT[0], -SIDE_SLOT[3], SIDE_SLOT[3], SIDE_SLOT[1]) for sx in (1, -1)]
+    # ---- the front's relief: the window chamfered down to the crystal; side rails; corner facets with their slots
+    rails = [box(min(sx * (RIB_X[1] + CH_RAIL), sx * (W / 2 + 1.0)), -SIDE_Y, max(sx * (RIB_X[1] + CH_RAIL), sx * (W / 2 + 1.0)), SIDE_Y) for sx in (1, -1)]
     corners = []
-    side_pads = [Point(sx * SIDE_SCR[0], sy * SIDE_SCR[1]).buffer(PAD_R, 64) for sx in (1, -1) for sy in (1, -1)]
-    plq_boss = [Point(sx * PLQ_SCR[0], sy * PLQ_SCR[1]).buffer(BOSS_R, 64) for sx in (1, -1) for sy in (1, -1)]
     for sx in (1, -1):
         for sy in (1, -1):
             p1 = (sx * (W / 2 - CH), sy * H / 2); t = (sx / math.sqrt(2), -sy / math.sqrt(2)); nv = (-sx / math.sqrt(2), -sy / math.sqrt(2))
             def at(s_, m_, p1=p1, t=t, nv=nv): return (p1[0] + s_ * t[0] + m_ * nv[0], p1[1] + s_ * t[1] + m_ * nv[1])
             m0, m1, s0, s1 = CF_SLOT; wi = m1 - m0
-            strip = Polygon([at(CF_S[0], -1.0), at(CF_S[1], -1.0), at(CF_S[1], CF_W), at(CF_S[0], CF_W)])
             corners.append({'p1': p1, 't': t, 'n': nv,
-                            'plan': strip.difference(unary_union(side_pads + plq_boss)),          # (round the flush pads and bosses)
+                            'floor': Polygon([at(CF_S[0], -1.0), at(CF_S[1], -1.0), at(CF_S[1], CF_W), at(CF_S[0], CF_W)]),
+                            'top': Polygon([at(CF_S[0] - CF_DEPTH, -1.0), at(CF_S[1] + CF_DEPTH, -1.0), at(CF_S[1] + CF_DEPTH, CF_W + CF_DEPTH), at(CF_S[0] - CF_DEPTH, CF_W + CF_DEPTH)]),
                             'slot': LineString([at(s0 + wi / 2, (m0 + m1) / 2), at(s1 - wi / 2, (m0 + m1) / 2)]).buffer(wi / 2, 32)})
-    front = dict(ring=ring_parts, rails=rails, side_slots=side_slots, corners=corners, plq_zone=plq_zone, ring_all=window.buffer(RING, 64, join_style=2),
-                 opening=unary_union([window] + ring_parts))                                    # (the flush top's inner edge runs round this)
+    win_top = window.buffer(CH_WIN, 64, join_style=2)                                     # the window chamfer's top edge
+    front = dict(rails=rails, corners=corners, win_top=win_top)
     discs = [(10.4, 0.0), (-10.4, 0.0)]
     # the crown sits outside the 3 o'clock wall in a well open to the back; the stem's neck passes the wall in a slit open to the back
     well = box(crown_x0 - 0.3, -(crown_r + 0.3), W / 2 + 2.0, crown_r + 0.3)
@@ -150,46 +144,48 @@ def build(layered_scene, info, helpers):
     kn = [400]
     def newk(): kn[0] += 1; return f'K{kn[0]}'
     sks, parts = [], []
-    def part(pid, name, outline, z0, t, cuts, mill='back'):
+    def part(pid, name, outline, z0, t, cuts, mill='back', chamfer=None):
         k = newk(); sks.append(sketch(k, f'{name.split(" (")[0]} outline', 'z', round(z0, 5), poly_dots(outline)))
-        parts.append({'id': pid, 'name': name, 'sketch': k, 'thickness': round(t, 5), 'grow': 'plus', 'mill': mill, 'minWall': 0.6, 'cuts': cuts})
-    def pocket(name, poly, frm, depth, hid):
+        parts.append({'id': pid, 'name': name, 'sketch': k, 'thickness': round(t, 5), 'grow': 'plus', 'mill': mill, 'minWall': 0.6, 'cuts': cuts,
+                      **({'chamfer': chamfer} if chamfer else {})})
+    def pocket(name, poly, frm, depth, hid, chamfer=None):
         if list(getattr(poly, 'interiors', [])): raise ValueError(f'{name}: a pocket with a hole (cut it as halves)')
         k = newk(); sks.append(sketch(k, name, 'z', 0.0, poly_dots(poly)))
-        return {'id': f'h{hid}', 'kind': 'pocket', 'name': name, 'sketch': k, 'from': frm, 'depth': None if depth is None else round(depth, 4)}
-    def hole(kind, name, at, d, frm, hid, depth=None, seat=None, fit=None):
+        return {'id': f'h{hid}', 'kind': 'pocket', 'name': name, 'sketch': k, 'from': frm, 'depth': None if depth is None else round(depth, 4),
+                **({'chamfer': chamfer} if chamfer else {})}
+    def hole(kind, name, at, d, frm, hid, depth=None, seat=None, fit=None, chamfer=None):
         c = {'id': f'h{hid}', 'kind': kind, 'name': name, 'at': [round(at[0], 4), round(at[1], 4)], 'd': d, 'from': frm, 'depth': depth}
         if seat: c['seat'] = seat
         if fit: c['fit'] = fit
+        if chamfer: c['chamfer'] = chamfer
         return c
     T_body = z_top - z_back
     hn = [0]
     def nid(): hn[0] += 1; return hn[0]
     ne_heads = [(5.05, 13.4), (10.55, 13.9)]
     z_head = z_plates + 1.8                            # the NE plate's pan heads stand 1.6 over the plates: clear them by 0.2
-    bc = [pocket('Window (the crystal\'s raised centre fills it, flush with the ring)', window, 'back', None, nid()),
+    bc = [pocket('Window: chamfered 45° from the flush top down to the crystal (whose raised centre fills it), plaques included', window, 'back', None, nid(), chamfer=CH_WIN),
           pocket('Cavity: the movement and dial plate go in from the back; its ceiling is the dial plate\'s shoulder', cav, 'front', z_dial1 - z_back, nid()),
           pocket('Crystal pocket (the window + 1.1): the crystal goes in from the back and is glued up against the ledge, 0.6 under the ring', cry_pocket, 'front', z_lip0 - z_back, nid()),
           pocket('Crown well (open to the back: the crown drops in with the movement)', well, 'front', zw + crown_r + 0.3 - z_back, nid()),
           pocket('Stem slit (open to the back)', slit, 'front', zw + neck_r + 0.2 - z_back, nid())]
     for s in ne_heads: bc.append(hole('clear', 'Relief over the NE plate\'s pan head (in the cavity\'s ceiling)', s, 4.6, 'front', nid(), depth=round(z_head - z_back, 4)))
     for sl in slots: bc.append(pocket('Lug slot (open to the back and the 12/6 face: the lug rises into it)', sl, 'front', RISE + 0.1, nid()))
-    for rp in ring_parts: bc.append(pocket('Inner ring round the window, flush with the crystal (none at the plaques: their faces drop straight to it)', rp, 'back', RELIEF, nid()))
-    for rl in rails: bc.append(pocket('Side rail, at the crystal\'s level (a flush rib inside it)', rl, 'back', RELIEF, nid()))
-    for sl in side_slots: bc.append(pocket('Side rail groove (along the rib\'s outer foot)', sl, 'back', RELIEF + SIDE_SLOT[2], nid()))
+    for rl in rails: bc.append(pocket('Side rail, down at the crystal\'s level (its rib side and ends chamfered)', rl, 'back', RELIEF, nid(), chamfer=CH_RAIL))
     for c in corners:
-        bc.append(pocket('Corner facet (falls from the band to the outer edge, 0 to 1.25; the sim draws it flat at its mean depth)', c['plan'], 'back', CF_SIM, nid()))
-        bc.append(pocket('Corner facet slot (down at the ring\'s level)', c['slot'], 'back', RELIEF, nid()))
+        bc.append(pocket('Corner facet: a floor along the octagon\'s chamfer edge, chamfered 45° all round', c['floor'], 'back', CF_DEPTH, nid(), chamfer=CF_DEPTH))
+        bc.append(pocket('Corner facet slot (in the floor, down at the crystal\'s level)', c['slot'], 'back', RELIEF, nid(), chamfer=CH_SLOT))
     vy = (18.3, 20.2, 22.1)
     for sy in (-1, 1):
-        for y in vy: bc.append(pocket('Vent (the shoulders\' three slots)', stadium(-10.0, 10.0, sy * y, 1.0), 'back', 1.0, nid()))
+        for y in vy: bc.append(pocket('Vent (the shoulders\' three slots)', stadium(-10.0, 10.0, sy * y, 1.0), 'back', 1.0, nid(), chamfer=CH_VENT))
     for s in plq:
-        bc.append(hole('clear', 'Plaque screw, M2x14 wafer head: clear down to the lug riser (it threads 5.1 into the riser and clamps the lug)', s, 2.3, 'back', nid(), depth=round(z_top - (z_back + RISE), 4), seat={'d': 4.4, 'depth': 0.9}, fit='m2_clear'))
+        bc.append(hole('clear', 'Plaque screw, M2x14 wafer head: clear down to the lug riser (it threads 5.1 into the riser and clamps the lug)', s, 2.3, 'back', nid(), depth=round(z_top - (z_back + RISE), 4), seat={'d': 4.4, 'depth': 0.9}, fit='m2_clear', chamfer=CH_CB))
     for s in side_scr:
         bc.append(hole('pilot', 'Side-rail screw, M1.6: drilled through, tapped 5 from each end (front screw down, back screw up)', s, 1.25, 'back', nid()))
-        bc.append(hole('clear', 'Side-rail screw head (M1.6, low)', s, 3.2, 'back', nid(), depth=0.5))
-    part('D9', 'Faceplate and body (black delrin, 3/4" faced to %.2f; milled from the front, then the back): the window, the ring and side rails at the crystal\'s level, '
-               'the corner faces, vents and front screws on the front; the movement\'s cavity, the crystal\'s pocket and ledge, the crown well and the stem slit from the back' % T_body, body, z_back, T_body, bc)
+        bc.append(hole('clear', 'Side-rail screw head (M1.6, low)', s, 3.2, 'back', nid(), depth=0.5, chamfer=CH_CB))
+    part('D9', 'Faceplate and body (black delrin, 3/4" faced to %.2f; milled from the front, then the back): the window chamfered down to the crystal, the side rails, '
+               'the corner facets, vents and front screws on the front, every rim chamfered 45°; the movement\'s cavity, the crystal\'s pocket and ledge, the crown well and the '
+               'stem slit from the back' % T_body, body, z_back, T_body, bc, chamfer={'face': 'back', 'size': CH_RIM})
     cry = [pocket('Step: the edge 0.4 thick, glued up against the ledge', hp, 'back', CRYSTAL_STEP, 1 + i) for i, hp in enumerate(halves(cry_out.difference(boss)))]
     part('D10', 'Crystal (1 mm clear acrylic, the window\'s shape + 1.0): its raised centre fills the window flush with the ring, its stepped edge is glued up against the ledge from the back', cry_out, z_cry0, CRYSTAL_T, cry)
     dc = [hole('clear', f'Disc aperture ({nm})', c, 19.6, 'back', i + 1) for i, (c, nm) in enumerate(zip(discs, ('minute', 'hour')))]
@@ -221,8 +217,8 @@ def build(layered_scene, info, helpers):
     # ---- the project
     P.update({'id': 'h88-case', 'name': 'H-88 Spectrum · case', 'title': 'H-88 Spectrum: a case for Beta 2'})
     P['blurb'] = ('The 1988 AMC Hemistitch H-88 "Spectrum" case around Beta 2 · layered, traced from Adam\'s Meshy model, render and stack sketch. '
-                  f'Faceplate and body (one piece, {W:.1f} x {H:.1f} mm octagon; its front relief at half the model\'s depth: a flush top, the ring round the window and the side rails '
-                  'at the crystal\'s level, chamfered corner faces), a 1 mm acrylic crystal in the window\'s shape glued against a ledge, a 1/16" dial plate with the discs turning in its apertures, '
+                  f'Faceplate and body (one piece, {W:.1f} x {H:.1f} mm octagon; its front relief at half the model\'s depth, every drop a 45° chamfer: the window falls from the flush top '
+                  'to the crystal, side rails, corner facets with slots), a 1 mm acrylic crystal in the window\'s shape glued against a ledge, a 1/16" dial plate with the discs turning in its apertures, '
                   'Beta 2, a lug plate (a frame with four lugs, a two-view part for the 4th axis) '
                   'and a back plate. The movement, stem and crown drop in from the back through a slit at 3. Four back screws thread up into the body; four front screws '
                   f'thread down into the same holes. {z_top - z_frame0:.2f} mm from the lug plate\'s back to the faceplate\'s top.')
@@ -238,11 +234,14 @@ def build(layered_scene, info, helpers):
               'z': {'lug plate': (round(z_frame0, 4), round(z_back, 4)), 'back plate': (round(z_back - BACK_T, 4), round(z_back, 4)), 'movement': (z_back, z_plates),
                     'discs': (7.75, round(z_disc1, 4)), 'dial plate': (round(z_dial0, 4), round(z_dial1, 4)), 'crystal': (round(z_cry0, 4), round(z_cry1, 4)),
                     'body': (z_back, round(z_top, 4))},
-              'front': {'top': round(z_top, 4), 'ring and rails (crystal top)': round(z_ring, 4), 'corner facets (inner edge to outer edge)': (round(z_top, 4), round(z_top + CF_PROF[-1][1], 4)), 'ledge': (round(z_lip0, 4), round(z_ring, 4)),
-                        'band ring-to-corner facet': round(((W / 2 + H / 2 - CH) - CF_W * math.sqrt(2) - (WIN_HW + WIN_HH - WIN_CH + RING * math.sqrt(2))) / math.sqrt(2), 2),
-                        'corner facet to plaque screw head / side screw head': (round(min(c['plan'].distance(Point(q)) for c in corners for q in plq) - 2.2, 2),
-                                                                                 round(min(c['plan'].distance(Point(q)) for c in corners for q in side_scr) - 1.6, 2)),
-                        'rail to side screw head': round(min(r.distance(Point(q)) for r in rails for q in side_scr) - 1.6, 2),
+              'front': {'top': round(z_top, 4), 'crystal (the window chamfer\'s foot, the rails\' floor)': round(z_ring, 4), 'facet floor': round(z_top - CF_DEPTH, 4),
+                        'ledge': (round(z_lip0, 4), round(z_ring, 4)),
+                        'window chamfer top to facet top (flush band)': round(min(win_top.distance(c['top']) for c in corners), 2),
+                        'facet top to plaque / side screw head': (round(min(c['top'].distance(Point(q)) for c in corners for q in plq) - 2.2, 2),
+                                                                  round(min(c['top'].distance(Point(q)) for c in corners for q in side_scr) - 1.6, 2)),
+                        'rail chamfer top to side screw head': round(min(r.buffer(CH_RAIL, join_style=2).distance(Point(q)) for r in rails for q in side_scr) - 1.6, 2),
+                        'rib (flush) width': round(RIB_X[1] - RIB_X[0], 2), 'window chamfer top to plaque screw head': round(min(win_top.distance(Point(q)) for q in plq) - 2.2, 2),
+                        'vent webs at the top': round(1.9 - 1.0 - 2 * CH_VENT, 2),
                         'NE head relief to crystal pocket': round(min(cry_pocket.distance(Point(q)) for q in ne_heads) - 2.3, 2)},
               'total': round(z_top - z_frame0, 3), 'disc_to_crystal': round(z_cry0 - z_disc1, 3), 'window': [round(v, 2) for v in window.bounds],
               'crown': {'x0': crown_x0, 'r': crown_r, 'below_back_face': round(z_back - (zw - crown_r), 3)}, 'screws': scr,

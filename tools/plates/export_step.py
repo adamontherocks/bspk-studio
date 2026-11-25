@@ -7,7 +7,10 @@
 #                              a wall shared by two floors fitted alike, so the floors meet exactly and glue into one solid.
 #   <pid>-<name>.dxf           for 2.5D CAM (Makera Studio): the outline on layer OUTLINE, each tier's rings on layer DEPTH_<mm from the
 #                              milled face>, each drilled hole a true circle on layer DRILL_<Ø>_DEPTH_<mm> (THROUGH for through cuts).
-#                              Exactly the resolved dots.
+#                              Exactly the resolved dots. Chamfers (cut['chamfer'], the part's d['chamfer']): the edge they follow on
+#                              layer CHAMFER45_<width>_<face>[_ON_<mm>] (a 90° chamfer mill or V-bit along it; ON: it starts on a floor).
+# Chamfers (2026-11-25) are cut into the solid as the sim draws them (tools/plates/chamfer.py: 45°, mitred corners, from where the cut
+# meets material), after the holes; a part's own edge chamfer by keeping only the outline drafted 45° in over it.
 # Two steps, two Pythons: the slabs are cut and fitted with pyclipper and numpy (system python, like the resolver); the solid is made
 # with CadQuery (.venv). What did not work (2026-11-22): cutting each tier out of a block (over 10 minutes for one plate: the tiers
 # share their walls, and solid booleans on coincident faces crawl); slabs with walls as the raw dots (12,000 edges a face: over an
@@ -65,6 +68,41 @@ def plan(J, pid):
         if not mat: continue
         za, zb_ = mz + sgn * s0, mz + sgn * s1
         slabs.append({'z0': min(za, zb_), 'z1': max(za, zb_), 'rings': [[[round(x, 4), round(y, 4)] for x, y in F(p)] for p in mat]})
+    # chamfers: each chamfered cut's opening (its outline, or its seat's / hole's ring), where it starts (the floor of a cut it sits in)
+    import math
+    import chamfer as chf
+    def ring(at, r, n=96): return [(at[0] + r * math.cos(2 * math.pi * i / n), at[1] + r * math.sin(2 * math.pi * i / n)) for i in range(n)]
+    def pip(pt, poly):
+        ins = False; j = len(poly) - 1
+        for i in range(len(poly)):
+            a, b = poly[i], poly[j]
+            if (a[1] > pt[1]) != (b[1] > pt[1]) and pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]: ins = not ins
+            j = i
+        return ins
+    opens = []
+    for c in d.get('cuts') or []:
+        D = T if c.get('depth') is None else min(T, c['depth']); fz = zb if c.get('from') == 'back' else zf
+        if c['kind'] == 'pocket':
+            ks = next((s_ for s_ in st['sketches'] if s_['id'] == c.get('sketch')), None)
+            if ks: opens.append({'c': c, 'from': c.get('from') or 'front', 'z': fz, 'D': D, 'path': [(q['u'], q['v']) for q in ks['points']]})
+        elif c.get('d'):
+            at = st['pos'].get(c['axis']) if c.get('axis') and st['pos'].get(c['axis']) else c['at']
+            seat = bool(c.get('seat')) and c['seat'].get('d', 0) > c['d'] and c['seat'].get('depth', 0) > 0
+            opens.append({'c': c, 'from': c.get('from') or 'front', 'z': fz, 'D': min(D, c['seat']['depth']) if seat else D, 'path': ring(at, (c['seat']['d'] if seat else c['d']) / 2)})
+    chamfers = []
+    for L in opens:
+        size = L['c'].get('chamfer') or 0
+        if not size > 0: continue
+        z0 = 0.0
+        for M in opens:
+            if M is not L and M['from'] == L['from'] and z0 < M['D'] < L['D'] - 1e-6 and all(pip(q, M['path']) for q in L['path']): z0 = M['D']
+        cc = min(size, L['D'] - z0)
+        b = chf.bevel(L['path'], cc, L['z'], -1 if L['z'] == max(zf, zb) else 1, z0) if cc > 1e-4 else None
+        if b: chamfers.append({'op': b, 'path': L['path'], 'size': cc, 'face': L['from'], 'z0': z0})
+    edge = None
+    if d.get('chamfer') and d['chamfer'].get('size', 0) > 0:
+        face_e = 'back' if d['chamfer'].get('face', 'back') == 'back' else 'front'
+        edge = {'size': min(d['chamfer']['size'], T), 'z': zb if face_e == 'back' else zf, 'face': face_e, 'outline': res['outline']}
     holes = []
     for c in d.get('cuts') or []:
         own = c['kind'] in DRILLED and c.get('d') and c['d'] <= DRILL_MAX
@@ -90,7 +128,7 @@ def plan(J, pid):
     allf = [f for sl in slabs for f in sl['faces']]
     fitted, fit_stats = fit_faces(allf)
     for f, fr in zip(allf, fitted): f['fit'] = fr
-    return {'T': T, 'slabs': slabs, 'holes': holes, 'outline': res['outline'], 'tiers': res['tiers'], 'name': d.get('name') or pid,
+    return {'T': T, 'slabs': slabs, 'holes': holes, 'chamfers': chamfers, 'edge': edge, 'outline': res['outline'], 'tiers': res['tiers'], 'name': d.get('name') or pid,
             'z': [min(zf, zb), max(zf, zb)], 'mill_z': mz, 'into': sgn, 'volume_exact': volume, 'fit': dict(fit_stats, specks=specks, tol=TOL)}
 
 def face_of(cq, f):
@@ -118,6 +156,10 @@ def build_dxf(job, base):
         msp.add_circle(h['at'], h['d'] / 2, dxfattribs={'layer': f"DRILL_{h['d']:g}_" + ('THROUGH' if h['through'] else f"DEPTH_{h['depth']:.3f}")})
         if h.get('seat') and h['seat'].get('d', 0) > h['d']: msp.add_circle(h['at'], h['seat']['d'] / 2, dxfattribs={'layer': f"SEAT_{h['seat']['d']:g}_DEPTH_{h['seat']['depth']:.3f}"})
         if h.get('csk') and h['csk'].get('d', 0) > h['d']: msp.add_circle(h['at'], h['csk']['d'] / 2, dxfattribs={'layer': f"CSK90_{h['csk']['d']:g}"})
+    for ch in job.get('chamfers') or []:
+        msp.add_lwpolyline(ch['path'], close=True, dxfattribs={'layer': f"CHAMFER45_{ch['size']:.3f}_{ch['face'].upper()}" + (f"_ON_{ch['z0']:.3f}" if ch['z0'] > 1e-6 else '')})
+    if job.get('edge'):
+        msp.add_lwpolyline(job['edge']['outline'], close=True, dxfattribs={'layer': f"CHAMFER45_{job['edge']['size']:.3f}_{job['edge']['face'].upper()}_EDGE"})
     doc.saveas(base + '.dxf')
     return {'dxf': base + '.dxf', 'layers': sorted({e.dxf.layer for e in msp})}
 
@@ -143,7 +185,14 @@ def build(job, base, single):
             c = (h['csk']['d'] - h['d']) / 2
             cut = cut.fuse(cq.Solid.makeCone(h['csk']['d'] / 2 + 0.005, h['d'] / 2, c + 0.005, cq.Vector(x, y, h['z'] - s * 0.005), cq.Vector(0, 0, s)))
         tools.append(cut)
+    for ch in job.get('chamfers') or []:      # the chamfers: ruled lofts (tools/plates/chamfer.py), cut with the holes
+        tools.append(cq.Solid.makeLoft([cq.Wire.makePolygon([cq.Vector(*q) for q in ch['op'][k]], close=True) for k in ('w0', 'w1')], True))
     if tools: body = body.cut(*tools)          # all holes in one cut (one at a time rebuilt the whole plate each time: 15 holes, 66 s)
+    if job.get('edge'):                       # the part's own edge chamfer: keep the outline drafted 45° in over it
+        e = job['edge']; zlo, zhi = job['z']; c = e['size']; f0 = cq.Face.makeFromWires(cq.Wire.makePolygon([cq.Vector(x, y, 0) for x, y in e['outline']], close=True))
+        if abs(e['z'] - zhi) < 1e-9: keep = cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, zhi - c - zlo + 0.02)).translate(cq.Vector(0, 0, zlo - 0.01)).fuse(cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, c + 0.01), taper=45).translate(cq.Vector(0, 0, zhi - c)))
+        else: keep = cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, zhi - zlo - c + 0.02)).translate(cq.Vector(0, 0, zlo + c - 0.01)).fuse(cq.Solid.extrudeLinear(f0, cq.Vector(0, 0, -(c + 0.01)), taper=45).translate(cq.Vector(0, 0, zlo + c)))
+        body = body.intersect(keep)
     cq.exporters.export(cq.Workplane('XY').add(body), base + '.step')
     cq.exporters.export(cq.Workplane('XY').add(body), base + '.stl', tolerance=0.005, angularTolerance=0.05)
     mem = body.isValid(); back = cq.importers.importStep(base + '.step').vals()
