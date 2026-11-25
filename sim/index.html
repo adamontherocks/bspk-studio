@@ -182,6 +182,8 @@ textarea.txt{min-height:56px;resize:vertical;line-height:1.45}
 .mark-btn.on{background:var(--pin);color:#0d1319;border-color:var(--pin);font-weight:600}
 .mark-btn.on::before{background:#0d1319;outline-color:#0d1319}
 .mark-btn kbd{font:10px var(--mono);opacity:.7}
+.trace-btn{top:88px}
+.trace-btn::before{border-radius:2px;transform:rotate(45deg)}
 .mark-btn .mk-n{font:600 10px/1 var(--mono);padding:2px 5px;border-radius:999px;background:var(--pin);color:#0d1319}
 .mark-btn.on .mk-n{background:#0d1319;color:var(--pin)}
 .mark-note{position:absolute;left:0;top:0;width:280px;z-index:5;display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px;background:rgba(15,22,29,.97);border:1px solid rgba(240,180,76,.6);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);will-change:transform}
@@ -234,6 +236,7 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
     <div class="tip" id="tip" hidden></div>
     <div class="quick" id="quick" hidden></div>
     <button class="mark-btn" id="markBtn" title="Markup: click a part to pin a note, or press and drag on a part to circle an area. M toggles it.">Markup <kbd>M</kbd></button>
+    <button class="mark-btn trace-btn" id="traceBtn" title="Trace: click the corners of an area on any surface (sloped faces too), then close it and say what it's for. T toggles it.">Trace <kbd>T</kbd></button>
     <div class="mark-note" id="markNote" hidden></div>
     <div class="overlay top">mm · Z up, dial side on top · <span id="gridLabel"></span></div>
     <div class="clock"><div class="t" id="dial">12:00:00</div><div class="s"><span class="beat" id="beat"></span><span id="beatTxt"></span></div></div>
@@ -276,7 +279,7 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
 
     <section>
       <button class="eyebrow fold" data-fold="pins" aria-expanded="true" title="Fold the list of notes (notes waiting on Claude stay in view)"><span class="chev" aria-hidden="true"></span>Markup<span class="fold-n" id="markN"></span></button>
-      <div class="row"><button class="tool" id="pinTool">Markup</button><label class="toggle" style="align-self:center"><input type="checkbox" id="showResolved"> Show resolved</label></div>
+      <div class="row"><button class="tool" id="pinTool">Markup</button><button class="tool" id="traceTool" title="Click the corners of an area on any surface, then close it">Trace</button><label class="toggle" style="align-self:center"><input type="checkbox" id="showResolved"> Show resolved</label></div>
       <p class="note" id="markCount"></p>
       <ul class="pins" id="pins" data-fold-list="pins"></ul>
     </section>
@@ -2972,7 +2975,13 @@ canvas.addEventListener('dblclick', e => {
 window.addEventListener('keydown', e => {
   const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement && document.activeElement.tagName);
   if (e.key === 'Escape' && !typing && noteFor) { closeNote(); return; }
+  if (tool === 'trace' && !typing && traceCur) {                 // a trace in progress: Esc drops it, Backspace takes its last corner back, Enter closes it
+    if (e.key === 'Escape') { traceCancel(); return; }
+    if (e.key === 'Backspace') { e.preventDefault(); traceCur.pts.pop(); traceCur.ns.pop(); if (!traceCur.pts.length) traceCancel(); else tracePreview(); return; }
+    if (e.key === 'Enter') { e.preventDefault(); traceClose(); return; }
+  }
   if (e.key === 'Escape' && !typing) { if (tool !== 'select') setTool('select'); else select(null); }
+  if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 't' && tool !== 'sketch') setTool(tool === 'trace' ? 'select' : 'trace');
   if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 'm' && tool !== 'sketch') setTool(tool === 'pin' ? 'select' : 'pin');
   if (!typing && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
 });
@@ -2981,19 +2990,23 @@ window.addEventListener('keydown', e => {
 const HINTS = {
   select: 'hover to identify · click to select (its label shows, with a padlock to lock or unlock it) · drag an arrow on the selected part to move it along X, Y or Z · double-click to zoom · drag empty space to orbit · right-drag pan · scroll zoom',
   pin: 'MARKUP · click a part to pin a note on that spot · press and drag on a part to circle an area · click a mark to open its note · drag empty space to orbit · M or Esc to stop',
+  trace: 'TRACE · click the corners of an area on any surface (sloped faces too) · click the first corner, double-click or press Enter to close it · Backspace takes the last corner back · drag to orbit · Esc cancels · T to stop',
 };
 function setTool(t) {
   if (t === tool) return;
   const was = tool;
   tool = t;
   if (was === 'sketch' && window.Sketcher) window.Sketcher.exit();
+  if (was === 'trace') traceCancel();
+  document.getElementById('traceTool').classList.toggle('on', t === 'trace'); document.getElementById('traceTool').textContent = t === 'trace' ? 'Stop tracing' : 'Trace';
+  document.getElementById('traceBtn').classList.toggle('on', t === 'trace');
   if (t === 'sketch' && window.Sketcher) window.Sketcher.enter();
   document.getElementById('pinTool').classList.toggle('on', t === 'pin');
   document.getElementById('pinTool').textContent = t === 'pin' ? 'Stop markup' : 'Markup';
   markBtn.classList.toggle('on', t === 'pin');
   markBtnLabel();
   syncPins();                                         // marks show only in Markup mode (and the one whose note is open)
-  if (was === 'pin' && noteFor) closeNote(true);
+  if ((was === 'pin' || was === 'trace') && noteFor) closeNote(true);
   canvas.style.cursor = t === 'select' ? '' : 'crosshair';
   document.getElementById('hint').textContent = (t === 'sketch' && window.Sketcher) ? window.Sketcher.hint : HINTS[t] || HINTS.select;
   if (t !== 'select') setHover(null, 'view');
@@ -3003,6 +3016,8 @@ function setTool(t) {
   if (window.Sketcher) window.Sketcher.renderPanel();
 }
 document.getElementById('pinTool').addEventListener('click', () => setTool(tool === 'pin' ? 'select' : 'pin'));
+document.getElementById('traceTool').addEventListener('click', () => setTool(tool === 'trace' ? 'select' : 'trace'));
+document.getElementById('traceBtn').addEventListener('click', () => setTool(tool === 'trace' ? 'select' : 'trace'));
 const markBtn = document.getElementById('markBtn');
 markBtn.addEventListener('click', () => setTool(tool === 'pin' ? 'select' : 'pin'));
 
@@ -3099,7 +3114,8 @@ function pinWorld(pin) {
   return p.root.localToWorld(new THREE.Vector3(...pin.at));
 }
 // Marks show only while Markup is on, so the normal view stays clean; a note opened from the list shows its own mark.
-const markShown = pin => parts[pin.part] && (pin.id === noteFor || (tool === 'pin' && (showResolved || stateOf(pin) !== 'resolved')));
+const markShown = pin => parts[pin.part] && (pin.id === noteFor || ((tool === 'pin' || tool === 'trace') && (showResolved || stateOf(pin) !== 'resolved')));
+const markKind = pin => (pin.trace ? `trace, ${pin.trace.length} corners` : pin.r ? 'area' : 'spot');
 function markBtnLabel() {                             // the button says how many notes are live, so hidden marks aren't forgotten
   const live = S.pins.filter(p => stateOf(p) !== 'resolved').length;
   markBtn.innerHTML = (tool === 'pin' ? 'Stop markup' : 'Markup') + (live ? ` <span class="mk-n">${live}</span>` : '') + ' <kbd>M</kbd>';
@@ -3110,6 +3126,7 @@ function syncPins() {
     const o = pinObjs[id];
     o.sprite.parent && o.sprite.parent.remove(o.sprite);
     if (o.ring && o.ring.parent) o.ring.parent.remove(o.ring);
+    if (o.trace) { if (o.trace.parent) o.trace.parent.remove(o.trace); disposeGroup(o.trace); }
     o.label.remove();
     delete pinObjs[id];
   }
@@ -3141,6 +3158,16 @@ function syncPins() {
       placeRing(o.ring, new THREE.Vector3(...pin.at), new THREE.Vector3(...(pin.n || [0, 0, 1])).normalize(), pin.r);
       o.ring.visible = shown;
     } else if (o.ring) { if (o.ring.parent) o.ring.parent.remove(o.ring); o.ring = null; }
+    if (pin.trace) {
+      const tk = `${st}|${JSON.stringify(pin.trace)}`;
+      if (!o.trace || o.traceKey !== tk) {
+        if (o.trace) { if (o.trace.parent) o.trace.parent.remove(o.trace); disposeGroup(o.trace); }
+        const pts = pin.trace.map((q, i) => new THREE.Vector3(...q).addScaledVector(new THREE.Vector3(...((pin.tn && pin.tn[i]) || [0, 0, 1])), 0.03));
+        o.trace = traceGroup(pts, MARK[st].color, true, 0.12); o.traceKey = tk;
+      }
+      if (o.trace.parent !== parent) { if (o.trace.parent) o.trace.parent.remove(o.trace); parent.add(o.trace); }
+      o.trace.visible = shown;
+    } else if (o.trace) { if (o.trace.parent) o.trace.parent.remove(o.trace); disposeGroup(o.trace); o.trace = null; }
     const key = `${pin.id}|${pin.note}|${st}`;
     if (o.key !== key) {
       o.key = key;
@@ -3184,6 +3211,77 @@ window.addEventListener('pointerup', () => {
   addMark(m.part, m.at, m.n, m.moved && m.r / scale > 0.8 ? m.r : 0);
 });
 
+// ---------- trace: the corners of an area on any surface (2026-11-25, Adam: "something about our sketch tool doesnt let me sketch on
+// surfaces... so i mouse clicked in the corners i was trying to define") ----------
+// In Trace mode each click on a part adds a corner where it lands (and the way that surface faces there), sloped faces and all; the
+// outline closes on its first corner, a double-click or Enter. It becomes a mark like a pin (a note, its state), kept in the first
+// part's frame, so it moves with the part and Claude reads its corners in 3D (the Report for Claude lists them).
+let traceCur = null, tracePrev = null, traceDown = null, traceHover = null;
+const traceMat = color => new THREE.MeshBasicMaterial({ color, depthTest: false, depthWrite: false, transparent: true, opacity: 0.95 });
+function traceGroup(pts, color, closed, tubeR) {   // a band along the corners (WebGL lines are 1 px, too faint) and a dot on each corner
+  const grp = new THREE.Group(), segs = closed ? pts.length : pts.length - 1;
+  for (let i = 0; i < segs; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    if (a.distanceTo(b) < 1e-6) continue;
+    const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(a, b), 1, tubeR, 6, false), traceMat(color));
+    m.renderOrder = 21; grp.add(m);
+  }
+  for (const p of pts) { const d = new THREE.Mesh(new THREE.SphereGeometry(tubeR * 2.4, 12, 8), traceMat(color)); d.position.copy(p); d.renderOrder = 22; grp.add(d); }
+  return grp;
+}
+const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+function tracePreview() {
+  if (tracePrev) { scene.remove(tracePrev); disposeGroup(tracePrev); tracePrev = null; }
+  if (!traceCur) return;
+  const pts = traceCur.pts.map((p, i) => p.clone().addScaledVector(traceCur.ns[i], 0.03 * scale));
+  if (traceHover) pts.push(traceHover.clone());
+  tracePrev = traceGroup(pts, MARK.open.color, false, 0.12 * scale);
+  scene.add(tracePrev);
+}
+function traceCancel() { traceCur = null; traceHover = null; tracePreview(); }
+function traceClose() {
+  if (!traceCur) return;
+  if (traceCur.pts.length < 3) { traceCancel(); return; }
+  const c = traceCur; traceCur = null; traceHover = null; tracePreview();
+  const root = parts[c.part].root, inv = root.matrixWorld.clone().invert(), r4 = v => +v.toFixed(4);
+  const loc = c.pts.map(p => root.worldToLocal(p.clone())), nl = c.ns.map(n => n.clone().transformDirection(inv));
+  const id = nextPinId();
+  const pin = { id, part: c.part, at: [loc[0].x, loc[0].y, loc[0].z].map(r4), note: '', status: 'open',
+    w: [c.pts[0].x, c.pts[0].y, c.pts[0].z].map(v => +(v / scale).toFixed(3)), t: new Date().toISOString(),
+    trace: loc.map(p => [p.x, p.y, p.z].map(r4)), tn: nl.map(n => [n.x, n.y, n.z].map(v => +v.toFixed(4))),
+    tw: c.pts.map(p => [p.x, p.y, p.z].map(v => +(v / scale).toFixed(3))) };
+  S.pins.push(pin);
+  activePin = id;
+  syncPins(); renderPins();
+  openNote(id, true);
+}
+canvas.addEventListener('pointerdown', e => { if (tool === 'trace' && e.button === 0 && !gizmo.axis) traceDown = [e.clientX, e.clientY]; }, { capture: true });
+window.addEventListener('pointermove', e => {
+  if (tool !== 'trace' || !traceCur) return;
+  const h = e.target === canvas ? hitAt(e.clientX, e.clientY) : null;
+  traceHover = h ? h.point.clone().addScaledVector(h.normal, 0.03 * scale) : null;
+  tracePreview();
+});
+window.addEventListener('pointerup', e => {
+  if (tool !== 'trace' || !traceDown || e.button !== 0) { traceDown = null; return; }
+  const moved = Math.hypot(e.clientX - traceDown[0], e.clientY - traceDown[1]) > 5;
+  traceDown = null;
+  if (moved || e.target !== canvas) return;                       // (a drag orbits, as everywhere)
+  const h = hitAt(e.clientX, e.clientY);
+  if (!h) return;
+  if (noteFor) closeNote(true);
+  if (traceCur && traceCur.pts.length >= 3) {                    // back on the first corner: close it
+    const p0 = traceCur.pts[0].clone().project(camera), r = canvas.getBoundingClientRect();
+    if (Math.hypot((p0.x + 1) / 2 * r.width + r.left - e.clientX, (1 - p0.y) / 2 * r.height + r.top - e.clientY) < 12) { traceClose(); return; }
+  }
+  if (!traceCur) traceCur = { part: h.part, pts: [], ns: [] };
+  const last = traceCur.pts[traceCur.pts.length - 1];
+  if (last && last.distanceTo(h.point) < 0.05 * scale) return;    // (the second click of a double-click)
+  traceCur.pts.push(h.point.clone()); traceCur.ns.push(h.normal.clone().normalize());
+  tracePreview();
+});
+canvas.addEventListener('dblclick', e => { if (tool === 'trace' && traceCur) { e.preventDefault(); traceClose(); } });
+
 // The note box sits beside its mark in the view.
 function openNote(id, isNew) {
   const pin = S.pins.find(p => p.id === id);
@@ -3194,8 +3292,8 @@ function openNote(id, isNew) {
   markNote.className = `mark-note ${st}`;
   markNote.innerHTML = `<div class="mn-head"><b>${pin.id}</b><span class="st-tag st-${st}">${MARK[st].sym} ${MARK[st].tag}</span>
       <button class="mini x" data-act="close" aria-label="Close">Close</button></div>
-    <div class="mn-where">${pin.r ? `Area Ø ${f2(2 * pin.r * (parts[pin.part].root.getWorldScale(new THREE.Vector3()).x || 1) / scale)} mm` : 'Spot'} on ${esc(nameOf(pin.part))}</div>
-    <textarea class="txt" rows="3" placeholder="What about this ${pin.r ? 'area' : 'spot'}? Enter saves · Shift+Enter for a new line">${esc(pin.note)}</textarea>
+    <div class="mn-where">${pin.trace ? `Trace, ${pin.trace.length} corners` : pin.r ? `Area Ø ${f2(2 * pin.r * (parts[pin.part].root.getWorldScale(new THREE.Vector3()).x || 1) / scale)} mm` : 'Spot'} on ${esc(nameOf(pin.part))}</div>
+    <textarea class="txt" rows="3" placeholder="What about this ${pin.trace ? 'traced area (e.g. a 1 mm vent groove)' : pin.r ? 'area' : 'spot'}? Enter saves · Shift+Enter for a new line">${esc(pin.note)}</textarea>
     ${pin.reply ? `<div class="mn-reply"><span>Claude</span>${esc(pin.reply)}</div>` : ''}
     <div class="row"><button class="primary" data-act="save">${noteNew ? 'Save note' : 'Save'}</button>
       ${st === 'answered' ? '<button data-act="resolve">Resolve</button>' : st === 'resolved' ? '<button data-act="reopen">Reopen</button>' : ''}
@@ -3213,7 +3311,7 @@ function saveNote() {
   const to = markNote.querySelector('textarea').value.trim();
   if (noteNew) {
     pin.note = to;
-    commit({ text: `Marked ${pin.id} (${pin.r ? 'area' : 'spot'}) on ${nameOf(pin.part)}${to ? `: “${to}”` : ''}`, adapt: false });
+    commit({ text: `Marked ${pin.id} (${markKind(pin)}) on ${nameOf(pin.part)}${to ? `: “${to}”` : ''}`, adapt: false });
   } else if (to !== pin.note) {
     pin.note = to;
     if (stateOf(pin) !== 'open') pin.status = 'open';   // you wrote more: back to Claude
@@ -3224,7 +3322,7 @@ function closeNote(save = false) {
   if (!noteFor) return;
   const pin = S.pins.find(p => p.id === noteFor);
   const typed = markNote.querySelector('textarea') ? markNote.querySelector('textarea').value.trim() : '';
-  if (pin && save && (typed || !noteNew)) saveNote();
+  if (pin && (save || pin.trace) && (typed || !noteNew || pin.trace)) saveNote();   // (a new trace is kept with or without a note: its corners are the point)
   else if (pin && noteNew) S.pins = S.pins.filter(p => p.id !== pin.id);   // a new mark closed without a note: gone
   noteFor = null; noteNew = false;
   markNote.hidden = true;
@@ -3288,7 +3386,7 @@ function renderPins() {
   ul.innerHTML = shown.map(p => {
     const st = stateOf(p);
     return `<li data-pin="${p.id}" class="${p.id === activePin ? 'on' : ''}${keep(p) ? ' keep' : ''} ${st}">
-      <div class="pin-top"><b>${p.id}</b><span class="st-tag st-${st}">${MARK[st].sym} ${MARK[st].tag}</span><span class="where">${p.r ? 'area' : 'spot'} on ${esc(nameOf(p.part))}</span></div>
+      <div class="pin-top"><b>${p.id}</b><span class="st-tag st-${st}">${MARK[st].sym} ${MARK[st].tag}</span><span class="where">${markKind(p)} on ${esc(nameOf(p.part))}</span></div>
       <div class="pin-note">${p.note ? esc(p.note) : '<i>no note yet</i>'}</div>
       ${p.reply ? `<div class="pin-reply"><span>Claude</span>${esc(p.reply)}</div>` : ''}
       <div class="row"><button class="mini" data-act="open">Open</button><button class="mini" data-act="show">Show</button><button class="mini" data-act="del">Delete</button></div></li>`;
@@ -4451,6 +4549,12 @@ function normalizeState(st) {
       if (num(p.r) && p.r > 0) q.r = p.r;
       if (Array.isArray(p.n) && p.n.length === 3 && p.n.every(num)) q.n = p.n.slice();
       if (Array.isArray(p.w) && p.w.length === 3 && p.w.every(num)) q.w = p.w.slice();
+      const ok3 = a => Array.isArray(a) && a.length >= 3 && a.every(v => Array.isArray(v) && v.length === 3 && v.every(num));
+      if (ok3(p.trace)) {
+        q.trace = p.trace.map(v => v.slice());
+        if (ok3(p.tn) && p.tn.length === p.trace.length) q.tn = p.tn.map(v => v.slice());
+        if (ok3(p.tw) && p.tw.length === p.trace.length) q.tw = p.tw.map(v => v.slice());
+      }
       if (typeof p.reply === 'string' && p.reply) q.reply = p.reply;
       if (typeof p.t === 'string') q.t = p.t;
       return q;
@@ -4575,7 +4679,8 @@ function partRecord(id) {
     rec.movement_d_mm = +(S.movementD * scale).toFixed(3);
   }
   rec.pins = S.pins.filter(q => q.part === id).map(q => ({ id: q.id, note: q.note, state: stateOf(q), at_mm: q.at.map(v => +(v * scale).toFixed(3)),
-    ...(q.r ? { area_d_mm: +(2 * q.r * scale).toFixed(3) } : {}), ...(q.reply ? { reply: q.reply } : {}) }));
+    ...(q.r ? { area_d_mm: +(2 * q.r * scale).toFixed(3) } : {}), ...(q.reply ? { reply: q.reply } : {}),
+    ...(q.trace ? { trace_corners_mm: q.trace.map(v => v.map(x => +(x * scale).toFixed(3))), ...(q.tw ? { trace_corners_world_mm: q.tw } : {}), ...(q.tn ? { trace_normals: q.tn } : {}) } : {}) }));
   return rec;
 }
 const sceneFile = () => ({ format: 'bspk-studio-scene', version: SCHEMA_VERSION, savedAt: new Date().toISOString(), print_scale: scale,
@@ -4714,8 +4819,10 @@ function reportText() {
   for (const c of A.collisions) L.push(`  - ${c.text}: ${clashAmount(c)}`);
   L.push('');
   L.push(S.pins.length ? `Markup (${S.pins.length}):` : 'Markup: none');
-  for (const q of S.pins) L.push(`  - ${q.id} [${MARK[stateOf(q)].tag}] ${q.r ? `area Ø ${f2(2 * q.r * s)} mm` : 'spot'} on ${nameOf(q.part)} at (${q.at.map(v => f2(v * s)).join(', ')}) mm in that part's frame` +
-    `${q.w ? `, (${q.w.map(f2).join(', ')}) mm in the movement` : ''}: ${q.note || '(no note)'}${q.reply ? ` — Claude: ${q.reply}` : ''}`);
+  for (const q of S.pins) L.push(`  - ${q.id} [${MARK[stateOf(q)].tag}] ${q.trace ? `trace, ${q.trace.length} corners` : q.r ? `area Ø ${f2(2 * q.r * s)} mm` : 'spot'} on ${nameOf(q.part)} at (${q.at.map(v => f2(v * s)).join(', ')}) mm in that part's frame` +
+    `${q.w ? `, (${q.w.map(f2).join(', ')}) mm in the movement` : ''}: ${q.note || '(no note)'}${q.reply ? ` — Claude: ${q.reply}` : ''}` +
+    (q.trace ? `\n      corners (mm, in the movement): ${(q.tw || q.trace.map(v => v.map(x => x * s))).map(v => `(${v.map(f2).join(', ')})`).join(' ')}` +
+      (q.tn ? `\n      surface facing at each: ${q.tn.map(v => `(${v.map(x => x.toFixed(2)).join(', ')})`).join(' ')}` : '') : ''));
   const named = partOrder.filter(id => S.info[id]);
   L.push('');
   L.push(named.length ? 'Your names and notes:' : 'Your names and notes: none');
