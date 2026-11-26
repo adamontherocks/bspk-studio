@@ -184,6 +184,9 @@ textarea.txt{min-height:56px;resize:vertical;line-height:1.45}
 .mark-btn kbd{font:10px var(--mono);opacity:.7}
 .trace-btn{top:88px}
 .trace-btn::before{border-radius:2px;transform:rotate(45deg)}
+.grid-btn{top:128px;border-color:rgba(150,170,190,.45)}
+.grid-btn::before{border-radius:1px;background:none;box-shadow:none;outline:1px solid #8ba0b4;background-image:linear-gradient(#8ba0b4,#8ba0b4),linear-gradient(#8ba0b4,#8ba0b4);background-size:1px 100%,100% 1px;background-position:center;background-repeat:no-repeat}
+.grid-btn.off{opacity:.6}
 .mark-btn .mk-n{font:600 10px/1 var(--mono);padding:2px 5px;border-radius:999px;background:var(--pin);color:#0d1319}
 .mark-btn.on .mk-n{background:#0d1319;color:var(--pin)}
 .mark-note{position:absolute;left:0;top:0;width:280px;z-index:5;display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px;background:rgba(15,22,29,.97);border:1px solid rgba(240,180,76,.6);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);will-change:transform}
@@ -237,6 +240,7 @@ dialog.textdlg textarea{width:100%;height:52vh;font:12px/1.45 var(--mono);backgr
     <div class="quick" id="quick" hidden></div>
     <button class="mark-btn" id="markBtn" title="Markup: click a part to pin a note, or press and drag on a part to circle an area. M toggles it.">Markup <kbd>M</kbd></button>
     <button class="mark-btn trace-btn" id="traceBtn" title="Trace: click the corners of an area on any surface (sloped faces too), then close it and say what it's for. T toggles it.">Trace <kbd>T</kbd></button>
+    <button class="mark-btn grid-btn" id="gridBtn" title="Show or hide the grid under the parts. G toggles it (remembered in this browser).">Grid on <kbd>G</kbd></button>
     <div class="mark-note" id="markNote" hidden></div>
     <div class="overlay top">mm · Z up, dial side on top · <span id="gridLabel"></span></div>
     <div class="clock"><div class="t" id="dial">12:00:00</div><div class="s"><span class="beat" id="beat"></span><span id="beatTxt"></span></div></div>
@@ -2983,6 +2987,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !typing) { if (tool !== 'select') setTool('select'); else select(null); }
   if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 't' && tool !== 'sketch') setTool(tool === 'trace' ? 'select' : 'trace');
   if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 'm' && tool !== 'sketch') setTool(tool === 'pin' ? 'select' : 'pin');
+  if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 'g' && tool !== 'sketch') setGrid(!gridOn);
   if (!typing && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
 });
 
@@ -3018,6 +3023,7 @@ function setTool(t) {
 document.getElementById('pinTool').addEventListener('click', () => setTool(tool === 'pin' ? 'select' : 'pin'));
 document.getElementById('traceTool').addEventListener('click', () => setTool(tool === 'trace' ? 'select' : 'trace'));
 document.getElementById('traceBtn').addEventListener('click', () => setTool(tool === 'trace' ? 'select' : 'trace'));
+document.getElementById('gridBtn').addEventListener('click', () => setGrid(!gridOn));
 const markBtn = document.getElementById('markBtn');
 markBtn.addEventListener('click', () => setTool(tool === 'pin' ? 'select' : 'pin'));
 
@@ -4934,6 +4940,22 @@ function setSpeed(i) {
 
 // ---------- view ----------
 let grid = null;
+// The grid under the parts: on unless turned off (the Grid button or G), remembered in this browser
+const GRID_KEY = 'bspk-studio.grid';
+let gridOn = true;
+try { gridOn = localStorage.getItem(GRID_KEY) !== '0'; } catch (e) { /* storage blocked: on */ }
+function gridLabel() {
+  const el = document.getElementById('gridLabel'); if (!el) return;
+  el.textContent = gridOn && grid ? `grid ${+grid.userData.cell.toPrecision(1)} mm/cell` : 'grid off';
+  const b = document.getElementById('gridBtn');
+  if (b) { b.classList.toggle('off', !gridOn); b.innerHTML = `Grid ${gridOn ? 'on' : 'off'} <kbd>G</kbd>`; }
+}
+function setGrid(on) {
+  gridOn = !!on;
+  try { localStorage.setItem(GRID_KEY, gridOn ? '1' : '0'); } catch (e) { /* not remembered */ }
+  if (grid) grid.visible = gridOn;
+  gridLabel();
+}
 const VIEWS = { iso: [1, -1.15, 0.95], top: [0, -0.001, 1], back: [0, -0.001, -1], side: [0, -1, 0.02] };
 const stackMid = () => ((PD.view && PD.view.mid != null ? PD.view.mid : 4.2) + explode * EXPLODE_STEP * LMAX / 2) * scale;
 
@@ -4945,8 +4967,9 @@ function rebuildGrid() {
   grid = new THREE.GridHelper(n * cell, n, 0x33465a, 0x1e2b39);
   grid.rotation.x = Math.PI / 2;
   grid.position.z = (-1 - EXPLODE_STEP * explode) * scale - 0.02 * scale;
+  grid.userData.cell = cell; grid.visible = gridOn;
   scene.add(grid);
-  document.getElementById('gridLabel').textContent = `grid ${+cell.toPrecision(1)} mm/cell`;
+  gridLabel();
 }
 
 function fit() {
