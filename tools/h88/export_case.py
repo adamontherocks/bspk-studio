@@ -85,13 +85,26 @@ def plan():
     # the case middle and its four lugs, one piece: the ring with all its cuts (the back bevel's wedges among them), then the lugs fused on
     # (so the bevel can't take them), then their spring bar holes drilled through from the outer faces
     mid = flat_part('D12', 'Case-middle-with-lugs')
-    ey, ez = g['eye']; mid['add'], mid['cuts2'] = [], []
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            prof = [[round(sy * u, 4), round(v, 4)] for u, v in g['side']]
-            mid['add'].append({'kind': 'xprism', 'ring': prof, 'x0': case.LUG_X[0] if sx > 0 else -case.LUG_X[1], 'x1': case.LUG_X[1] if sx > 0 else -case.LUG_X[0]})
-            mid['cuts2'].append({'kind': 'xcyl', 'y': sy * ey, 'z': ez, 'r': case.HOLE / 2, 'x0': -case.LUG_X[1] - 1 if sx < 0 else case.LUG_X[0] - 0.01,
-                                 'x1': -case.LUG_X[0] + 0.01 if sx < 0 else case.LUG_X[1] + 1})
+    # each lug: its side profile grown across x, less its edge chamfer (the same wedges as a flat part's, built in its own frame: u = y, v = z,
+    # w = x), fused on; then its screw bar hole drilled through, with the head's seat in the outer face
+    mid['add'], mid['cuts2'] = [], []
+    def uvw(q): return [q[2], q[0], q[1]]                    # (u, v, w) -> (x, y, z): u is y, v is z, w is x
+    for d in st['drawn']:
+        if d['id'] not in ('D14', 'D15', 'D16', 'D17'): continue
+        k_ = sk[d['sketch']]; xa = k_['plane']['offset']; xb = xa + d['thickness']
+        prof = [(q['u'], q['v']) for q in k_['points']]
+        lug = {'kind': 'xprism', 'ring': [[round(u, 4), round(v, 4)] for u, v in prof], 'x0': xa, 'x1': xb}
+        ch = d.get('chamfer')
+        if ch:
+            wf, into = (xb, -1) if ch.get('face', 'back') == 'back' else (xa, 1)
+            lug = {'kind': 'diff', 'a': lug, 'b': [{'kind': 'pprism', 'pts': [uvw(q) for q in w['pts']], 'vec': uvw(w['vec'])} for w in chf.edge_wedges(prof, ch, wf, into)]}
+        mid['add'].append(lug)
+        for c in d['cuts']:
+            u, v = c['at']
+            mid['cuts2'].append({'kind': 'xcyl', 'y': u, 'z': v, 'r': c['d'] / 2, 'x0': xa - 0.01, 'x1': xb + 0.01})
+            if c.get('seat'):
+                sd = c['seat']['depth']; a_, b_ = (xb - sd, xb + 0.01) if c['from'] == 'back' else (xa - 0.01, xa + sd)
+                mid['cuts2'].append({'kind': 'xcyl', 'y': u, 'z': v, 'r': c['seat']['d'] / 2, 'x0': a_, 'x1': b_})
     parts.append(mid)
     parts.append(flat_part('D13', 'Back-plate'))
     # Beta 2's discs (hands): blanks, numerals V-carved after
@@ -121,6 +134,8 @@ def build(parts, outdir):
             return cq.Solid.makeLoft([cq.Wire.makePolygon([cq.Vector(*q) for q in op[k]], close=True) for k in ('w0', 'w1')], True)
         if op['kind'] == 'inter':
             return solid(op['a']).intersect(solid(op['b']))
+        if op['kind'] == 'diff':
+            return solid(op['a']).cut(*[solid(b) for b in op['b']]).clean()
         if op['kind'] == 'cyl':
             return cq.Solid.makeCylinder(op['r'], op['z1'] - op['z0'], cq.Vector(op['x'], op['y'], op['z0']), cq.Vector(0, 0, 1))
         if op['kind'] == 'xprism':        # a side profile (y, z) grown along x

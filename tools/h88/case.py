@@ -73,7 +73,11 @@ LUG_X = (11.0, 17.0)            # lug inner and outer faces: a 22 mm strap, each
 RISE, SLOT_Y0 = 6.5, 17.5       # Adam (lugs up): each lug rises this far into a slot cut up into the body from its back, open to the 12/6 face
 PLQ_SCR = (16.0, 19.6)          # the plaque screws (M2, from the back): up through each lug riser's centre into the body above its slot
 SIDE_SCR = (24.65, 9.0)         # the side-rail screws (M1.6, the render's spots)
-EYE_R, EYE_OUT, HOLE = 2.5, 2.7, 1.2    # the lug's eye (spring bar boss) just outside the body: radius, its centre this far out, bar hole
+EYE_R, EYE_OUT = 2.5, 2.7      # the lug's eye: its boss (now faceted on the octagon round this radius) and its centre this far out from the body
+SCREW_BAR = dict(tube=2.0, hole=2.05, head=2.6, seat=2.8, seat_depth=0.9)   # screw bars, not spring bars (Adam, 2026-11-25): a Ø2.0 tube across the strap, through both
+#   lugs, a hex-head screw into each end from the outer faces, heads sunk flush in seats. Placeholder sizes: set them from the bars once they're in hand.
+LUG_CHAMFER = dict(across=2.0, down=0.6)   # the lugs' outer top edges (Adam: "start the chamfer at 2mm to the edge"): 2.0 in across the top faces, 0.6 down the outer
+#   face; steeper than 45° so the screw head's seat keeps 0.5 clear of it (a 2 x 2 chamfer would run into the seat)
 # The case in three (Adam, 2026-11-25: "break the main case into two parts. the upper face plate, then... a lower plate that just sits
 # there as separation... could the lug and back plate now be married?", and the lugs "more central... the lug holes will sit at the lower
 # 1/3 line", their tops where the top chamfer starts "or a few mm below"):
@@ -97,9 +101,6 @@ SCREW = dict(tap=1.25, clear=1.8, head=3.2, head_depth=0.8, tap_depth=5.0)  # M1
 PANEL_12 = dict(inner=1.44, outer=1.43, side=2.1, edge_depth=1.0)     # 12/6: in from the deck edge and the octagon edge (plan), off the ridges; depth at the outer edge
 PANEL_CORNER = dict(inner=1.1, outer=1.5, side=1.6, end=1.75, edge_depth=0.75)   # corners: the same, and kept 1.75 off the 3/9 face; shallower (Beta 2's corner is behind)
 PANEL_R = 1.0
-FACE_SCREWS = [(sx * 12.2, sy * 16.1) for sy in (1, -1) for sx in (-1, 1)]   # Adam's four marks on the deck (P1-P4, 2026-11-25: "face screw"), squared up
-FACE_SCREW = dict(d=3.5, k=1.1, hex=1.3, hex_depth=0.7, tap=1.6, tap_depth=2.8, length=2.5)   # M2 button head, hex socket (ISO 7380): sits on the deck, threads into a
-#   blind hole (over the dial plate there's 3.6 of faceplate: a through screw can't reach the case middle without its head hanging off the deck edge). Not structural.
 DIAL_CORNER = 5.0                # the dial plate's corners cut back to 5.0 in from the case's corner chamfer lines, so the faceplate stays solid behind the corner panels
 DOWEL_XY, DOWEL_D, DOWEL_DEPTH = [(25.1, -7.0), (-25.1, 7.0)], 1.5, 3.0     # faceplate to case middle (clear of the crown's well)
 HORN_IN = 21.0                  # each lug's root runs this far in (inside the ring's wall, under the octagon's corner)
@@ -212,13 +213,14 @@ def build(layered_scene, info, helpers):
     well = box(crown_x0 - 0.3, -(crown_r + 0.3), W / 2 + 2.0, crown_r + 0.3)
     slit = box(HX, -(neck_r + 0.2), crown_x0, neck_r + 0.2)
     # ---- the case middle's lugs (horns): each one's side profile (y out from the centre, z up), drawn on its inner face's plane and grown
-    # across its 4.0: flat on top at the split, 45° down onto its eye (the spring bar at the lower third of the case's height), round the
-    # eye, flat underneath, its root running in under the octagon's corner into the ring's wall
+    # across its 6.0: flat on top at the split, 45° down toward its eye (the screw bar at the lower third of the case's height), the eye's end
+    # faceted on the octagon round it (Adam: "lets facet off the round": faces square to 45°, 0°, -45° and -90°, each tangent to the old round),
+    # flat underneath, its root running in under the octagon's corner into the ring's wall
     eye_y = H / 2 + EYE_OUT
     eye_z = z_frame0 + (z_top - z_frame0) / 3
-    tp = (eye_y + EYE_R * math.cos(math.radians(45)), eye_z + EYE_R * math.sin(math.radians(45)))
-    lug_side = [(HORN_IN, Z_SPLIT), (tp[0] + tp[1] - Z_SPLIT, Z_SPLIT)] + \
-               [(eye_y + EYE_R * math.cos(math.radians(a)), eye_z + EYE_R * math.sin(math.radians(a))) for a in range(45, -91, -5)] + [(HORN_IN, eye_z - EYE_R)]
+    kq = EYE_R * math.sqrt(2) - EYE_R                                   # how far each octagon corner sits along a face from its tangent point
+    lug_side = [(HORN_IN, Z_SPLIT), (eye_y + eye_z + EYE_R * math.sqrt(2) - Z_SPLIT, Z_SPLIT), (eye_y + EYE_R, eye_z + kq), (eye_y + EYE_R, eye_z - kq),
+                (eye_y + kq, eye_z - EYE_R), (HORN_IN, eye_z - EYE_R)]
     # the back bevel: one plane per face at BEVEL_ANGLE, BEVEL_W in at the back plate's bottom; the ring carries what's left at its own bottom
     bev_drop = TT / math.tan(math.radians(BEVEL_ANGLE))                   # how much of it the back plate's thickness takes
     def bev_w(deg, at_back_plate=True):
@@ -272,8 +274,6 @@ def build(layered_scene, info, helpers):
     for pn in panels:
         bc.append(pocket('Chamfer panel (%d°): cut straight down from the front to a flat floor at z %.2f, %.2f deep at its outer edge and %.2f at its inner edge; inside corners r %.1f'
                          % (pn['face'], pn['floor'], pn['edge'], pn['inner'], PANEL_R), pn['poly'], 'back', pn['depth'], nid()))
-    for s in FACE_SCREWS: bc.append(hole('pilot', 'Face screw, M2x%.1f button head: tapped %.1f deep from the deck (blind; it holds nothing)' % (FACE_SCREW['length'], FACE_SCREW['tap_depth']),
-                                         s, FACE_SCREW['tap'], 'back', nid(), depth=FACE_SCREW['tap_depth'], fit='m2_tap'))
     for s in DOWEL_XY: bc.append(hole('dowel', f'Dowel Ø{DOWEL_D} (lines the faceplate up on the case middle)', s, DOWEL_D, 'front', nid(), depth=DOWEL_DEPTH))
     part('D9', 'Faceplate (black delrin, 5/16" faced to %.2f; milled from the front, then the back): the walls fall in on 45° exterior chamfers (6.0 at 12 and 6, '
                '4.8 at the corners, a 0.5 break at 3 and 9) to the deck, the window chamfered down to the crystal, the side rails and vents; the cavity\'s top, the '
@@ -304,27 +304,26 @@ def build(layered_scene, info, helpers):
     bk.append(pocket('Relief under the crown (it dips %.2f under the movement\'s back face)' % (z_back - (zw - crown_r)), well.intersection(back_outline.buffer(1.0)), 'back', 0.4, len(bk) + 1))
     part('D13', 'Back plate (1/16" black delrin, or clear acrylic as a display back): under the case middle and Beta 2, its edge carrying the back bevel on; the six case '
                 'screws come up through it', back_outline, z_frame0, TT, bk, chamfer={'face': 'front', 'size': round(bev_drop, 4), 'angle': BEVEL_ANGLE})
-    # ---- D14-D17 the lugs: the case middle's horns (one piece with it), each drawn as its side profile, grown across its 4.0
+    # ---- D14-D17 the lugs: the case middle's horns (one piece with it), each drawn as its side profile, grown across its 6.0
     side = lug_side
     for i, (sx, sy) in enumerate([(1, 1), (-1, 1), (1, -1), (-1, -1)]):
         k = newk(); pts = [(sy * u, v) for u, v in side]
         if sy < 0: pts = pts[::-1]
         sks.append({'id': k, 'name': f'Lug {i + 1} side profile', 'plane': {'axis': 'x', 'offset': round(LUG_X[0] if sx > 0 else -LUG_X[1], 4)}, 'closed': True,
                     'points': [{'u': round(u, 4), 'v': round(v, 4), 'smooth': False} for u, v in pts]})
+        outer = 'back' if sx > 0 else 'front'           # (the face away from its sketch plane is 'back')
+        up = {0: 0, 45: 0, 90: 1, 135: 0, 180: 0, 225: 0, 270: 0, 315: 0}
+        for a_ in ((0, 45) if sy > 0 else (135, 180)): up[a_] = 1                # the top flat, the 45° face and the end: the edges that get it
         parts.append({'id': f'D{14 + i}', 'name': f'Lug {i + 1} ({"3" if sx > 0 else "9"} o\'clock side, {"12" if sy > 0 else "6"} o\'clock end): part of the case middle, '
-                                                  f'flat on top at the split, 45° down onto its eye; its side profile and spring bar hole cut on the 4th axis',
+                                                  f'flat on top at the split, 45° down toward its eye, the end faceted; its outer top edges chamfered {LUG_CHAMFER["across"]:.1f} '
+                                                  f'in; its side profile, chamfer and screw bar hole cut on the 4th axis',
                       'sketch': k, 'thickness': round(LUG_X[1] - LUG_X[0], 4), 'grow': 'plus', 'mill': 'back', 'minWall': 0.6,
-                      'cuts': [{'id': 'h1', 'kind': 'clear', 'name': f'Spring bar hole Ø{HOLE} (drilled through from the outer face)', 'at': [round(sy * eye_y, 4), round(eye_z, 4)], 'd': HOLE, 'from': 'back', 'depth': None}]})
-    # ---- D18-D21 the face screws (hardware, shown so Adam can judge them): an M2 button head with its hex socket, on the deck
-    hexp = [(FACE_SCREW['hex'] / math.sqrt(3) * math.cos(math.radians(30 + 60 * i)), FACE_SCREW['hex'] / math.sqrt(3) * math.sin(math.radians(30 + 60 * i))) for i in range(6)]
-    for i, s in enumerate(FACE_SCREWS):
-        k = newk(); sks.append(sketch(k, f'Face screw {i + 1} head', 'z', round(z_top, 5), poly_dots(Point(s).buffer(FACE_SCREW['d'] / 2, 32))))
-        kh = newk(); sks.append(sketch(kh, f'Face screw {i + 1} hex socket', 'z', 0.0, poly_dots(Polygon([(s[0] + u, s[1] + v) for u, v in hexp]))))
-        parts.append({'id': f'D{18 + i}', 'name': f'Face screw {i + 1}: M2x{FACE_SCREW["length"]} button head, hex socket (ISO 7380, Ø{FACE_SCREW["d"]} x {FACE_SCREW["k"]}), '
-                                                  f'on the deck, threaded {FACE_SCREW["tap_depth"]} into the faceplate (hardware: shown, not cut)',
-                      'sketch': k, 'thickness': FACE_SCREW['k'], 'grow': 'plus', 'mill': 'back', 'minWall': 0.3,
-                      'chamfer': {'face': 'back', 'size': 0.35, 'angle': 45},
-                      'cuts': [{'id': 'h1', 'kind': 'pocket', 'name': f'Hex socket {FACE_SCREW["hex"]} AF', 'sketch': kh, 'from': 'back', 'depth': FACE_SCREW['hex_depth']}]})
+                      'chamfer': {'face': outer, 'size': LUG_CHAMFER['down'], 'angle': round(math.degrees(math.atan2(LUG_CHAMFER['across'], LUG_CHAMFER['down'])), 4),
+                                  'widths': [[a_, LUG_CHAMFER['down'] * up[a_]] for a_ in sorted(up)]},
+                      'cuts': [{'id': 'h1', 'kind': 'clear', 'name': f'Screw bar: the Ø{SCREW_BAR["tube"]} tube\'s hole through the lug, its hex-head screw sunk flush in a '
+                                                               f'Ø{SCREW_BAR["seat"]} x {SCREW_BAR["seat_depth"]} seat in the outer face',
+                                'at': [round(sy * eye_y, 4), round(eye_z, 4)], 'd': SCREW_BAR['hole'], 'from': outer, 'depth': None,
+                                'seat': {'d': SCREW_BAR['seat'], 'depth': SCREW_BAR['seat_depth']}}]})
     st['sketches'] = st['sketches'] + sks
     st['drawn'] = st['drawn'] + parts
     # ---- the project
@@ -338,13 +337,15 @@ def build(layered_scene, info, helpers):
                                                  '(face/body, calibre, lug plate, back plate) and notes (one-piece stepped crystal, dial plate, stem slit).']
     P['plate']['z'] = round(z_frame0 - 1.5, 4)
     P['groups']['drawn'] = 'Movement plates, stem and case'
-    case_ids = ['D9', 'D10', 'D11', 'D12', 'D13', 'D14', 'D15', 'D16', 'D17', 'D18', 'D19', 'D20', 'D21']
+    case_ids = ['D9', 'D10', 'D11', 'D12', 'D13', 'D14', 'D15', 'D16', 'D17']
     P['focus'] = [{'id': 'case', 'label': 'The case: faceplate, crystal, dial plate, case middle with its lugs, back plate', 'parts': case_ids + ['D6']},
                   {'id': 'inside', 'label': 'Inside the case: Beta 2 under the dial plate', 'parts': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D11', 'D12', 'D13', 'minute', 'hour', 'a1', 'a2', 'b', 'e']},
-                  {'id': 'stack', 'label': 'Everything', 'parts': ['D%d' % i for i in range(1, 22)]}] + [f for f in P['focus'] if f['id'] in ('train',)]
+                  {'id': 'stack', 'label': 'Everything', 'parts': ['D%d' % i for i in range(1, 18)]}] + [f for f in P['focus'] if f['id'] in ('train',)]
     bev_top = z_frame0 + BEVEL_W['12/6'] * math.tan(math.radians(BEVEL_ANGLE))
     report = {'lugs': {'top': Z_SPLIT, 'eye': (round(eye_y, 3), round(eye_z, 3), EYE_R), 'lug_to_lug': round(2 * (eye_y + EYE_R), 2),
-                       'width': LUG_X[1] - LUG_X[0], 'strap': 2 * LUG_X[0], 'root to the case screws': round(min(abs(HORN_IN - abs(q[1])) for q in scr if abs(q[0]) + SCREW['clear'] / 2 > LUG_X[0]) - SCREW['clear'] / 2, 2),
+                       'width': LUG_X[1] - LUG_X[0], 'strap': 2 * LUG_X[0], 'profile': [tuple(round(v, 3) for v in q) for q in lug_side],
+                       'screw bar: tube hole to the facets': round(EYE_R - SCREW_BAR['hole'] / 2, 2),
+                       'screw bar: seat to the chamfer\'s foot (outer face)': round(EYE_R - LUG_CHAMFER['down'] - SCREW_BAR['seat'] / 2, 2), 'root to the case screws': round(min(abs(HORN_IN - abs(q[1])) for q in scr if abs(q[0]) + SCREW['clear'] / 2 > LUG_X[0]) - SCREW['clear'] / 2, 2),
                        'eye at the lower third of the height': round((eye_z - z_frame0) / (z_top - z_frame0), 3)},
               'z': {'back plate': (round(z_frame0, 4), round(z_back, 4)), 'case middle': (z_back, Z_SPLIT), 'faceplate': (Z_SPLIT, round(z_top, 4)), 'movement': (z_back, z_plates),
                     'discs': (7.75, round(z_disc1, 4)), 'dial plate': (round(z_dial0, 4), round(z_dial1, 4)), 'crystal': (round(z_cry0, 4), round(z_cry1, 4))},
@@ -370,12 +371,7 @@ def build(layered_scene, info, helpers):
                             round(H / 2 - max(0, EXT_W['12/6'] - (z_top - z_dial1) / math.tan(math.radians(EXT_ANGLE))) - (HY + CLR), 2),
                             round(min(body.exterior.distance(Point(q)) for q in cav.exterior.coords) - max(0, EXT_W['corner'] - (z_top - z_dial1) / math.tan(math.radians(EXT_ANGLE))), 2),
                             round(W / 2 - max(0, EXT_W['3/9'] - (z_top - z_dial1)) - (HX + CLR), 2)),
-                        'rails inside the deck': deck.buffer(1e-6).contains(unary_union([r.buffer(CH_RAIL, join_style=2) for r in rails]).intersection(body.buffer(-EXT_W['3/9'] - 1e-3))),
-                        'face screws: head to the window chamfer\'s top edge': round(min(win_top.exterior.distance(Point(q)) for q in FACE_SCREWS) - FACE_SCREW['d'] / 2, 2),
-                        'face screws: head to the deck edge': round(min(deck.exterior.distance(Point(q)) for q in FACE_SCREWS) - FACE_SCREW['d'] / 2, 2),
-                        'face screws: head to the vents': round(min(stadium(-VENT_X, VENT_X, sy * y, VENT_W).distance(Point(q)) for q in FACE_SCREWS for sy in (1, -1) for y in VENT_Y) - FACE_SCREW['d'] / 2, 2),
-                        'face screws: floor over the dial pocket': round(z_top - FACE_SCREW['tap_depth'] - z_dial1, 2),
-                        'face screws: tap to the case screws\' taps': round(min(math.dist(q, r) for q in FACE_SCREWS for r in scr) - FACE_SCREW['tap'] / 2 - SCREW['tap'] / 2, 2)},
+                        'rails inside the deck': deck.buffer(1e-6).contains(unary_union([r.buffer(CH_RAIL, join_style=2) for r in rails]).intersection(body.buffer(-EXT_W['3/9'] - 1e-3)))},
               'panels': [{'face': pn['face'], 'floor z': round(pn['floor'], 3), 'depth at outer edge': pn['edge'], 'at inner edge': pn['inner'],
                           'bounds': [round(v, 2) for v in pn['poly'].bounds],
                           'floor over the cavity': round(pn['floor'] - z_plates, 2) if pn['poly'].intersects(cav) else None,
@@ -386,7 +382,7 @@ def build(layered_scene, info, helpers):
                         'corner': round(min(body.exterior.distance(Point(q)) for q in cav.exterior.coords), 2)}}
     geo = dict(win_oct=win_oct, plaques=plaques, red=red, body=body, cav=cav, insert=insert, dial=dial_outline, panels=panels, window=window, boss=boss, well=well, slit=slit, scr=scr, discs=discs, side=side,
                back_outline=back_outline, eye=(eye_y, eye_z),
-               cry_out=cry_out, cry_pocket=cry_pocket, front=front, face_screws=FACE_SCREWS,
+               cry_out=cry_out, cry_pocket=cry_pocket, front=front,
                z=dict(back=z_back, plates=z_plates, dial=(z_dial0, z_dial1), cry=(z_cry0, z_cry1), lip0=z_lip0, ring=z_ring, top=z_top, frame0=z_frame0, disc1=z_disc1, split=Z_SPLIT),
                crown=(crown_x0, crown_r, zw))
     return S, report, geo
