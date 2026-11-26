@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-25T12:17:41",
+ "savedAt": "2026-11-25T18:51:28",
  "state": {
   "pos": {
    "minute": [
@@ -276052,28 +276052,28 @@
      {
       "id": "h30",
       "kind": "pilot",
-      "name": "M2 thread (ne plate)",
+      "name": "M1.6 thread (ne plate)",
       "at": [
-       5.05,
-       13.4
+       5.45,
+       13.33
       ],
-      "d": 1.6,
+      "d": 1.25,
       "from": "back",
       "depth": null,
-      "fit": "m2_tap"
+      "fit": "m16_tap"
      },
      {
       "id": "h31",
       "kind": "pilot",
-      "name": "M2 thread (ne plate)",
+      "name": "M1.6 thread (ne plate)",
       "at": [
-       10.55,
-       13.9
+       10.45,
+       13.83
       ],
-      "d": 1.6,
+      "d": 1.25,
       "from": "back",
       "depth": null,
-      "fit": "m2_tap"
+      "fit": "m16_tap"
      },
      {
       "id": "h32",
@@ -276369,28 +276369,28 @@
      {
       "id": "h24",
       "kind": "clear",
-      "name": "M2 through (the ne plate's screw)",
+      "name": "M1.6 through (the ne plate's screw)",
       "at": [
-       5.05,
-       13.4
+       5.45,
+       13.33
       ],
-      "d": 2.3,
+      "d": 1.8,
       "from": "back",
       "depth": null,
-      "fit": "m2_clear"
+      "fit": "m16_clear"
      },
      {
       "id": "h25",
       "kind": "clear",
-      "name": "M2 through (the ne plate's screw)",
+      "name": "M1.6 through (the ne plate's screw)",
       "at": [
-       10.55,
-       13.9
+       10.45,
+       13.83
       ],
-      "d": 2.3,
+      "d": 1.8,
       "from": "back",
       "depth": null,
-      "fit": "m2_clear"
+      "fit": "m16_clear"
      },
      {
       "id": "h26",
@@ -276538,28 +276538,36 @@
      {
       "id": "h4",
       "kind": "clear",
-      "name": "M2 through (pan head on the factory face)",
+      "name": "M1.6 through, cheese head sunk flush in a counterbore (from the top: the plate's one cut on its factory face)",
       "at": [
-       5.05,
-       13.4
+       5.45,
+       13.33
       ],
-      "d": 2.3,
-      "from": "front",
+      "d": 1.8,
+      "from": "back",
       "depth": null,
-      "fit": "m2_clear"
+      "fit": "m16_cb",
+      "seat": {
+       "d": 3.3,
+       "depth": 1.1
+      }
      },
      {
       "id": "h5",
       "kind": "clear",
-      "name": "M2 through (pan head on the factory face)",
+      "name": "M1.6 through, cheese head sunk flush in a counterbore (from the top: the plate's one cut on its factory face)",
       "at": [
-       10.55,
-       13.9
+       10.45,
+       13.83
       ],
-      "d": 2.3,
-      "from": "front",
+      "d": 1.8,
+      "from": "back",
       "depth": null,
-      "fit": "m2_clear"
+      "fit": "m16_cb",
+      "seat": {
+       "d": 3.3,
+       "depth": 1.1
+      }
      }
     ]
    },
@@ -276865,6 +276873,24 @@
     "d": 1.6,
     "seat": null,
     "note": "M2 tapped thread in delrin"
+   },
+   "m16_tap": {
+    "d": 1.25,
+    "seat": null,
+    "note": "M1.6 tapped thread in delrin (placeholder until the coupon)"
+   },
+   "m16_clear": {
+    "d": 1.8,
+    "seat": null,
+    "note": "M1.6 screw passing through"
+   },
+   "m16_cb": {
+    "d": 1.8,
+    "seat": {
+     "d": 3.3,
+     "depth": 1.1
+    },
+    "note": "M1.6 screw through, its cheese head sunk flush in a counterbore"
    }
   }
  },

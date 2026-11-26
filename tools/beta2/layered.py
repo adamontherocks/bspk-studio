@@ -42,6 +42,8 @@ HEAD_R, HEAD_H = 1.9, 1.3
 CB_D, CB_DEPTH = 4.2, 1.4            # counterbore for an M2 cheese head (fit m2_cb)
 BOSS = 1.15 + 0.5                    # clearance hole Ø2.3 with 0.5 of plate round it
 CB_KEEP = CB_D / 2 + 0.6             # a counterbore with 0.6 round it (the minimum wall)
+CB16_D, CB16_DEPTH = 3.3, 1.1        # the NE plate's two screws: M1.6 cheese heads (DIN 84, Ø3.0 x 1.0) sunk flush from its top (Adam 2026-11-25: "id want them
+#   sunk"; its arms are too small for an M2 counterbore with its wall: one screw would fit)
 TAP_SOLID, TAP_DEPTH = 1.2, 3.0      # an M2 thread: 0.4 of solid round its Ø1.6 hole, 3 mm deep at least
 BEARING = dict(d=5.98, seat=7.3, seat_depth=0.65, body=1.9)
 R_IN = 1.5                           # every inside corner of the anchor's outline
@@ -329,7 +331,7 @@ def build(aligned_scene, info, helpers):
     if fins: make_pockets(main)
     # ---- screws
     def tap_ok(z_seat, s): return floor_at(main, C(s, TAP_SOLID, 32)) >= z_seat - 1e-9 and z_seat - z_bot >= TAP_DEPTH
-    def keep(X): return BOSS + 0.6 if X['id'] == 'ne' else WAFER_D / 2 + 0.6 if X['id'] in ('bm', 'bh') else CB_KEEP   # (pan heads on the NE plate: Ø4)
+    def keep(X): return CB16_D / 2 + 0.6 if X['id'] == 'ne' else WAFER_D / 2 + 0.6 if X['id'] in ('bm', 'bh') else CB_KEEP
     def path_ok(X, s):
         if floor_at(X, C(s, keep(X), 32)) < X['zt'] - 1e-9: return None
         if X['id'] in ('tp', 'ne'):
@@ -351,7 +353,7 @@ def build(aligned_scene, info, helpers):
             return ('main', Y['zb']) if tap_ok(Y['zb'], s) else None
         return None
     def pick(X, n, spacing=7.0, region=None):
-        inner = X['F'].buffer(-(CB_KEEP if X['id'] != 'ne' else HEAD_R + 0.2))
+        inner = X['F'].buffer(-(CB16_D / 2 + 0.6 if X['id'] == 'ne' else CB_KEEP))
         if region is not None: inner = inner.intersection(region)
         cand = []
         if not inner.is_empty:
@@ -421,8 +423,8 @@ def build(aligned_scene, info, helpers):
         outline = outline_pts if key == 'main' else poly_dots(X['F'])
         sks.append(sketch(k, f'{TITLE[key]} outline', 'z', round(X['zb'], 5), outline))
         cuts = []; hid = [1]
-        def hole(kind, name, at, d, depth=None, fit=None, axis=None, seat=None):
-            c = {'id': f'h{hid[0]}', 'kind': kind, 'name': name, 'at': [round(at[0], 4), round(at[1], 4)], 'd': d, 'from': X['mill'], 'depth': depth}
+        def hole(kind, name, at, d, depth=None, fit=None, axis=None, seat=None, frm=None):
+            c = {'id': f'h{hid[0]}', 'kind': kind, 'name': name, 'at': [round(at[0], 4), round(at[1], 4)], 'd': d, 'from': frm or X['mill'], 'depth': depth}
             if fit: c['fit'] = fit
             if axis: c['axis'] = axis
             if seat: c['seat'] = seat
@@ -446,7 +448,8 @@ def build(aligned_scene, info, helpers):
         for a in X['pivots']: hole('rod', f'Pivot, {names[a]} (plain delrin)', arbor_at[a], 3.08, fit='rod_free', axis=a)
         for s in X['screws']:
             if key in ('bm', 'bh'): hole('clear', 'M2 through, wafer head (Ø4, under 0.8 tall) in a counterbore', s, 2.3, fit='m2_clear', seat={'d': WAFER_D, 'depth': WAFER_DEPTH}); continue
-            if key == 'ne': hole('clear', 'M2 through (pan head on the factory face)', s, 2.3, fit='m2_clear')
+            if key == 'ne': hole('clear', 'M1.6 through, cheese head sunk flush in a counterbore (from the top: the plate\'s one cut on its factory face)', s, 1.8,
+                                 fit='m16_cb', seat={'d': CB16_D, 'depth': CB16_DEPTH}, frm='back'); continue
             else: hole('clear', 'M2 through, cheese head in a counterbore', s, 2.3, fit='m2_cb', seat={'d': CB_D, 'depth': CB_DEPTH})
         for Y, under in (('bm', 'tp'), ('bh', 'top')):
             if key == under:
@@ -454,10 +457,12 @@ def build(aligned_scene, info, helpers):
         if key == 'sec':
             for Y in ('tp', 'ne', 'bm'):
                 for s in plates[Y]['screws']:
-                    if X['F'].contains(Point(s)): hole('clear', f'M2 through (the {TITLE[Y].lower()}\'s screw)', s, 2.3, fit='m2_clear')
+                    if X['F'].contains(Point(s)): hole('clear', f'{"M1.6" if Y == "ne" else "M2"} through (the {TITLE[Y].lower()}\'s screw)', s, 1.8 if Y == 'ne' else 2.3,
+                                                       fit='m16_clear' if Y == 'ne' else 'm2_clear')
         if key == 'main':
             for Y in ('sec', 'tp', 'ne', 'top', 'bm', 'bh'):
-                for s in plates[Y]['screws']: hole('pilot', f'M2 thread ({TITLE[Y].lower()})', s, 1.6, fit='m2_tap')
+                for s in plates[Y]['screws']: hole('pilot', f'{"M1.6" if Y == "ne" else "M2"} thread ({TITLE[Y].lower()})', s, 1.25 if Y == 'ne' else 1.6,
+                                                   fit='m16_tap' if Y == 'ne' else 'm2_tap')
         drawn.append({'id': pid, 'name': NAME[key], 'sketch': k, 'thickness': X['T'], 'grow': 'plus', 'mill': X['mill'], 'minWall': 0.6, 'cuts': cuts})
     stem = copy.deepcopy(next(d for d in st['drawn'] if d.get('turn'))); stem['id'] = 'D6'
     ksk = next(k for k in st['sketches'] if k['id'] == stem['sketch'])
@@ -468,7 +473,9 @@ def build(aligned_scene, info, helpers):
     drawn.append(stem)
     st['sketches'] = [ksk] + sks
     st['drawn'] = drawn
-    st['fits'] = FITS
+    st['fits'] = {**FITS, 'm16_tap': {'d': 1.25, 'seat': None, 'note': 'M1.6 tapped thread in delrin (placeholder until the coupon)'},
+                  'm16_clear': {'d': 1.8, 'seat': None, 'note': 'M1.6 screw passing through'},
+                  'm16_cb': {'d': 1.8, 'seat': {'d': CB16_D, 'depth': CB16_DEPTH}, 'note': 'M1.6 screw through, its cheese head sunk flush in a counterbore'}}
     # ---- the project
     P.update({'id': 'beta2-layered', 'name': 'Beta 2 · layered', 'title': 'Beta 2 · layered: plates that host the train'})
     P['blurb'] = (P['blurb'].split(' Module 0.6')[0] + ' Module 0.6, black delrin, brass rods. Plates in layers, each hosting the wheels at its own heights: '
