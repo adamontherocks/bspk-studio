@@ -874,7 +874,13 @@ Adam's next journey: the 1988 AMC Hemistitch H-88 "Spectrum" (his Meshy model an
     - **The chamfer** runs along the outer edge of the top flat, the 45° face and the end: 2.0 in across those faces, as Adam set it, and 0.6 down the outer face. It's steeper than 45° because a 2 × 2 chamfer would run into the screw head's seat; this keeps the seat 0.5 clear. It stops at the lower facets, running out over the corner. In the sim it's the lugs' own edge chamfer, with widths by side; the exporter cuts the same wedges in each lug's frame before fusing it to the ring.
     - All case STEPs valid, one solid each. Image: `exports/h88-lugs-faceted-v1.png`.
   - **Open:** the case screws' heads stand 0.2 proud of the back plate (M1.6 cheese heads are 1.0 tall, and the 1/16" back plate leaves room for a 0.8 counterbore). Wafer heads about 0.6 tall would sink flush.
-- **Not yet:** the side slots and their red inserts, the badges (AMC, HEMISTITCH) and the red inner frame, the body's stock (14.5 tall: 5/8" faced, or plates). The sim's checks don't cover the case parts yet; the stack was checked by numbers.
+- **The dash stays (2026-11-26).** Adam: "the dash stays... this one came first and the name was birthed here." Academic friends say the names are backwards (the dash at the meeting point is the caesura, so CAESURA, the AXIS model with a frame at the reading point, would have the better claim to it). Adam keeps HEMISTICH for the H-88: "the words are coming together... that says hemistich to me."
+- **Where the H-88 stands (end of 2026-11-26).** Adam: "i feel good about this spot we got today."
+  - **Waiting on Adam:** the screw pins (34 mm eBay pins; holes and seats resize once they're bought and measured); his logo as a vector (SVG/PDF/AI) and the name of its typeface, for cutting; any more graphics.
+  - **Next:** the production check against the Air (each part's stock, setups, cutters, reach, inside radii, the special tools for the 45°, 62° and 67.5° faces and the lugs' chamfer, the 4th-axis work, fixturing); then the fit coupon (M1.6 tap/clear, the screw pin holes Ø1.15 / 1.20 / 1.25, an engraving size row 1.1 / 0.9 / 0.7 / 0.5); then Hudson's write-up with the STEP package, inventory and instructions (Adam: both wait until the design is done).
+  - **Open in the sim:** "Walls drawn twice" on Beta 2's main and secondary plates (D1/D2).
+  - **Not doing:** the side slots with red inserts and the AMC/HEMISTITCH badges as applied parts (Adam: "red slots and badges arent concerning. the engravings will suffice").
+- **Not yet:** the body's stock (14.5 tall: 5/8" faced, or plates). The sim's checks don't cover the case parts yet; the stack was checked by numbers.
 
 ### Files
 
