@@ -24,7 +24,7 @@ CRY_OUT, CRY_POCKET = 1.0, 1.1  # the crystal: the window's outline + 1.0 (Adam:
 # cut.chamfer, cut with a 90° chamfer mill or V-bit), sized to the room each one has:
 #   - the window: falls the whole RELIEF from the flush top (plaques, shoulders, ribs) to the crystal on a 45° chamfer, plaques included
 #     (a 1/4" or 6 mm 90° chamfer mill: a 1/8" one reaches about 1.4);
-#   - the side notches (were the side rails): see NOTCH below;
+#   - the sides: no rails or notches (their faces run clean; see the side chamfer below);
 #   - the corner facets: a floor CF_DEPTH down along each of the octagon's chamfer edges, chamfered all round by its depth, with a slot in
 #     the floor down at the crystal's level;
 #   - the vents, counterbores and outer rim: small chamfers (CH_VENT, CH_CB, CH_RIM).
@@ -53,9 +53,8 @@ SIDE_W = 27.25 - (RELIEF + 22.7)  # 3/9: from the rib's outer edge (x 24.7) to t
 EXT_W = {'12/6': 6.0, 'corner': 4.8, '3/9': SIDE_W}
 SIDE_ANGLE = math.degrees(math.atan2(EXT_W['corner'], SIDE_W))      # down 4.8 like the corners: 62.0°
 EXT_ANGLES = [[0, SIDE_ANGLE], [45, EXT_ANGLE], [90, EXT_ANGLE], [135, EXT_ANGLE], [180, SIDE_ANGLE], [225, EXT_ANGLE], [270, EXT_ANGLE], [315, EXT_ANGLE]]
-# The notch over the crown (and its mirror at 9; the side rails it replaces were RELIEF deep): cut in from the side to a flat floor, its back
-# wall straight, its ends rising at 45° from the foot line, open to the side; seen from 3 o'clock, a trapezoid in the side chamfer.
-NOTCH = dict(x0=RELIEF + 23.7, half=4.0, floor=7.0)    # back wall at x 25.7 (1.0 outside the rib), floor half-length, floor z
+# The side faces run clean from corner to corner: a notch over the crown (floor z 7.0, 45° ends) was built and dropped (Adam: "the
+# angled ledge cut out thing doesnt seem to go with the other rounded cut outs... drop and clean"); the side rails went with it.
 EXT_WIDTHS = [[0, EXT_W['3/9']], [45, EXT_W['corner']], [90, EXT_W['12/6']], [135, EXT_W['corner']], [180, EXT_W['3/9']], [225, EXT_W['corner']],
               [270, EXT_W['12/6']], [315, EXT_W['corner']]]   # (facing direction in degrees, 0 = 3 o'clock, 90 = 12) -> width
 VENT_Y, VENT_W, VENT_X = (13.8, 15.4, 17.0), 0.8, 9.0   # the vents on the deck behind each plaque: rows, width, half-length
@@ -166,8 +165,7 @@ def build(layered_scene, info, helpers):
     cry_out = window.buffer(CRY_OUT, 64, join_style=1).buffer(0.5, 64).buffer(-0.5, 64)   # the crystal: the window + 1.0 (its inside corners r 0.5, as cut)
     cry_pocket = window.buffer(CRY_POCKET, 64, join_style=1)                               # its pocket, up from the back to the ledge
     body = octagon()
-    # ---- the front's relief: the window chamfered down to the crystal; the side notches; the deck the exterior chamfers leave
-    notches = [box(min(sx * NOTCH['x0'], sx * (W / 2 + 1.0)), -NOTCH['half'], max(sx * NOTCH['x0'], sx * (W / 2 + 1.0)), NOTCH['half']) for sx in (1, -1)]
+    # ---- the front's relief: the window chamfered down to the crystal; the deck the exterior chamfers leave
     win_top = window.buffer(CH_WIN, 64, join_style=2)                                     # the window chamfer's top edge
     def ext_w(deg):
         t = sorted(EXT_WIDTHS); a = deg % 360
@@ -205,7 +203,7 @@ def build(layered_scene, info, helpers):
         (x0, y0), (nx, ny) = f['p'], f['n']; return -nx, -ny, nx * x0 + ny * y0
     panels = []
     for f in faces_e:
-        if f['w'] < 2.0 or abs(f['n'][1]) < 1e-6: continue          # (3 and 9 carry the notches)
+        if f['w'] < 2.0 or abs(f['n'][1]) < 1e-6: continue          # (3 and 9 run clean)
         PP = PANEL_12 if abs(f['n'][0]) < 1e-6 else PANEL_CORNER
         a, b, c = dist_coef(f); reg = body
         tf = f['t']
@@ -224,7 +222,7 @@ def build(layered_scene, info, helpers):
         floor = z_top - tf * (f['w'] - PP['outer']) - PP['edge_depth']   # under the outer edge by edge_depth
         panels.append(dict(poly=pan, face=round(math.degrees(math.atan2(f['n'][1], f['n'][0])) % 360), floor=floor, depth=z_top - floor,
                            edge=PP['edge_depth'], inner=round(tf * (f['w'] - PP['inner'] - PP['outer']) + PP['edge_depth'], 3)))
-    front = dict(notches=notches, win_top=win_top, deck=deck, deck_at=deck_at, panels=panels)
+    front = dict(win_top=win_top, deck=deck, deck_at=deck_at, panels=panels)
     discs = [(10.4, 0.0), (-10.4, 0.0)]
     # the crown sits outside the 3 o'clock wall in a well open to the back; the stem's neck passes the wall in a slit open to the back
     well = box(crown_x0 - 0.3, -(crown_r + 0.3), W / 2 + 2.0, crown_r + 0.3)
@@ -284,10 +282,6 @@ def build(layered_scene, info, helpers):
           pocket('Cavity: the top of Beta 2, up to its plates\' tops', cav, 'front', z_plates - Z_SPLIT, nid()),
           pocket('Dial plate pocket (the dial plate + 0.1; its corners cut back, so the faceplate stays solid under the corner panels): its ceiling clamps the dial plate', dial_pocket, 'front', z_dial1 - Z_SPLIT, nid()),
           pocket('Crystal pocket (the window + 1.1): the crystal goes in from the back and is glued up against the ledge, 0.6 under the ring', cry_pocket, 'front', z_lip0 - Z_SPLIT, nid())]
-    z_foot = z_top - EXT_W['corner']
-    for nt in notches: bc.append(pocket('Side notch over the crown (and its mirror at 9): cut in from the side to a flat floor at z %.2f, its back wall straight, its ends '
-                                        'rising at 45° from the side chamfer\'s foot line (z %.2f)' % (NOTCH['floor'], z_foot), nt, 'back', z_top - NOTCH['floor'], nid(),
-                                        chamfer=round(z_top - z_foot, 4), chamfer_widths=[[0, 0], [90, round(z_top - z_foot, 4)], [180, 0], [270, round(z_top - z_foot, 4)]]))
     for sy in (-1, 1):
         for y in VENT_Y: bc.append(pocket('Vent (on the deck behind the plaque)', stadium(-VENT_X, VENT_X, sy * y, VENT_W), 'back', 1.0, nid(), chamfer=CH_VENT))
     for s in scr: bc.append(hole('pilot', 'Case screw, M1.6x14: tapped %.1f up from the split (it comes up through the back plate and the case middle)' % SCREW['tap_depth'], s, SCREW['tap'], 'front', nid(), depth=SCREW['tap_depth'], fit='m16_tap'))
@@ -296,7 +290,7 @@ def build(layered_scene, info, helpers):
                          % (pn['face'], pn['floor'], pn['edge'], pn['inner'], PANEL_R), pn['poly'], 'back', pn['depth'], nid()))
     for s in DOWEL_XY: bc.append(hole('dowel', f'Dowel Ø{DOWEL_D} (lines the faceplate up on the case middle)', s, DOWEL_D, 'front', nid(), depth=DOWEL_DEPTH))
     part('D9', 'Faceplate (black delrin, 5/16" faced to %.2f; milled from the front, then the back): the walls fall in on exterior chamfers (45°: 6.0 at 12 and 6, '
-               '4.8 at the corners; %.1f° at 3 and 9, %.2f in, down to the corners\' foot) to the deck, the window chamfered down to the crystal, the side notches and vents; the cavity\'s top, the '
+               '4.8 at the corners; %.1f° at 3 and 9, %.2f in, down to the corners\' foot) to the deck, the window chamfered down to the crystal, the vents; the cavity\'s top, the '
                'crystal\'s pocket and ledge, the screws\' tapped holes and the dowel holes from the back' % (T_face, SIDE_ANGLE, SIDE_W), body, Z_SPLIT, T_face, bc,
          chamfer={'face': 'back', 'size': EXT_W['3/9'], 'angle': EXT_ANGLE, 'widths': EXT_WIDTHS, 'angles': [[a_, round(v, 4)] for a_, v in EXT_ANGLES]})
     cry = [pocket('Step: the edge 0.4 thick, glued up against the ledge', hp, 'back', CRYSTAL_STEP, 1 + i) for i, hp in enumerate(halves(cry_out.difference(boss)))]
@@ -384,10 +378,7 @@ def build(layered_scene, info, helpers):
                         'exterior chamfer feet (12/6, corners, 3/9)': tuple(round(z_top - EXT_W[k_] * ext_t(dg_), 3) for k_, dg_ in (('12/6', 90), ('corner', 45), ('3/9', 0))),
                         'side chamfer': {'angle': round(SIDE_ANGLE, 2), 'top edge x': round(W / 2 - SIDE_W, 2),
                                          'ridges meet the deck at y': round(min(abs(q[1]) for q in deck.exterior.coords if abs(q[0]) > W / 2 - SIDE_W - 1e-6), 3)},
-                        'notch': {'floor': NOTCH['floor'], 'ends rise from (foot line)': round(z_top - EXT_W['corner'], 4), 'back wall x': NOTCH['x0'],
-                                  'back wall top': round(z_top - ext_t(0) * (NOTCH['x0'] - (W / 2 - SIDE_W)), 3),
-                                  'to the cavity': round(NOTCH['x0'] - (HX + CLR), 2), 'over the split': round(NOTCH['floor'] - Z_SPLIT, 2),
-                                  'dowels: side chamfer over the dowel top': round(z_top - ext_t(0) * (SIDE_W - (W / 2 - (DOWEL_XY[0][0] + DOWEL_D / 2))) - (Z_SPLIT + DOWEL_DEPTH), 2)},
+                        'side chamfer over the dowel tops': round(z_top - ext_t(0) * (SIDE_W - (W / 2 - (DOWEL_XY[0][0] + DOWEL_D / 2))) - (Z_SPLIT + DOWEL_DEPTH), 2),
                         'deck bounds': [round(v, 2) for v in deck.bounds],
                         'flat between the window bezel and the exterior chamfer (12/6 stubs, corners, plaques)': (
                             round(H / 2 - EXT_W['12/6'] - (WIN_HH + CH_WIN), 2), round((W / 2 + H / 2 - CH) / math.sqrt(2) - EXT_W['corner'] - (WIN_HW + WIN_HH - WIN_CH + CH_WIN * math.sqrt(2)) / math.sqrt(2), 2),
