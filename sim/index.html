@@ -2643,6 +2643,7 @@ function buildDisc(part, h, hs) {
   part.anchorSpin = new THREE.Vector3(R * 0.55, 0, hs.z + hs.t);
 }
 
+const _camLocal = new THREE.Vector3();
 const plate = makePart({ id: 'plate', name: (PROJECT.plate && PROJECT.plate.name) || 'Mainplate', group: 'plate', kind: 'plate', level: -1,
   role: (PROJECT.plate && PROJECT.plate.role) || 'Base plate. A plain plate: no holes, jewels or bearings until you add them. Parts can hang past its edge without a flag; Checks shows how far out they reach.' });
 plate.mat.transparent = true;
@@ -2673,6 +2674,7 @@ function syncScene() {
     clearPart(plate);
     const pz = PROJECT.plate && typeof PROJECT.plate.z === 'number' ? PROJECT.plate.z : 0;   // a project can set its ground lower (Crescent has parts under its main plate)
     addMesh(plate, zCylinder(S.movementD / 2, pz - 1, pz, 160), plate.statics);
+    plate.zBottom = pz - 1;
     plate.anchorLocal.set(S.movementD / 2 * Math.cos(-2.4), S.movementD / 2 * Math.sin(-2.4), 0);
     plate.key = pk;
     rebuilt = true;
@@ -5291,6 +5293,9 @@ let last = performance.now(), lastPick = 0;
     if (hoverSource !== 'label' && hoverSource !== 'list') setHover(pickAt(pointerXY.cx, pointerXY.cy), 'view');
   }
   renderTip();
+  // the ground disc steps aside when the view comes from under it, so a part's underside shows (2026-11-26: the H-88's back plate
+  // and its engraved logo were behind it)
+  if (plate.zBottom != null) { const below = plate.root.worldToLocal(_camLocal.copy(camera.position)).z < plate.zBottom; if (plate.statics.visible === below) plate.statics.visible = !below; }
   renderer.render(scene, camera);
   updateLabels();
   placeQuick();
