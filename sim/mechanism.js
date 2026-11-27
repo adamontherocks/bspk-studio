@@ -537,56 +537,91 @@
     return [...out.entries()].map(([k, v]) => `${k}: up to ${v.toFixed(2)} mm² in one 0.3 mm slice`);
   }
 
-  // ---------- engraving: ticks, numbers and text printed on a drawn part's top face ----------
-  function engrave(part, d, items) {
+  // ---------- engraving: ticks, numbers, text and images printed on a drawn part's face ----------
+  // PROJECT.decor.engrave[partId] = [items] (on its top face) or { items, face: 'top' | 'bottom', z } (2026-11-26, the H-88: a face
+  // under a ridge, and the back plate's wrist side, seen from below so it reads from the back). Items: arc / ring (ticks), text
+  // ({ text, at, cap or size, font, weight, spacing, angle, narrow }), image ({ src, at, w, h }: a transparent PNG, drawn as it is).
+  const IMGS = {};
+  function engrave(part, d, spec) {
     const k = sketchOf(d);
+    const items = Array.isArray(spec) ? spec : spec && spec.items;
     if (!k || !items || !items.length) return;
-    const top = Math.max(...faceOffsets(d, k));
+    const bottom = !Array.isArray(spec) && spec.face === 'bottom', offs = faceOffsets(d, k);
+    const zf = !Array.isArray(spec) && Number.isFinite(spec.z) ? spec.z : bottom ? Math.min(...offs) : Math.max(...offs);
     const pts = outlinePoints(k);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const p of pts) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
     const W = x1 - x0, Hh = y1 - y0, px = Math.min(28, 2048 / Math.max(W, Hh));
     const cv = document.createElement('canvas'); cv.width = Math.ceil(W * px); cv.height = Math.ceil(Hh * px);
     const g = cv.getContext('2d');
-    const P = (x, y) => [(x - x0) * px, (y1 - y) * px];
-    g.strokeStyle = g.fillStyle = '#20262d'; g.lineCap = 'round'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (const it of items) {
-      if (it.kind === 'arc') {
-        const n = it.n, [l0, l1] = it.len || [1.5, 3];
-        for (let i = 0; i <= n; i++) {
-          const a = (it.a0 + (it.a1 - it.a0) * i / n) * DEG, maj = i % it.major === 0, L1 = maj ? l1 : l0;
-          const [ax, ay] = P(it.c[0] + it.r * Math.cos(a), it.c[1] + it.r * Math.sin(a)), [bx, by] = P(it.c[0] + (it.r + L1) * Math.cos(a), it.c[1] + (it.r + L1) * Math.sin(a));
-          g.lineWidth = (maj ? 0.32 : 0.18) * px; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
-        }
-        if (it.labels) for (const [i, txt] of Object.entries(it.labels)) {
-          const a = (it.a0 + (it.a1 - it.a0) * (+i) / n) * DEG, [x, y] = P(it.c[0] + it.rl * Math.cos(a), it.c[1] + it.rl * Math.sin(a));
-          g.save(); g.translate(x, y); g.rotate(-(a - Math.PI / 2)); g.font = `600 ${it.size * px}px Georgia, serif`; g.fillText(txt, 0, 0); g.restore();
-        }
-      } else if (it.kind === 'text') {
-        const [x, y] = P(it.at[0], it.at[1]);
-        g.save(); g.translate(x, y); g.rotate(-(it.angle || 0) * DEG); g.font = `${it.weight || 600} ${it.size * px}px Georgia, serif`; g.fillText(it.text, 0, 0); g.restore();
-      } else if (it.kind === 'ring') {
-        for (let i = 0; i < it.n; i++) {
-          const a = (90 - 360 * i / it.n) * DEG, maj = i % it.major === 0, L1 = maj ? it.len[1] : it.len[0];
-          const [ax, ay] = P(it.c[0] + it.r * Math.cos(a), it.c[1] + it.r * Math.sin(a)), [bx, by] = P(it.c[0] + (it.r - L1) * Math.cos(a), it.c[1] + (it.r - L1) * Math.sin(a));
-          g.lineWidth = (maj ? 0.28 : 0.15) * px; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+    const P = (x, y) => [(bottom ? x1 - x : x - x0) * px, (y1 - y) * px];   // (the bottom face as seen from below: x runs the other way)
+    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+    const paint = () => {
+      g.clearRect(0, 0, cv.width, cv.height);
+      g.strokeStyle = g.fillStyle = '#20262d'; g.lineCap = 'round'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      for (const it of items) {
+        if (it.kind === 'arc') {
+          const n = it.n, [l0, l1] = it.len || [1.5, 3];
+          for (let i = 0; i <= n; i++) {
+            const a = (it.a0 + (it.a1 - it.a0) * i / n) * DEG, maj = i % it.major === 0, L1 = maj ? l1 : l0;
+            const [ax, ay] = P(it.c[0] + it.r * Math.cos(a), it.c[1] + it.r * Math.sin(a)), [bx, by] = P(it.c[0] + (it.r + L1) * Math.cos(a), it.c[1] + (it.r + L1) * Math.sin(a));
+            g.lineWidth = (maj ? 0.32 : 0.18) * px; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+          }
+          if (it.labels) for (const [i, txt] of Object.entries(it.labels)) {
+            const a = (it.a0 + (it.a1 - it.a0) * (+i) / n) * DEG, [x, y] = P(it.c[0] + it.rl * Math.cos(a), it.c[1] + it.rl * Math.sin(a));
+            g.save(); g.translate(x, y); g.rotate(-(a - Math.PI / 2)); g.font = `600 ${it.size * px}px Georgia, serif`; g.fillText(txt, 0, 0); g.restore();
+          }
+        } else if (it.kind === 'text') {
+          const [x, y] = P(it.at[0], it.at[1]), fam = `${it.weight || 600} %spx ${it.font ? it.font + ', ' : ''}Georgia, serif`;
+          let fpx = (it.size || 1.5) * px;
+          if (it.cap > 0) { g.letterSpacing = '0px'; g.textBaseline = 'alphabetic'; g.font = fam.replace('%s', '100'); fpx = (100 * it.cap * px) / (g.measureText('H').actualBoundingBoxAscent || 72); }
+          g.font = fam.replace('%s', fpx.toFixed(2)); g.letterSpacing = `${(it.spacing || 0) * fpx}px`; g.textBaseline = 'middle';
+          g.save(); g.translate(x, y); g.rotate(-(it.angle || 0) * DEG); if (it.narrow > 0 && it.narrow < 1) g.scale(it.narrow, 1);
+          g.fillText(it.text, (it.spacing || 0) * fpx / 2, 0); g.restore(); g.letterSpacing = '0px';
+        } else if (it.kind === 'ring') {
+          for (let i = 0; i < it.n; i++) {
+            const a = (90 - 360 * i / it.n) * DEG, maj = i % it.major === 0, L1 = maj ? it.len[1] : it.len[0];
+            const [ax, ay] = P(it.c[0] + it.r * Math.cos(a), it.c[1] + it.r * Math.sin(a)), [bx, by] = P(it.c[0] + (it.r - L1) * Math.cos(a), it.c[1] + (it.r - L1) * Math.sin(a));
+            g.lineWidth = (maj ? 0.28 : 0.15) * px; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+          }
+        } else if (it.kind === 'image' && it.src) {
+          let im = IMGS[it.src];
+          if (!im) { im = IMGS[it.src] = new Image(); im.src = it.src; }
+          if (!im.complete || !im.naturalWidth) { im.addEventListener('load', () => { paint(); tex.needsUpdate = true; }, { once: true }); continue; }
+          const [cx, cy] = P(it.at[0], it.at[1]), w = it.w * px, h = (it.h || it.w * im.naturalHeight / im.naturalWidth) * px;
+          g.drawImage(im, cx - w / 2, cy - h / 2, w, h);
         }
       }
-    }
-    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+    };
+    paint();
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, Hh), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
-    mesh.position.set((x0 + x1) / 2, (y0 + y1) / 2, top + 0.03);
-    mesh.userData.part = part.id;
+    mesh.position.set((x0 + x1) / 2, (y0 + y1) / 2, zf + (bottom ? -0.03 : 0.03));
+    if (bottom) mesh.rotation.y = Math.PI;      // facing the wrist
+    mesh.userData.part = part.id; mesh.userData.engraving = true;
     mesh.raycast = () => {};   // the printing's transparent sheet covers the part's whole bounding box: clicks go through it to the real surface
     part.statics.add(mesh);
+  }
+  // every project's engravings (with or without moving parts): re-printed when the part or its engraving changes
+  const engDone = {};
+  function engraveAll() {
+    const eng = (typeof PROJECT !== 'undefined' && PROJECT.decor && PROJECT.decor.engrave) || {};
+    for (const d of S.drawn) {
+      const p = parts[d.id];
+      if (!p) continue;
+      const key = p.key + '|' + JSON.stringify(eng[d.id] || null);
+      if (engDone[d.id] === key) continue;
+      engDone[d.id] = key;
+      for (const c of [...p.statics.children]) if (c.userData && c.userData.engraving) { p.statics.remove(c); if (c.geometry) c.geometry.dispose(); if (c.material) { if (c.material.map) c.material.map.dispose(); c.material.dispose(); } }
+      if (eng[d.id]) engrave(p, d, eng[d.id]);
+    }
   }
 
   // ---------- keeping the scene in step: mounts, engravings, springs ----------
   const done = {};
   Mech.sync = function () {
+    engraveAll();
     const m = def();
     if (!m) { Mech.checksDrawn = false; return; }
-    const eng = (PROJECT.decor && PROJECT.decor.engrave) || {};
     for (const d of S.drawn) {
       const p = parts[d.id];
       if (!p) continue;
@@ -609,7 +644,6 @@
         p.statics.position.set(-mx.axisY[0], 0, -mx.axisY[1]);
         p.anchorLocal.x -= mx.axisY[0]; p.anchorLocal.z -= mx.axisY[1];
       }
-      if (eng[d.id]) engrave(p, d, eng[d.id]);
     }
     // the project's own colours (materials, not states): applied once to each part's base material
     const cols = (PROJECT.decor && PROJECT.decor.colors) || {};

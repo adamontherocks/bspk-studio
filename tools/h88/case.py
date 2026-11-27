@@ -391,6 +391,17 @@ def build(layered_scene, info, helpers):
                   'a case middle (a ring round the movement carrying the four lugs, with a back bevel for the wrist) and a back plate, plus a 1 mm acrylic crystal in the window\'s shape '
                   'and a 1/16" dial plate with the discs turning in its apertures. Beta 2, its stem and crown drop into the ring from the back; six screws come up through the back plate '
                   f'and the ring into the faceplate. Spring bars at the lower third of the height; {z_top - z_frame0:.2f} mm from the back to the deck.')
+    # ---- engravings (Adam, 2026-11-26: "BSPK can be larger and the name can be smaller... fit them wherever fits well"; the literary
+    # HEMISTICH, "the correct word"; his logo on the back "like 60% coverage"): V-carved and filled white. On the dial plate's face, where
+    # it shows between the discs: BSPK in his logo's style (Avenir Next Heavy stands in for it) above, HEMISTICH '88 in the discs' type
+    # below (narrowed a touch to keep 0.7 off the disc openings). On the back plate's wrist side: his shield logo, 60% of its height.
+    bk_h = back_outline.bounds[3] - back_outline.bounds[1]
+    P['decor'] = {**(P.get('decor') or {}), 'engrave': {
+        'D11': {'face': 'top', 'z': round(z_dial1, 4), 'items': [
+            {'kind': 'text', 'text': 'BSPK', 'at': [0.0, 8.2], 'cap': 1.5, 'font': '"Avenir Next"', 'weight': 800, 'spacing': 0.04},
+            {'kind': 'text', 'text': "HEMISTICH '88", 'at': [0.0, -8.55], 'cap': 1.1, 'font': '"Avenir Next Condensed"', 'weight': 600, 'narrow': 0.92}]},
+        'D13': {'face': 'bottom', 'items': [
+            {'kind': 'image', 'src': 'projects/assets/bspk-logo.png', 'at': [0.0, 0.0], 'w': round(0.6 * bk_h / 0.9773, 3), 'h': round(0.6 * bk_h, 3)}]}}}
     P['source'] = list(P.get('source') or []) + ['H-88 case: Claude, 2026-11-25, traced from Adam\'s Meshy model (1988 hemistitch) and render (H-88 "Spectrum"), his stack sketch '
                                                  '(face/body, calibre, lug plate, back plate) and notes (one-piece stepped crystal, dial plate, stem slit).']
     P['plate']['z'] = round(z_frame0 - 1.5, 4)

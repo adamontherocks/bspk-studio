@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-26T20:18:44",
+ "savedAt": "2026-11-26T20:33:35",
  "state": {
   "pos": {
    "minute": [
@@ -308433,6 +308433,55 @@
     "e_wheel": true,
     "hour_disc": true,
     "minute_disc": true
+   }
+  },
+  "decor": {
+   "engrave": {
+    "D11": {
+     "face": "top",
+     "z": 9.0375,
+     "items": [
+      {
+       "kind": "text",
+       "text": "BSPK",
+       "at": [
+        0.0,
+        8.2
+       ],
+       "cap": 1.5,
+       "font": "\"Avenir Next\"",
+       "weight": 800,
+       "spacing": 0.04
+      },
+      {
+       "kind": "text",
+       "text": "HEMISTICH '88",
+       "at": [
+        0.0,
+        -8.55
+       ],
+       "cap": 1.1,
+       "font": "\"Avenir Next Condensed\"",
+       "weight": 600,
+       "narrow": 0.92
+      }
+     ]
+    },
+    "D13": {
+     "face": "bottom",
+     "items": [
+      {
+       "kind": "image",
+       "src": "projects/assets/bspk-logo.png",
+       "at": [
+        0.0,
+        0.0
+       ],
+       "w": 27.575,
+       "h": 26.949
+      }
+     ]
+    }
    }
   }
  }
