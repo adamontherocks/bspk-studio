@@ -540,7 +540,7 @@
   // ---------- engraving: ticks, numbers, text and images printed on a drawn part's face ----------
   // PROJECT.decor.engrave[partId] = [items] (on its top face) or { items, face: 'top' | 'bottom', z } (2026-11-26, the H-88: a face
   // under a ridge, and the back plate's wrist side, seen from below so it reads from the back). Items: arc / ring (ticks), text
-  // ({ text, at, cap or size, font, weight, spacing, angle, narrow }), image ({ src, at, w, h }: a transparent PNG, drawn as it is).
+  // ({ text, at, cap or size, font, weight, spacing, angle, narrow, maxw: narrowed to fit that width, mm }), image ({ src, at, w, h }: a transparent PNG, drawn as it is).
   const IMGS = {};
   function engrave(part, d, spec) {
     const k = sketchOf(d);
@@ -576,7 +576,9 @@
           let fpx = (it.size || 1.5) * px;
           if (it.cap > 0) { g.letterSpacing = '0px'; g.textBaseline = 'alphabetic'; g.font = fam.replace('%s', '100'); fpx = (100 * it.cap * px) / (g.measureText('H').actualBoundingBoxAscent || 72); }
           g.font = fam.replace('%s', fpx.toFixed(2)); g.letterSpacing = `${(it.spacing || 0) * fpx}px`; g.textBaseline = 'middle';
-          g.save(); g.translate(x, y); g.rotate(-(it.angle || 0) * DEG); if (it.narrow > 0 && it.narrow < 1) g.scale(it.narrow, 1);
+          let nr = it.narrow > 0 && it.narrow < 1 ? it.narrow : 1;
+          if (it.maxw > 0) { const wt = g.measureText(it.text).width - (it.spacing || 0) * fpx; nr = Math.min(nr, (it.maxw * px) / wt); }   // narrowed to fit maxw (mm)
+          g.save(); g.translate(x, y); g.rotate(-(it.angle || 0) * DEG); if (nr < 1) g.scale(nr, 1);
           g.fillText(it.text, (it.spacing || 0) * fpx / 2, 0); g.restore(); g.letterSpacing = '0px';
         } else if (it.kind === 'ring') {
           for (let i = 0; i < it.n; i++) {
@@ -601,8 +603,9 @@
     mesh.raycast = () => {};   // the printing's transparent sheet covers the part's whole bounding box: clicks go through it to the real surface
     part.statics.add(mesh);
   }
-  // every project's engravings (with or without moving parts): re-printed when the part or its engraving changes
+  // every project's engravings (with or without moving parts): re-printed when the part or its engraving changes (or its fonts arrive)
   const engDone = {};
+  Mech.refreshEngraving = () => { for (const k of Object.keys(engDone)) delete engDone[k]; };
   function engraveAll() {
     const eng = (typeof PROJECT !== 'undefined' && PROJECT.decor && PROJECT.decor.engrave) || {};
     for (const d of S.drawn) {

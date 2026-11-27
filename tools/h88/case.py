@@ -372,9 +372,11 @@ def build(layered_scene, info, helpers):
     # ---- the discs' faces: the AXIS word discs (Adam, 2026-11-26, from the AXIS renders: "radial words, not stacked... no frame or tick
     # marks... accept the v bits 1.1mm"): the hours written out on the left disc, the minutes in fives on the right, each word along its
     # radius against the rim; they're read where the discs face each other, across the middle, as one phrase ("TWELVE FORTY-FIVE").
-    # Letters 1.1 tall (V-carved and filled) in Avenir Next Condensed demi, spaced 0.06 em, from 2.0 off the centre to 0.4 off the rim (the
-    # long minute words narrowed to fit: Adam picked it over DIN Condensed for more room); :05 reads O'FIVE (Adam: "reads more logical",
-    # twelve oh-five, rhyming with O'CLOCK). No ticks, no index drawn.
+    # Letters 1.1 tall (V-carved and filled) in Orbitron (Adam, 2026-11-26: an 80s face, "michroma and orbitron are great... you make a
+    # call": Orbitron, the narrower of the two; Michroma would squeeze even TWELVE to 79%), from 2.6 off the centre (where neighbouring words'
+    # inner ends keep 0.25 apart: Orbitron's words are long enough that most reach the hub) to 0.4 off the rim; words longer than that are
+    # narrowed to fit (TWENTY-FIVE to about 51%, THIRTY-FIVE 58%, FORTY-FIVE 59%, FIFTY-FIVE 66%, TWELVE 85%). :05 reads O'FIVE (Adam:
+    # "reads more logical", twelve oh-five, rhyming with O'CLOCK). No ticks, no index drawn.
     words_h = ['TWELVE', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN']
     words_m = ["O'CLOCK", "O'FIVE", 'TEN', 'FIFTEEN', 'TWENTY', 'TWENTY-FIVE', 'THIRTY', 'THIRTY-FIVE', 'FORTY', 'FORTY-FIVE', 'FIFTY', 'FIFTY-FIVE']
     disc_x = dict(zip(('minute', 'hour'), (d_[0] for d_ in discs)))
@@ -382,7 +384,7 @@ def build(layered_scene, info, helpers):
         if hd.get('id') not in ('hour_disc', 'minute_disc'): continue
         mine = 'hour' if hd['id'] == 'hour_disc' else 'minute'
         hd.update({'marks': 0, 'labels': words_h if mine == 'hour' else words_m, 'pointer': False,
-                   'words': {'r0': 2.0, 'r1': DISC_R - 0.4, 'cap': 1.1, 'font': '"Avenir Next Condensed"', 'weight': 600, 'spacing': 0.06},
+                   'words': {'r0': 2.6, 'r1': DISC_R - 0.4, 'cap': 1.1, 'font': '"Orbitron"', 'weight': 500, 'spacing': 0.0},   # (r0: neighbours' inner ends keep 0.25)
                    'indicator': 0.0 if disc_x[mine] < 0 else math.pi})    # (read on the side facing the other disc)
         hd['role'] = (hd.get('role') or '').split(' Its face:')[0] + (' Its face: the %s in words along the radii (the AXIS discs), letters 1.1 tall, V-carved and filled; '
                       'read where the discs face each other.' % ('hours' if mine == 'hour' else 'minutes in fives'))
@@ -393,13 +395,13 @@ def build(layered_scene, info, helpers):
                   f'and the ring into the faceplate. Spring bars at the lower third of the height; {z_top - z_frame0:.2f} mm from the back to the deck.')
     # ---- engravings (Adam, 2026-11-26: "BSPK can be larger and the name can be smaller... fit them wherever fits well"; the literary
     # HEMISTICH, "the correct word"; his logo on the back "like 60% coverage"): V-carved and filled white. On the dial plate's face, where
-    # it shows between the discs: BSPK in his logo's style (Avenir Next Heavy stands in for it) above, HEMISTICH '88 in the discs' type
-    # below (narrowed a touch to keep 0.7 off the disc openings). On the back plate's wrist side: his shield logo, 60% of its height.
+    # it shows between the discs, both in Orbitron like the discs: BSPK above, HEMISTICH '88 below, each narrowed where it must be to keep
+    # about 0.6 off the disc openings (maxw: the width there). On the back plate's wrist side: his shield logo, 60% of its height.
     bk_h = back_outline.bounds[3] - back_outline.bounds[1]
     P['decor'] = {**(P.get('decor') or {}), 'engrave': {
         'D11': {'face': 'top', 'z': round(z_dial1, 4), 'items': [
-            {'kind': 'text', 'text': 'BSPK', 'at': [0.0, 8.2], 'cap': 1.5, 'font': '"Avenir Next"', 'weight': 800, 'spacing': 0.04},
-            {'kind': 'text', 'text': "HEMISTICH '88", 'at': [0.0, -8.55], 'cap': 1.1, 'font': '"Avenir Next Condensed"', 'weight': 600, 'narrow': 0.92}]},
+            {'kind': 'text', 'text': 'BSPK', 'at': [0.0, 8.2], 'cap': 1.5, 'font': '"Orbitron"', 'weight': 700, 'maxw': 6.9},
+            {'kind': 'text', 'text': "HEMISTICH '88", 'at': [0.0, -8.6], 'cap': 1.1, 'font': '"Orbitron"', 'weight': 500, 'maxw': 8.4}]},
         'D13': {'face': 'bottom', 'items': [
             {'kind': 'image', 'src': 'projects/assets/bspk-logo.png', 'at': [0.0, 0.0], 'w': round(0.6 * bk_h / 0.9773, 3), 'h': round(0.6 * bk_h, 3)}]}}}
     P['source'] = list(P.get('source') or []) + ['H-88 case: Claude, 2026-11-25, traced from Adam\'s Meshy model (1988 hemistitch) and render (H-88 "Spectrum"), his stack sketch '

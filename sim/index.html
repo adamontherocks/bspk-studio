@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BSPK Studio · Watch train</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Michroma&display=swap">
 <style>
 :root{
   --bg:#0d1319; --stage-top:#18222d; --panel:#121a22; --line:#243140; --line-2:#2f3e4f;
@@ -2648,6 +2650,20 @@ for (const a of ARBOR_DEFS) makePart({ id: a.id, name: a.name, group: a.group, r
 for (const h of HAND_DEFS) makePart({ id: h.id, name: h.name, group: h.group, role: h.role, kind: 'hand', level: h.level });
 for (const a of ARBOR_DEFS) if (a.drumH) parts[a.id].mats.push(springMat);
 
+// Faces a project's discs or engravings name (Google Fonts, loaded above): canvases drawn before a face arrives fall back to another,
+// so once the faces are in, the discs and engravings are drawn again (2026-11-26, the H-88's Orbitron)
+function redrawType() {
+  for (const h of HAND_DEFS) if (h.shape === 'disc' && parts[h.id]) parts[h.id].key = '';
+  if (window.Mech && Mech.refreshEngraving) Mech.refreshEngraving();
+  syncScene();
+}
+if (document.fonts) {
+  const want = [];
+  for (const h of HAND_DEFS) if (h.words && h.words.font) want.push(`${h.words.weight || 700} 40px ${h.words.font}`);
+  for (const spec of Object.values((PROJECT.decor && PROJECT.decor.engrave) || {})) for (const it of (Array.isArray(spec) ? spec : spec.items || [])) if (it.font) want.push(`${it.weight || 600} 40px ${it.font}`);
+  Promise.all(want.map(f => document.fonts.load(f).catch(() => null))).then(() => document.fonts.ready).then(() => setTimeout(redrawType, 0));
+  document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => setTimeout(redrawType, 0));
+}
 function syncScene() {
   let rebuilt = false;
   const pk = String(S.movementD);

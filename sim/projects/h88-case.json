@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-26T20:33:35",
+ "savedAt": "2026-11-26T20:48:31",
  "state": {
   "pos": {
    "minute": [
@@ -308233,12 +308233,12 @@
     "role": "\u00d819 black delrin, numerals V-carved and filled; pressed on the hour arbor's post 0.3 above the hour bridge, like a hand over a dial. Turns the same way as the minute disc (four reductions). Its face: the hours in words along the radii (the AXIS discs), letters 1.1 tall, V-carved and filled; read where the discs face each other.",
     "pointer": false,
     "words": {
-     "r0": 2.0,
+     "r0": 2.6,
      "r1": 9.1,
      "cap": 1.1,
-     "font": "\"Avenir Next Condensed\"",
-     "weight": 600,
-     "spacing": 0.06
+     "font": "\"Orbitron\"",
+     "weight": 500,
+     "spacing": 0.0
     }
    },
    {
@@ -308267,12 +308267,12 @@
     "role": "\u00d819 black delrin, numerals V-carved and filled; pressed on the minute arbor's post 0.3 above the minute bridge, like a hand over a dial. Its face: the minutes in fives in words along the radii (the AXIS discs), letters 1.1 tall, V-carved and filled; read where the discs face each other.",
     "pointer": false,
     "words": {
-     "r0": 2.0,
+     "r0": 2.6,
      "r1": 9.1,
      "cap": 1.1,
-     "font": "\"Avenir Next Condensed\"",
-     "weight": 600,
-     "spacing": 0.06
+     "font": "\"Orbitron\"",
+     "weight": 500,
+     "spacing": 0.0
     }
    }
   ],
@@ -308449,21 +308449,21 @@
         8.2
        ],
        "cap": 1.5,
-       "font": "\"Avenir Next\"",
-       "weight": 800,
-       "spacing": 0.04
+       "font": "\"Orbitron\"",
+       "weight": 700,
+       "maxw": 6.9
       },
       {
        "kind": "text",
        "text": "HEMISTICH '88",
        "at": [
         0.0,
-        -8.55
+        -8.6
        ],
        "cap": 1.1,
-       "font": "\"Avenir Next Condensed\"",
-       "weight": 600,
-       "narrow": 0.92
+       "font": "\"Orbitron\"",
+       "weight": 500,
+       "maxw": 8.4
       }
      ]
     },
