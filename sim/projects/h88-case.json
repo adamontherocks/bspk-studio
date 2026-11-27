@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-26T20:58:14",
+ "savedAt": "2026-11-26T21:09:51",
  "state": {
   "pos": {
    "minute": [
@@ -308484,12 +308484,12 @@
      "items": [
       {
        "kind": "image",
-       "src": "projects/assets/bspk-logo.png",
+       "src": "projects/assets/bspk-logo.png?v=2",
        "at": [
         0.0,
         0.0
        ],
-       "w": 27.575,
+       "w": 27.999,
        "h": 26.949
       }
      ]

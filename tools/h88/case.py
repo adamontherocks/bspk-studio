@@ -408,7 +408,7 @@ def build(layered_scene, info, helpers):
             # there (the disc openings come within 0.6 of the centre), so it's 0.9 long at most.
             {'kind': 'text', 'text': '\u2013', 'at': [0.0, 0.0], 'cap': 1.1, 'font': '"Orbitron"', 'weight': 500, 'maxw': 0.9}]},
         'D13': {'face': 'bottom', 'items': [
-            {'kind': 'image', 'src': 'projects/assets/bspk-logo.png', 'at': [0.0, 0.0], 'w': round(0.6 * bk_h / 0.9773, 3), 'h': round(0.6 * bk_h, 3)}]}}}
+            {'kind': 'image', 'src': 'projects/assets/bspk-logo.png?v=2', 'at': [0.0, 0.0], 'w': round(0.6 * bk_h / 0.9625, 3), 'h': round(0.6 * bk_h, 3)}]}}}
     P['source'] = list(P.get('source') or []) + ['H-88 case: Claude, 2026-11-25, traced from Adam\'s Meshy model (1988 hemistitch) and render (H-88 "Spectrum"), his stack sketch '
                                                  '(face/body, calibre, lug plate, back plate) and notes (one-piece stepped crystal, dial plate, stem slit).']
     P['plate']['z'] = round(z_frame0 - 1.5, 4)
