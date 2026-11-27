@@ -318,6 +318,7 @@ def build(layered_scene, info, helpers):
          chamfer={'face': 'back', 'size': EXT_W['3/9'], 'angle': EXT_ANGLE, 'widths': EXT_WIDTHS, 'angles': [[a_, round(v, 4)] for a_, v in EXT_ANGLES]})
     cry = []
     part('D10', 'Crystal (1 mm clear acrylic, flat, the window\'s shape + 1.0): in from the back against the faceplate\'s %.1f lip, held there by the dial plate\'s ridge' % LIP, cry_out, z_cry0, CRYSTAL_T, cry)
+    parts[-1]['glass'] = True                         # (drawn see-through in the sim)
     dc = [hole('clear', f'Disc aperture ({nm})', c, 19.6, 'back', i + 1) for i, (c, nm) in enumerate(zip(discs, ('minute', 'hour')))]
     ridge_h = z_ridge - z_dial1
     dc += [pocket('The face, inside the ridge (%.1f down from its top)' % ridge_h, ridge_in, 'back', ridge_h, 20)]

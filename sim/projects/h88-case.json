@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-26T20:02:06",
+ "savedAt": "2026-11-26T20:04:08",
  "state": {
   "pos": {
    "minute": [
@@ -307191,7 +307191,8 @@
     "grow": "plus",
     "mill": "back",
     "minWall": 0.6,
-    "cuts": []
+    "cuts": [],
+    "glass": true
    },
    {
     "id": "D11",

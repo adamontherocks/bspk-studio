@@ -2501,6 +2501,8 @@ function syncDrawn() {
     const cutKey = (d.cuts || []).map(c => [c, c.axis && S.pos[c.axis], c.kind === 'pocket' && (S.sketches.find(x => x.id === c.sketch) || {}).points]);
     const key = JSON.stringify([k && k.points, k && k.plane, k && k.closed, d.thickness, d.grow, d.back, d.edges, cutKey, d.twist, d.twistAt, d.place, d.mill, d.minWall, d.cutter, d.resolved ? d.resolved.at + '|' + d.resolved.key : '', d.turn, d.worm, d.flutes, d.chamfer]);
     if (p.key !== key) { buildDrawn(p, d, k); applyPlace(p, d); p.key = key; rebuilt = true; }
+    // a clear part (d.glass: a crystal, 2026-11-26): drawn see-through, faintly blue, so what's under it shows
+    if (d.glass === true) for (const m of p.mats) { m.userData.baseOpacity = 0.16; m.userData.baseColor = 0xcfe6fa; }
   }
   return rebuilt;
 }
@@ -4597,6 +4599,7 @@ function normalizeState(st) {
                    ...(Array.isArray(d.chamfer.widths) ? { widths: d.chamfer.widths.filter(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1])).map(q => [q[0], q[1]]) } : {}),
                    ...(Array.isArray(d.chamfer.angles) ? { angles: d.chamfer.angles.filter(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1]) && q[1] > 0 && q[1] < 90).map(q => [q[0], q[1]]) } : {}) } } : {}),
                grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges, ...(cuts.length ? { cuts } : {}), ...(d.mill === 'front' || d.mill === 'back' ? { mill: d.mill } : {}),
+               ...(d.glass === true ? { glass: true } : {}),
                ...(num(d.twist) && d.twist && Math.abs(d.twist) <= 36000 ? { twist: d.twist } : {}), ...(okXY(d.twistAt) ? { twistAt: d.twistAt.slice() } : {}),
                ...(d.place && Array.isArray(d.place.pivot) && d.place.pivot.length === 3 && d.place.pivot.every(num) && Array.isArray(d.place.axis) && d.place.axis.length === 3
                    && d.place.axis.every(num) && Math.hypot(...d.place.axis) > 1e-9 && num(d.place.deg) ? { place: { pivot: d.place.pivot.slice(), axis: d.place.axis.slice(), deg: d.place.deg } } : {}),
