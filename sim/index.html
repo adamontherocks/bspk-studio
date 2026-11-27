@@ -2585,6 +2585,24 @@ function discFace(h, hs) {
     g.lineWidth = major ? 6 : 3;
     g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
   }
+  if (h.words) {
+    // Word discs (2026-11-26, the AXIS discs: "radial words, not stacked"): each word along its radius, set against the rim and
+    // reading left to right (outward on the right half, inward on the left: none upside down), so at an index on the disc's side
+    // it reads straight across, and two discs side by side read as one phrase ("TWELVE FORTY-FIVE"). h.words = { r0, r1, cap }: the
+    // radial span (mm) and the letters' cap height; a word longer than the span is narrowed to fit, never shrunk.
+    const Wd = h.words, r0 = Wd.r0 > 0 ? Wd.r0 : R * 0.27, r1 = Wd.r1 > 0 ? Math.min(Wd.r1, R) : R - 0.6, cap = Wd.cap > 0 ? Wd.cap : 1.1;
+    g.font = `700 ${(cap / 0.72) * px}px ${Wd.font || '"DIN Condensed", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", sans-serif'}`;
+    g.textBaseline = 'middle';
+    labels.forEach((txt, k) => {
+      const a = ind - sgn * 2 * Math.PI * k / labels.length, ca = Math.cos(a), sa = Math.sin(a);
+      const out = ca > 1e-6 || (Math.abs(ca) <= 1e-6 && sa > 0), [x, y] = at(r1, a), span = (r1 - r0) * px, wt = g.measureText(String(txt)).width;
+      g.save(); g.translate(x, y); g.rotate(out ? -a : Math.PI - a); g.textAlign = out ? 'right' : 'left';
+      if (wt > span) g.scale(span / wt, 1);
+      g.fillText(String(txt), 0, 0); g.restore();
+    });
+    const tw = new THREE.CanvasTexture(cv); tw.anisotropy = 4;
+    return tw;
+  }
   g.font = `600 ${Math.round(R * 0.13 * px)}px system-ui, -apple-system, sans-serif`;
   g.textAlign = 'center'; g.textBaseline = 'middle';
   labels.forEach((txt, k) => {
@@ -2605,7 +2623,7 @@ function buildDisc(part, h, hs) {
     face.userData.part = part.id;
     part.spin.add(face);
   }
-  if (h.indicator != null) {   // the fixed index: a small pointer just outside the rim; it stays put while the disc turns
+  if (h.indicator != null && h.pointer !== false) {   // the fixed index: a small pointer just outside the rim; it stays put while the disc turns (h.pointer false: none drawn)
     const wd = Math.max(0.6, R * 0.05), L = Math.max(1.2, R * 0.09), r0 = R + 0.4;
     const tri = new THREE.Shape([[r0, 0], [r0 + L, wd], [r0 + L, -wd]].map(([x, y]) => new THREE.Vector2(x, y)));
     const m = addMesh(part, new THREE.ExtrudeGeometry(tri, { depth: hs.t, bevelEnabled: false }), part.statics);

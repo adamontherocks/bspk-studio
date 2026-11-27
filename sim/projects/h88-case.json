@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-26T19:54:32",
+ "savedAt": "2026-11-26T20:02:06",
  "state": {
   "pos": {
    "minute": [
@@ -308213,23 +308213,29 @@
     "group": "display",
     "level": 5,
     "shape": "disc",
-    "marks": 12,
+    "marks": 0,
     "labels": [
-     "12",
-     "1",
-     "2",
-     "3",
-     "4",
-     "5",
-     "6",
-     "7",
-     "8",
-     "9",
-     "10",
-     "11"
+     "TWELVE",
+     "ONE",
+     "TWO",
+     "THREE",
+     "FOUR",
+     "FIVE",
+     "SIX",
+     "SEVEN",
+     "EIGHT",
+     "NINE",
+     "TEN",
+     "ELEVEN"
     ],
-    "indicator": 1.5707963267948966,
-    "role": "\u00d819 black delrin, numerals V-carved and filled; pressed on the hour arbor's post 0.3 above the hour bridge, like a hand over a dial. Turns the same way as the minute disc (four reductions)."
+    "indicator": 0.0,
+    "role": "\u00d819 black delrin, numerals V-carved and filled; pressed on the hour arbor's post 0.3 above the hour bridge, like a hand over a dial. Turns the same way as the minute disc (four reductions). Its face: the hours in words along the radii (the AXIS discs), letters 1.1 tall, V-carved and filled; read where the discs face each other.",
+    "pointer": false,
+    "words": {
+     "r0": 2.6,
+     "r1": 8.9,
+     "cap": 1.1
+    }
    },
    {
     "id": "minute_disc",
@@ -308238,23 +308244,29 @@
     "group": "display",
     "level": 5,
     "shape": "disc",
-    "marks": 60,
+    "marks": 0,
     "labels": [
-     "0",
-     "5",
-     "10",
-     "15",
-     "20",
-     "25",
-     "30",
-     "35",
-     "40",
-     "45",
-     "50",
-     "55"
+     "O'CLOCK",
+     "FIVE",
+     "TEN",
+     "FIFTEEN",
+     "TWENTY",
+     "TWENTY-FIVE",
+     "THIRTY",
+     "THIRTY-FIVE",
+     "FORTY",
+     "FORTY-FIVE",
+     "FIFTY",
+     "FIFTY-FIVE"
     ],
-    "indicator": 1.5707963267948966,
-    "role": "\u00d819 black delrin, numerals V-carved and filled; pressed on the minute arbor's post 0.3 above the minute bridge, like a hand over a dial."
+    "indicator": 3.141592653589793,
+    "role": "\u00d819 black delrin, numerals V-carved and filled; pressed on the minute arbor's post 0.3 above the minute bridge, like a hand over a dial. Its face: the minutes in fives in words along the radii (the AXIS discs), letters 1.1 tall, V-carved and filled; read where the discs face each other.",
+    "pointer": false,
+    "words": {
+     "r0": 2.6,
+     "r1": 8.9,
+     "cap": 1.1
+    }
    }
   ],
   "stages": {

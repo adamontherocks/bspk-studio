@@ -368,6 +368,20 @@ def build(layered_scene, info, helpers):
     st['drawn'] = st['drawn'] + parts
     # ---- the project
     P.update({'id': 'h88-case', 'name': 'H-88 Spectrum · case', 'title': 'H-88 Spectrum: a case for Beta 2'})
+    # ---- the discs' faces: the AXIS word discs (Adam, 2026-11-26, from the AXIS renders: "radial words, not stacked... no frame or tick
+    # marks... accept the v bits 1.1mm"): the hours written out on the left disc, the minutes in fives on the right, each word along its
+    # radius against the rim; they're read where the discs face each other, across the middle, as one phrase ("TWELVE FORTY-FIVE").
+    # Letters 1.1 tall (V-carved and filled); no ticks, no index drawn.
+    words_h = ['TWELVE', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN']
+    words_m = ["O'CLOCK", 'FIVE', 'TEN', 'FIFTEEN', 'TWENTY', 'TWENTY-FIVE', 'THIRTY', 'THIRTY-FIVE', 'FORTY', 'FORTY-FIVE', 'FIFTY', 'FIFTY-FIVE']
+    disc_x = dict(zip(('minute', 'hour'), (d_[0] for d_ in discs)))
+    for hd in P.get('hands') or []:
+        if hd.get('id') not in ('hour_disc', 'minute_disc'): continue
+        mine = 'hour' if hd['id'] == 'hour_disc' else 'minute'
+        hd.update({'marks': 0, 'labels': words_h if mine == 'hour' else words_m, 'pointer': False, 'words': {'r0': 2.6, 'r1': DISC_R - 0.6, 'cap': 1.1},
+                   'indicator': 0.0 if disc_x[mine] < 0 else math.pi})    # (read on the side facing the other disc)
+        hd['role'] = (hd.get('role') or '').split(' Its face:')[0] + (' Its face: the %s in words along the radii (the AXIS discs), letters 1.1 tall, V-carved and filled; '
+                      'read where the discs face each other.' % ('hours' if mine == 'hour' else 'minutes in fives'))
     P['blurb'] = ('The 1988 AMC Hemistitch H-88 "Spectrum" case around Beta 2 · layered, from Adam\'s Meshy model, render, stack sketch and edits. '
                   f'Three parts: a faceplate ({W:.1f} x {H:.1f} mm octagon, its front relief at half the model\'s depth, every drop a 45° chamfer, heavy exterior chamfers to a raised deck), '
                   'a case middle (a ring round the movement carrying the four lugs, with a back bevel for the wrist) and a back plate, plus a 1 mm acrylic crystal in the window\'s shape '
