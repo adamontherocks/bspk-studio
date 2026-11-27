@@ -69,7 +69,8 @@ def plan():
             for M in opens:      # it starts on the floor of a cut it sits in
                 if M is not L and M['from'] == L['from'] and zz < M['D'] < L['D'] - 1e-6 and SP(M['path']).buffer(1e-6).contains(Pp): zz = M['D']
             cc = min(size, L['D'] - zz)
-            b = chf.bevel(L['path'], cc, L['zc'], L['into'], zz) if cc > 1e-4 else None
+            b = (chf.bevel_by(L['path'], cc, L['c']['chamferWidths'], L['zc'], L['into'], zz) if L['c'].get('chamferWidths')
+                 else chf.bevel(L['path'], cc, L['zc'], L['into'], zz)) if cc > 1e-4 else None
             if b: cuts.append(b)
         part = {'id': pid, 'name': name, 'solid': [zp(outline, lo, hi)], 'cuts': cuts}
         ch = d.get('chamfer')

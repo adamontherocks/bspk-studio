@@ -79,10 +79,42 @@ def width_of(ch):
         return t[0][1]
     return f
 
+def angle_of(ch):
+    """a part's edge chamfer's angle from the face for an edge facing `deg` degrees: ch['angles'] = [[deg, angle], ...] round the
+    compass, read between (2026-11-26); else ch['angle'] (45)"""
+    a0 = float(ch.get('angle') or 45.0)
+    if not ch.get('angles'): return lambda deg: a0
+    f = width_of({'widths': ch['angles'], 'size': a0})
+    return lambda deg: min(89.0, max(1.0, f(deg)))
+
+def bevel_by(path, c, widths, z_face, into, z0=0.0, under=0.05, E=0.01):
+    """a cut's 45° rim chamfer with a width per wall (widths = [[deg, w], ...], deg the way the wall looks into the opening, as the
+    sim's c.chamferWidths): a ruled loft from the outline at depth z0 + c up to its offset by each wall's width at the face. A wall with
+    none stays straight (its face is the pocket's own wall); widths are c or 0."""
+    p = [(float(q[0]), float(q[1])) for q in path]
+    if area(p) < 0: p.reverse()                                   # anticlockwise: the material on each edge's right
+    n = len(p); wof = width_of({'widths': widths, 'size': c})
+    N, W = [], []
+    for i in range(n):
+        (x0, y0), (x1, y1) = p[i], p[(i + 1) % n]; L = math.hypot(x1 - x0, y1 - y0) or 1.0
+        nx, ny = (y1 - y0) / L, -(x1 - x0) / L; N.append((nx, ny))
+        W.append(min(c, wof(math.degrees(math.atan2(-ny, -nx)))))
+    def off(dist):
+        out = []
+        for i in range(n):
+            j = (i - 1) % n; (ax, ay), (bx, by) = p[j], p[i]; (cx, cy) = p[(i + 1) % n]
+            a1 = (ax + N[j][0] * dist[j], ay + N[j][1] * dist[j]); b1 = (bx + N[j][0] * dist[j], by + N[j][1] * dist[j])
+            a2 = (bx + N[i][0] * dist[i], by + N[i][1] * dist[i]); b2 = (cx + N[i][0] * dist[i], cy + N[i][1] * dist[i])
+            out.append(_x(a1, b1, a2, b2) or a2)
+        return out
+    bot = off([-under if w > 1e-6 else 0.0 for w in W]); top = off([w + E if w > 1e-6 else 0.0 for w in W])
+    zA = z_face + into * (z0 + c + under); zB = z_face + into * (z0 - E)
+    return {'kind': 'loft', 'w0': [[x, y, zA] for x, y in bot], 'w1': [[x, y, zB] for x, y in top]}
+
 def edge_wedges(outline, ch, z_face, into, E=0.01):
     """a part's edge chamfer (any angle, widths by side) as one wedge per edge, each the half-space above that face's chamfer plane,
     run on past the edge's ends: cut together they leave the faces meeting in true ridges. Ops {'kind': 'pprism', 'pts', 'vec'}."""
-    tan = math.tan(math.radians(ch.get('angle') or 45.0)); wof = width_of(ch)
+    aof = angle_of(ch); wof = width_of(ch)
     p = [(float(x), float(y)) for x, y in outline]
     if len(p) > 48:                     # a curved outline: its arcs as chords within 5 µm, so it isn't hundreds of wedges (each its own face)
         from shapely.geometry import Polygon as _P
@@ -93,7 +125,7 @@ def edge_wedges(outline, ch, z_face, into, E=0.01):
         L = math.hypot(x1 - x0, y1 - y0)
         if L < 1e-9: continue
         tx, ty = (x1 - x0) / L, (y1 - y0) / L; nx, ny = ty, -tx       # outward
-        w = wof(math.degrees(math.atan2(ny, nx)))
+        deg = math.degrees(math.atan2(ny, nx)); w = wof(deg); tan = math.tan(math.radians(aof(deg)))
         if w <= 1e-6: continue
         X = 2.0 + w; up = 1.0
         # the section across the edge (s: out from the deck line, h: up from the face, signed into the part): along the chamfer plane

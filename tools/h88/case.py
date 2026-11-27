@@ -24,14 +24,14 @@ CRY_OUT, CRY_POCKET = 1.0, 1.1  # the crystal: the window's outline + 1.0 (Adam:
 # cut.chamfer, cut with a 90° chamfer mill or V-bit), sized to the room each one has:
 #   - the window: falls the whole RELIEF from the flush top (plaques, shoulders, ribs) to the crystal on a 45° chamfer, plaques included
 #     (a 1/4" or 6 mm 90° chamfer mill: a 1/8" one reaches about 1.4);
-#   - the side rails: RELIEF deep, their rib side and ends chamfered CH_RAIL, the rest of the wall straight;
+#   - the side notches (were the side rails): see NOTCH below;
 #   - the corner facets: a floor CF_DEPTH down along each of the octagon's chamfer edges, chamfered all round by its depth, with a slot in
 #     the floor down at the crystal's level;
 #   - the vents, counterbores and outer rim: small chamfers (CH_VENT, CH_CB, CH_RIM).
-RELIEF = 2.0                    # flush top to the crystal: the window's chamfer, and the side rails' depth
+RELIEF = 2.0                    # flush top to the crystal: the window's chamfer
 CH_WIN = RELIEF                 # the window's chamfer: 45° all the way down to the crystal
 RIB_X = (RELIEF + 21.7, RELIEF + 22.7)            # the side rib, flush: from the window chamfer's top edge, 1.0 wide
-SIDE_Y, CH_RAIL = 4.0, 1.0      # the side rails: the floor's half-length (inside the sides' flat top, clear of the corner chamfers); rim chamfer
+
 CH_VENT = 0.15                  # the vents' rims
 # The exterior (Adam, 2026-11-25, showing it on the 6 o'clock face and the 4:30 corner by pulling the top outline in: "exterior chamfers
 # that stop this from being a brick and start making it architecturally interesting and more watch like... i know these are heavy
@@ -44,8 +44,18 @@ CH_VENT = 0.15                  # the vents' rims
 #   - 3 and 9: a 0.5 break (the window's bezel, the rib and the rail fill the sides; the crown is at 3).
 # What sat where the chamfers now are moves: the plaque screws thread up from the back through the lug risers (no front heads), the
 # side screws come in from the back only, the vents sit on the deck behind the plaques, the rails shorten, the corner facets go.
+# The sides (Adam, 2026-11-26, tracing it on the 3 o'clock wall: "lowering the pocket above the crown down several mm and then running a
+# chamfer along the sidewall down to the new pockets height... feel free to take some freedom to make it look good"): 3 and 9 fall in too,
+# from the deck at the rib's outer edge down to the corners' foot height, so their ridges with the corner faces land on the octagon's
+# corners and one foot line runs round the corners and sides. Steeper than 45° (that far in, 45° would take the window's bezel).
 EXT_ANGLE = 45.0
-EXT_W = {'12/6': 6.0, 'corner': 4.8, '3/9': 0.5}
+SIDE_W = 27.25 - (RELIEF + 22.7)  # 3/9: from the rib's outer edge (x 24.7) to the wall
+EXT_W = {'12/6': 6.0, 'corner': 4.8, '3/9': SIDE_W}
+SIDE_ANGLE = math.degrees(math.atan2(EXT_W['corner'], SIDE_W))      # down 4.8 like the corners: 62.0°
+EXT_ANGLES = [[0, SIDE_ANGLE], [45, EXT_ANGLE], [90, EXT_ANGLE], [135, EXT_ANGLE], [180, SIDE_ANGLE], [225, EXT_ANGLE], [270, EXT_ANGLE], [315, EXT_ANGLE]]
+# The notch over the crown (and its mirror at 9; the side rails it replaces were RELIEF deep): cut in from the side to a flat floor, its back
+# wall straight, its ends rising at 45° from the foot line, open to the side; seen from 3 o'clock, a trapezoid in the side chamfer.
+NOTCH = dict(x0=RELIEF + 23.7, half=4.0, floor=7.0)    # back wall at x 25.7 (1.0 outside the rib), floor half-length, floor z
 EXT_WIDTHS = [[0, EXT_W['3/9']], [45, EXT_W['corner']], [90, EXT_W['12/6']], [135, EXT_W['corner']], [180, EXT_W['3/9']], [225, EXT_W['corner']],
               [270, EXT_W['12/6']], [315, EXT_W['corner']]]   # (facing direction in degrees, 0 = 3 o'clock, 90 = 12) -> width
 VENT_Y, VENT_W, VENT_X = (13.8, 15.4, 17.0), 0.8, 9.0   # the vents on the deck behind each plaque: rows, width, half-length
@@ -135,7 +145,7 @@ def build(layered_scene, info, helpers):
     z_dial0, z_dial1 = z_plates, z_plates + DIAL_T
     z_cry0 = z_disc1 + DISC_TO_CRYSTAL; z_cry1 = z_cry0 + CRYSTAL_T
     z_lip0 = z_cry0 + CRYSTAL_T - CRYSTAL_STEP          # the ledge the crystal's edge is glued against
-    z_ring = z_cry1                                    # the inner ring and side rails: flush with the crystal
+    z_ring = z_cry1                                    # the inner ring: flush with the crystal
     z_top = z_ring + RELIEF                            # the flush top: shoulders, pads, ribs
     z_frame0 = z_back - TT                             # the back plate's bottom (the case's back)
     # ---- outlines
@@ -156,14 +166,19 @@ def build(layered_scene, info, helpers):
     cry_out = window.buffer(CRY_OUT, 64, join_style=1).buffer(0.5, 64).buffer(-0.5, 64)   # the crystal: the window + 1.0 (its inside corners r 0.5, as cut)
     cry_pocket = window.buffer(CRY_POCKET, 64, join_style=1)                               # its pocket, up from the back to the ledge
     body = octagon()
-    # ---- the front's relief: the window chamfered down to the crystal; side rails; the deck the exterior chamfers leave
-    rails = [box(min(sx * (RIB_X[1] + CH_RAIL), sx * (W / 2 + 1.0)), -SIDE_Y, max(sx * (RIB_X[1] + CH_RAIL), sx * (W / 2 + 1.0)), SIDE_Y) for sx in (1, -1)]
+    # ---- the front's relief: the window chamfered down to the crystal; the side notches; the deck the exterior chamfers leave
+    notches = [box(min(sx * NOTCH['x0'], sx * (W / 2 + 1.0)), -NOTCH['half'], max(sx * NOTCH['x0'], sx * (W / 2 + 1.0)), NOTCH['half']) for sx in (1, -1)]
     win_top = window.buffer(CH_WIN, 64, join_style=2)                                     # the window chamfer's top edge
     def ext_w(deg):
         t = sorted(EXT_WIDTHS); a = deg % 360
         for (d0, w0), (d1, w1) in zip(t, t[1:] + [[t[0][0] + 360, t[0][1]]]):
             if d0 <= a <= d1: return w0 + (w1 - w0) * (a - d0) / (d1 - d0)
         return t[0][1]
+    def ext_t(deg):        # each face's slope (tan of its angle from the deck)
+        t = sorted(EXT_ANGLES); a = deg % 360
+        for (d0, w0), (d1, w1) in zip(t, t[1:] + [[t[0][0] + 360, t[0][1]]]):
+            if d0 <= a <= d1: return math.tan(math.radians(w0 + (w1 - w0) * (a - d0) / (d1 - d0)))
+        return math.tan(math.radians(t[0][1]))
     def deck_at(depth):    # the exterior's section `depth` under the top: each face's half-plane moved in by what's left of its chamfer there
         cuts_ = []
         ring = list(body.exterior.coords)[:-1]
@@ -171,7 +186,7 @@ def build(layered_scene, info, helpers):
         poly = body
         for (x0, y0), (x1, y1) in zip(ring, ring[1:] + ring[:1]):
             L = math.hypot(x1 - x0, y1 - y0); nx, ny = (y1 - y0) / L, -(x1 - x0) / L          # outward normal (anticlockwise ring)
-            w = max(0.0, ext_w(math.degrees(math.atan2(ny, nx))) - depth / math.tan(math.radians(EXT_ANGLE)))
+            dg = math.degrees(math.atan2(ny, nx)); w = max(0.0, ext_w(dg) - depth / ext_t(dg))
             if w > 0: poly = poly.difference(Polygon([(x0 + nx * 50 - ny * 99, y0 + ny * 50 + nx * 99), (x0 + nx * 50 + ny * 99, y0 + ny * 50 - nx * 99),
                                                        (x0 - nx * w + ny * 99, y0 - ny * w - nx * 99), (x0 - nx * w - ny * 99, y0 - ny * w + nx * 99)]))
         return poly
@@ -182,7 +197,7 @@ def build(layered_scene, info, helpers):
     faces_e = []
     for (x0, y0), (x1, y1) in zip(ring_e, ring_e[1:] + ring_e[:1]):
         L = math.hypot(x1 - x0, y1 - y0); nx, ny = (y1 - y0) / L, -(x1 - x0) / L
-        faces_e.append(dict(p=(x0, y0), q=(x1, y1), n=(nx, ny), w=ext_w(math.degrees(math.atan2(ny, nx)))))
+        faces_e.append(dict(p=(x0, y0), q=(x1, y1), n=(nx, ny), w=ext_w(math.degrees(math.atan2(ny, nx))), t=ext_t(math.degrees(math.atan2(ny, nx)))))
     def half(a, b, c):             # the half-plane a x + b y + c >= 0, as a big polygon
         L = math.hypot(a, b); ux, uy = a / L, b / L; px, py = -c * ux / L, -c * uy / L
         return Polygon([(px - uy * 200, py + ux * 200), (px + uy * 200, py - ux * 200), (px + uy * 200 + ux * 200, py - ux * 200 + uy * 200), (px - uy * 200 + ux * 200, py + ux * 200 + uy * 200)])
@@ -190,12 +205,14 @@ def build(layered_scene, info, helpers):
         (x0, y0), (nx, ny) = f['p'], f['n']; return -nx, -ny, nx * x0 + ny * y0
     panels = []
     for f in faces_e:
-        if f['w'] < 2.0: continue                                  # (3 and 9 have only a break)
+        if f['w'] < 2.0 or abs(f['n'][1]) < 1e-6: continue          # (3 and 9 carry the notches)
         PP = PANEL_12 if abs(f['n'][0]) < 1e-6 else PANEL_CORNER
         a, b, c = dist_coef(f); reg = body
-        for g2 in faces_e:              # where this face's plane lies deepest: w_f - dist_f >= w_g - dist_g
+        tf = f['t']
+        for g2 in faces_e:              # where this face's plane lies deepest: t_f (w_f - dist_f) >= t_g (w_g - dist_g)
             if g2 is f: continue
-            a2, b2, c2 = dist_coef(g2); reg = reg.intersection(half(a2 - a, b2 - b, c2 - c + f['w'] - g2['w']))
+            a2, b2, c2 = dist_coef(g2); tg = g2['t']
+            reg = reg.intersection(half(tg * a2 - tf * a, tg * b2 - tf * b, tg * c2 - tf * c + tf * f['w'] - tg * g2['w']))
         band = half(a, b, c - PP['outer']).intersection(half(-a, -b, -c + f['w'] - PP['inner']))
         pan = reg.intersection(band)
         ridges = [LineString(seg) for seg in zip(list(reg.exterior.coords)[:-1], list(reg.exterior.coords)[1:])
@@ -204,10 +221,10 @@ def build(layered_scene, info, helpers):
         if 'end' in PP: pan = pan.difference(box(W / 2 - PP['end'], -H, W, H)).difference(box(-W, -H, -W / 2 + PP['end'], H))
         pan = pan.buffer(-PANEL_R, 32, join_style=1).buffer(PANEL_R, 32, join_style=1)
         if pan.geom_type != 'Polygon' or pan.area < 1.0: continue
-        floor = z_top - f['w'] + PP['outer'] - PP['edge_depth']       # under the outer edge by edge_depth
+        floor = z_top - tf * (f['w'] - PP['outer']) - PP['edge_depth']   # under the outer edge by edge_depth
         panels.append(dict(poly=pan, face=round(math.degrees(math.atan2(f['n'][1], f['n'][0])) % 360), floor=floor, depth=z_top - floor,
-                           edge=PP['edge_depth'], inner=round(f['w'] - PP['inner'] - PP['outer'] + PP['edge_depth'], 3)))
-    front = dict(rails=rails, win_top=win_top, deck=deck, deck_at=deck_at, panels=panels)
+                           edge=PP['edge_depth'], inner=round(tf * (f['w'] - PP['inner'] - PP['outer']) + PP['edge_depth'], 3)))
+    front = dict(notches=notches, win_top=win_top, deck=deck, deck_at=deck_at, panels=panels)
     discs = [(10.4, 0.0), (-10.4, 0.0)]
     # the crown sits outside the 3 o'clock wall in a well open to the back; the stem's neck passes the wall in a slit open to the back
     well = box(crown_x0 - 0.3, -(crown_r + 0.3), W / 2 + 2.0, crown_r + 0.3)
@@ -248,11 +265,11 @@ def build(layered_scene, info, helpers):
         k = newk(); sks.append(sketch(k, f'{name.split(" (")[0]} outline', 'z', round(z0, 5), poly_dots(outline)))
         parts.append({'id': pid, 'name': name, 'sketch': k, 'thickness': round(t, 5), 'grow': 'plus', 'mill': mill, 'minWall': 0.6, 'cuts': cuts,
                       **({'chamfer': chamfer} if chamfer else {})})
-    def pocket(name, poly, frm, depth, hid, chamfer=None):
+    def pocket(name, poly, frm, depth, hid, chamfer=None, chamfer_widths=None):
         if list(getattr(poly, 'interiors', [])): raise ValueError(f'{name}: a pocket with a hole (cut it as halves)')
         k = newk(); sks.append(sketch(k, name, 'z', 0.0, poly_dots(poly)))
         return {'id': f'h{hid}', 'kind': 'pocket', 'name': name, 'sketch': k, 'from': frm, 'depth': None if depth is None else round(depth, 4),
-                **({'chamfer': chamfer} if chamfer else {})}
+                **({'chamfer': chamfer} if chamfer else {}), **({'chamferWidths': chamfer_widths} if chamfer and chamfer_widths else {})}
     def hole(kind, name, at, d, frm, hid, depth=None, seat=None, fit=None, chamfer=None):
         c = {'id': f'h{hid}', 'kind': kind, 'name': name, 'at': [round(at[0], 4), round(at[1], 4)], 'd': d, 'from': frm, 'depth': depth}
         if seat: c['seat'] = seat
@@ -267,7 +284,10 @@ def build(layered_scene, info, helpers):
           pocket('Cavity: the top of Beta 2, up to its plates\' tops', cav, 'front', z_plates - Z_SPLIT, nid()),
           pocket('Dial plate pocket (the dial plate + 0.1; its corners cut back, so the faceplate stays solid under the corner panels): its ceiling clamps the dial plate', dial_pocket, 'front', z_dial1 - Z_SPLIT, nid()),
           pocket('Crystal pocket (the window + 1.1): the crystal goes in from the back and is glued up against the ledge, 0.6 under the ring', cry_pocket, 'front', z_lip0 - Z_SPLIT, nid())]
-    for rl in rails: bc.append(pocket('Side rail, down at the crystal\'s level (its rib side and ends chamfered)', rl, 'back', RELIEF, nid(), chamfer=CH_RAIL))
+    z_foot = z_top - EXT_W['corner']
+    for nt in notches: bc.append(pocket('Side notch over the crown (and its mirror at 9): cut in from the side to a flat floor at z %.2f, its back wall straight, its ends '
+                                        'rising at 45° from the side chamfer\'s foot line (z %.2f)' % (NOTCH['floor'], z_foot), nt, 'back', z_top - NOTCH['floor'], nid(),
+                                        chamfer=round(z_top - z_foot, 4), chamfer_widths=[[0, 0], [90, round(z_top - z_foot, 4)], [180, 0], [270, round(z_top - z_foot, 4)]]))
     for sy in (-1, 1):
         for y in VENT_Y: bc.append(pocket('Vent (on the deck behind the plaque)', stadium(-VENT_X, VENT_X, sy * y, VENT_W), 'back', 1.0, nid(), chamfer=CH_VENT))
     for s in scr: bc.append(hole('pilot', 'Case screw, M1.6x14: tapped %.1f up from the split (it comes up through the back plate and the case middle)' % SCREW['tap_depth'], s, SCREW['tap'], 'front', nid(), depth=SCREW['tap_depth'], fit='m16_tap'))
@@ -275,10 +295,10 @@ def build(layered_scene, info, helpers):
         bc.append(pocket('Chamfer panel (%d°): cut straight down from the front to a flat floor at z %.2f, %.2f deep at its outer edge and %.2f at its inner edge; inside corners r %.1f'
                          % (pn['face'], pn['floor'], pn['edge'], pn['inner'], PANEL_R), pn['poly'], 'back', pn['depth'], nid()))
     for s in DOWEL_XY: bc.append(hole('dowel', f'Dowel Ø{DOWEL_D} (lines the faceplate up on the case middle)', s, DOWEL_D, 'front', nid(), depth=DOWEL_DEPTH))
-    part('D9', 'Faceplate (black delrin, 5/16" faced to %.2f; milled from the front, then the back): the walls fall in on 45° exterior chamfers (6.0 at 12 and 6, '
-               '4.8 at the corners, a 0.5 break at 3 and 9) to the deck, the window chamfered down to the crystal, the side rails and vents; the cavity\'s top, the '
-               'crystal\'s pocket and ledge, the screws\' tapped holes and the dowel holes from the back' % T_face, body, Z_SPLIT, T_face, bc,
-         chamfer={'face': 'back', 'size': EXT_W['3/9'], 'angle': EXT_ANGLE, 'widths': EXT_WIDTHS})
+    part('D9', 'Faceplate (black delrin, 5/16" faced to %.2f; milled from the front, then the back): the walls fall in on exterior chamfers (45°: 6.0 at 12 and 6, '
+               '4.8 at the corners; %.1f° at 3 and 9, %.2f in, down to the corners\' foot) to the deck, the window chamfered down to the crystal, the side notches and vents; the cavity\'s top, the '
+               'crystal\'s pocket and ledge, the screws\' tapped holes and the dowel holes from the back' % (T_face, SIDE_ANGLE, SIDE_W), body, Z_SPLIT, T_face, bc,
+         chamfer={'face': 'back', 'size': EXT_W['3/9'], 'angle': EXT_ANGLE, 'widths': EXT_WIDTHS, 'angles': [[a_, round(v, 4)] for a_, v in EXT_ANGLES]})
     cry = [pocket('Step: the edge 0.4 thick, glued up against the ledge', hp, 'back', CRYSTAL_STEP, 1 + i) for i, hp in enumerate(halves(cry_out.difference(boss)))]
     part('D10', 'Crystal (1 mm clear acrylic, the window\'s shape + 1.0): its raised centre fills the window flush with the ring, its stepped edge is glued up against the ledge from the back', cry_out, z_cry0, CRYSTAL_T, cry)
     dc = [hole('clear', f'Disc aperture ({nm})', c, 19.6, 'back', i + 1) for i, (c, nm) in enumerate(zip(discs, ('minute', 'hour')))]
@@ -360,8 +380,14 @@ def build(layered_scene, info, helpers):
                          'counterbore to the back plate edge (at its bottom)': round(min(inset_by(body, lambda d: bev_w(d)).exterior.distance(Point(q)) for q in scr) - SCREW['head'] / 2, 2),
                          'tap top to the deck surface over it': round(z_top - max(0.0, EXT_W['12/6'] - (H / 2 - max(abs(q[1]) for q in scr))) - (Z_SPLIT + SCREW['tap_depth']), 2),
                          'dowels to the crown well': round(min(well.distance(Point(q)) for q in DOWEL_XY) - DOWEL_D / 2, 2)},
-              'front': {'top': round(z_top, 4), 'crystal (the window chamfer\'s foot, the rails\' floor)': round(z_ring, 4), 'ledge': (round(z_lip0, 4), round(z_ring, 4)),
-                        'exterior chamfer feet (12/6, corners, 3/9)': tuple(round(z_top - w * math.tan(math.radians(EXT_ANGLE)), 3) for w in (EXT_W['12/6'], EXT_W['corner'], EXT_W['3/9'])),
+              'front': {'top': round(z_top, 4), 'crystal (the window chamfer\'s foot)': round(z_ring, 4), 'ledge': (round(z_lip0, 4), round(z_ring, 4)),
+                        'exterior chamfer feet (12/6, corners, 3/9)': tuple(round(z_top - EXT_W[k_] * ext_t(dg_), 3) for k_, dg_ in (('12/6', 90), ('corner', 45), ('3/9', 0))),
+                        'side chamfer': {'angle': round(SIDE_ANGLE, 2), 'top edge x': round(W / 2 - SIDE_W, 2),
+                                         'ridges meet the deck at y': round(min(abs(q[1]) for q in deck.exterior.coords if abs(q[0]) > W / 2 - SIDE_W - 1e-6), 3)},
+                        'notch': {'floor': NOTCH['floor'], 'ends rise from (foot line)': round(z_top - EXT_W['corner'], 4), 'back wall x': NOTCH['x0'],
+                                  'back wall top': round(z_top - ext_t(0) * (NOTCH['x0'] - (W / 2 - SIDE_W)), 3),
+                                  'to the cavity': round(NOTCH['x0'] - (HX + CLR), 2), 'over the split': round(NOTCH['floor'] - Z_SPLIT, 2),
+                                  'dowels: side chamfer over the dowel top': round(z_top - ext_t(0) * (SIDE_W - (W / 2 - (DOWEL_XY[0][0] + DOWEL_D / 2))) - (Z_SPLIT + DOWEL_DEPTH), 2)},
                         'deck bounds': [round(v, 2) for v in deck.bounds],
                         'flat between the window bezel and the exterior chamfer (12/6 stubs, corners, plaques)': (
                             round(H / 2 - EXT_W['12/6'] - (WIN_HH + CH_WIN), 2), round((W / 2 + H / 2 - CH) / math.sqrt(2) - EXT_W['corner'] - (WIN_HW + WIN_HH - WIN_CH + CH_WIN * math.sqrt(2)) / math.sqrt(2), 2),
@@ -370,8 +396,7 @@ def build(layered_scene, info, helpers):
                         'walls to the cavity at its top (12/6, corner, 3/9)': (
                             round(H / 2 - max(0, EXT_W['12/6'] - (z_top - z_dial1) / math.tan(math.radians(EXT_ANGLE))) - (HY + CLR), 2),
                             round(min(body.exterior.distance(Point(q)) for q in cav.exterior.coords) - max(0, EXT_W['corner'] - (z_top - z_dial1) / math.tan(math.radians(EXT_ANGLE))), 2),
-                            round(W / 2 - max(0, EXT_W['3/9'] - (z_top - z_dial1)) - (HX + CLR), 2)),
-                        'rails inside the deck': deck.buffer(1e-6).contains(unary_union([r.buffer(CH_RAIL, join_style=2) for r in rails]).intersection(body.buffer(-EXT_W['3/9'] - 1e-3)))},
+                            round(W / 2 - max(0, EXT_W['3/9'] - (z_top - z_dial1) / ext_t(0)) - (HX + CLR), 2))},
               'panels': [{'face': pn['face'], 'floor z': round(pn['floor'], 3), 'depth at outer edge': pn['edge'], 'at inner edge': pn['inner'],
                           'bounds': [round(v, 2) for v in pn['poly'].bounds],
                           'floor over the cavity': round(pn['floor'] - z_plates, 2) if pn['poly'].intersects(cav) else None,

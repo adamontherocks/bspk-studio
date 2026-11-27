@@ -197,6 +197,7 @@ textarea.txt{min-height:56px;resize:vertical;line-height:1.45}
 .mn-where{font-size:11px;color:var(--muted)}
 .mark-note textarea{resize:vertical;min-height:58px;line-height:1.4}
 .mn-reply,.pin-reply{border-left:2px solid var(--ok);padding:2px 0 2px 8px;font-size:12px;line-height:1.45;color:var(--fg);white-space:pre-wrap}
+.rl-note{display:block;margin-top:4px;color:#5fdcff;font-style:normal;font-size:11px}
 .mn-reply span,.pin-reply span{display:block;font:600 10px var(--mono);color:var(--ok);letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
 .st-tag{font:600 10px/1 var(--mono);padding:3px 6px;border-radius:999px;border:1px solid;white-space:nowrap}
 .st-open{color:var(--pin);border-color:rgba(240,180,76,.6)}
@@ -1867,17 +1868,25 @@ function chamferFeats(d, k, T, outline) {
     for (const M of opens) if (M !== L && M.from === L.from && M.D < D - 1e-6 && M.D > z0 && inside(path, M.path)) z0 = M.D;
     const cc = Math.min(size, D - z0);
     if (!(cc > 1e-4)) continue;
-    const lp = chamferLoop(path, cc, true);
-    if (lp) feats.push({ cut: c, from: L.from, z0, c: cc, D, ...lp, rim: false });
+    // its width by the way each wall faces (c.chamferWidths: [degrees, width] pairs, the direction the wall looks into the opening; 0 =
+    // toward +u): e.g. a notch whose ends slope while its back wall stays straight (2026-11-26, the H-88's side notches). Widths are
+    // the full chamfer or none: one in between is drawn over the full band.
+    const wBy = Array.isArray(c.chamferWidths) && c.chamferWidths.length ? chamferWidthOf({ widths: c.chamferWidths, size: cc }) : null;
+    const lp = chamferLoop(path, cc, true, wBy ? (deg => Math.min(cc, wBy(deg))) : null);
+    if (lp) feats.push({ cut: c, from: L.from, z0, c: cc, D, ...lp, ...(wBy ? { byEdge: true } : {}), rim: false });
   }
   if (d.chamfer && (d.chamfer.size > 0 || Array.isArray(d.chamfer.widths))) {
     // its angle from the face (45° unless set) and its width: one for all, or by the way each edge faces (d.chamfer.widths: [degrees,
     // width] pairs round the compass, 0 = toward +u, 90 = toward +v, read between): heavy on some sides, none on others
-    const ch = d.chamfer, tan = Math.tan((ch.angle > 0 && ch.angle < 90 ? ch.angle : 45) * Math.PI / 180), wOf = chamferWidthOf(ch);
+    // and its angle: one for all, or by side too (d.chamfer.angles, the same way round: 2026-11-26, the H-88's 3 and 9 o'clock faces
+    // steeper than the rest so their feet meet the corners' at one height)
+    const ch = d.chamfer, a0 = ch.angle > 0 && ch.angle < 90 ? ch.angle : 45, tan = Math.tan(a0 * Math.PI / 180), wOf = chamferWidthOf(ch);
+    const aOf = Array.isArray(ch.angles) && ch.angles.length ? chamferWidthOf({ widths: ch.angles, size: a0 }) : null;
     const lp = chamferLoop(outline, ch.size || 0, false, wOf);
     if (lp) {
-      const H = lp.W.map(w => Math.min(T, w * tan)), Hmax = Math.max(0, ...H);
-      if (Hmax > 1e-4) feats.push({ cut: null, from: ch.face === 'front' ? 'front' : 'back', z0: 0, c: Hmax, ...lp, H, tan, rim: true });
+      const tans = lp.N.map(nn => (aOf ? Math.tan(Math.min(89, Math.max(1, aOf(Math.atan2(-nn[1], -nn[0]) * 180 / Math.PI))) * Math.PI / 180) : tan));
+      const H = lp.W.map((w, i) => Math.min(T, w * tans[i])), Hmax = Math.max(0, ...H);
+      if (Hmax > 1e-4) feats.push({ cut: null, from: ch.face === 'front' ? 'front' : 'back', z0: 0, c: Hmax, ...lp, H, tan, tans, rim: true });
     }
   }
   return { feats, opens };
@@ -1948,11 +1957,15 @@ function chamferSkins(feats, opens, outline, T) {
       let poly, H = f.c, tan = 1;
       if (f.rim) {
         const w = f.W[i]; if (!(w > 1e-6)) continue;
-        H = f.H[i]; tan = f.tan;
+        H = f.H[i]; tan = f.tans ? f.tans[i] : f.tan;
         const L = Math.hypot(f.p[j][0] - f.p[i][0], f.p[j][1] - f.p[i][1]) || 1, dx = (f.p[j][0] - f.p[i][0]) / L, dy = (f.p[j][1] - f.p[i][1]) / L, m = 2 * Wmax + 1;
         const A = [f.p[i][0] - dx * m, f.p[i][1] - dy * m], B = [f.p[j][0] + dx * m, f.p[j][1] + dy * m];
         poly = [A, B, [B[0] + N[0] * w, B[1] + N[1] * w], [A[0] + N[0] * w, A[1] + N[1] * w]];
-      } else poly = [f.p[i], f.p[j], f.o[j], f.o[i]];
+      } else {
+        if (f.byEdge && !(f.W[i] > 1e-6)) continue;           // (a wall with no chamfer: the slabs draw it)
+        poly = [f.p[i], f.p[j], f.o[j], f.o[i]];
+        if (f.byEdge) H = f.W[i];
+      }
       const xs = poly.map(q => q[0]), ys = poly.map(q => q[1]);
       quads.push({ f, fi, i, poly, N, P0: f.p[i], H, tan, box: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] });
     }
@@ -3133,6 +3146,7 @@ function syncPins() {
     o.sprite.parent && o.sprite.parent.remove(o.sprite);
     if (o.ring && o.ring.parent) o.ring.parent.remove(o.ring);
     if (o.trace) { if (o.trace.parent) o.trace.parent.remove(o.trace); disposeGroup(o.trace); }
+    if (o.rl) { if (o.rl.parent) o.rl.parent.remove(o.rl); disposeGroup(o.rl); }
     o.label.remove();
     delete pinObjs[id];
   }
@@ -3174,6 +3188,12 @@ function syncPins() {
       if (o.trace.parent !== parent) { if (o.trace.parent) o.trace.parent.remove(o.trace); parent.add(o.trace); }
       o.trace.visible = shown;
     } else if (o.trace) { if (o.trace.parent) o.trace.parent.remove(o.trace); disposeGroup(o.trace); o.trace = null; }
+    if (pin.rl) {                                       // Claude's reading drawn back: dashed blue lines beside the mark
+      const rk = JSON.stringify(pin.rl);
+      if (!o.rl || o.rlKey !== rk) { if (o.rl) { if (o.rl.parent) o.rl.parent.remove(o.rl); disposeGroup(o.rl); } o.rl = replyLines(pin.rl); o.rlKey = rk; }
+      if (o.rl.parent !== parent) { if (o.rl.parent) o.rl.parent.remove(o.rl); parent.add(o.rl); }
+      o.rl.visible = shown;
+    } else if (o.rl) { if (o.rl.parent) o.rl.parent.remove(o.rl); disposeGroup(o.rl); o.rl = null; }
     const key = `${pin.id}|${pin.note}|${st}`;
     if (o.key !== key) {
       o.key = key;
@@ -3236,6 +3256,27 @@ function traceGroup(pts, color, closed, tubeR) {   // a band along the corners (
   return grp;
 }
 const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+// Claude's lines on a mark (2026-11-26, Adam: "lets see your sketch"): Claude's reading of a trace drawn back on the model, before
+// anything is cut, so a misread shows in the sim. Polylines in the mark's part frame, drawn dashed in vivid cyan (the dashes set them apart from the marks
+// solid bands, amber or pale blue, not colour alone), seen through the part, a dot at each corner. Markup.draw(id, lines) puts them there.
+const RL_COLOR = 0x22d6ff;
+function replyLines(lines, tubeR = 0.07, dash = 0.7, gap = 0.4) {
+  const grp = new THREE.Group(), mat = () => traceMat(RL_COLOR);
+  for (const line of lines) {
+    const pts = line.map(q => new THREE.Vector3(...q));
+    for (let i = 0; i + 1 < pts.length; i++) {
+      const a = pts[i], b = pts[i + 1], L = a.distanceTo(b);
+      if (L < 1e-6) continue;
+      const n = Math.max(1, Math.round(L / (dash + gap))), step = L / n, on = step * dash / (dash + gap);
+      for (let k = 0; k < n; k++) {
+        const p0 = a.clone().lerp(b, (k * step) / L), p1 = a.clone().lerp(b, (k * step + on) / L);
+        const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(p0, p1), 1, tubeR, 6, false), mat()); m.renderOrder = 23; grp.add(m);
+      }
+    }
+    for (const p of pts) { const d = new THREE.Mesh(new THREE.SphereGeometry(tubeR * 2.2, 10, 6), mat()); d.position.copy(p); d.renderOrder = 24; grp.add(d); }
+  }
+  return grp;
+}
 function tracePreview() {
   if (tracePrev) { scene.remove(tracePrev); disposeGroup(tracePrev); tracePrev = null; }
   if (!traceCur) return;
@@ -3300,7 +3341,7 @@ function openNote(id, isNew) {
       <button class="mini x" data-act="close" aria-label="Close">Close</button></div>
     <div class="mn-where">${pin.trace ? `Trace, ${pin.trace.length} corners` : pin.r ? `Area Ø ${f2(2 * pin.r * (parts[pin.part].root.getWorldScale(new THREE.Vector3()).x || 1) / scale)} mm` : 'Spot'} on ${esc(nameOf(pin.part))}</div>
     <textarea class="txt" rows="3" placeholder="What about this ${pin.trace ? 'traced area (e.g. a 1 mm vent groove)' : pin.r ? 'area' : 'spot'}? Enter saves · Shift+Enter for a new line">${esc(pin.note)}</textarea>
-    ${pin.reply ? `<div class="mn-reply"><span>Claude</span>${esc(pin.reply)}</div>` : ''}
+    ${pin.reply ? `<div class="mn-reply"><span>Claude</span>${esc(pin.reply)}${pin.rl ? '<i class="rl-note">Claude\'s reading is drawn on the model: the cyan dashed lines.</i>' : ''}</div>` : ''}
     <div class="row"><button class="primary" data-act="save">${noteNew ? 'Save note' : 'Save'}</button>
       ${st === 'answered' ? '<button data-act="resolve">Resolve</button>' : st === 'resolved' ? '<button data-act="reopen">Reopen</button>' : ''}
       <button data-act="del">Delete</button></div>`;
@@ -3394,7 +3435,7 @@ function renderPins() {
     return `<li data-pin="${p.id}" class="${p.id === activePin ? 'on' : ''}${keep(p) ? ' keep' : ''} ${st}">
       <div class="pin-top"><b>${p.id}</b><span class="st-tag st-${st}">${MARK[st].sym} ${MARK[st].tag}</span><span class="where">${markKind(p)} on ${esc(nameOf(p.part))}</span></div>
       <div class="pin-note">${p.note ? esc(p.note) : '<i>no note yet</i>'}</div>
-      ${p.reply ? `<div class="pin-reply"><span>Claude</span>${esc(p.reply)}</div>` : ''}
+      ${p.reply ? `<div class="pin-reply"><span>Claude</span>${esc(p.reply)}${p.rl ? '<i class="rl-note">Drawn on the model: the cyan dashed lines.</i>' : ''}</div>` : ''}
       <div class="row"><button class="mini" data-act="open">Open</button><button class="mini" data-act="show">Show</button><button class="mini" data-act="del">Delete</button></div></li>`;
   }).join('');
 }
@@ -3424,6 +3465,22 @@ window.Markup = {
     if (!pin) return false;
     pin.reply = String(text); pin.status = MARK[status] ? status : 'answered';
     commit({ text: `Claude answered ${id}`, adapt: false });
+    if (noteFor === id) openNote(id, false);
+    return true;
+  },
+  // Claude's reading drawn back on the mark: lines = [[[x, y, z], ...], ...] in mm in the movement's frame (as the trace corners are
+  // reported); kept in the mark's part frame so they move with it. An empty list takes them off.
+  draw(id, lines) {
+    const pin = S.pins.find(p => p.id === id);
+    if (!pin || !parts[pin.part] || !Array.isArray(lines)) return false;
+    const root = parts[pin.part].root; root.updateMatrixWorld(true);
+    const ok = lines.filter(l => Array.isArray(l) && l.length >= 2 && l.every(q => Array.isArray(q) && q.length === 3 && q.every(Number.isFinite)));
+    if (!ok.length) { delete pin.rl; delete pin.rlw; }
+    else {
+      pin.rlw = ok.map(l => l.map(q => q.map(v => +v.toFixed(4))));
+      pin.rl = ok.map(l => l.map(q => { const v = root.worldToLocal(new THREE.Vector3(...q.map(x => x * scale))); return [v.x, v.y, v.z].map(x => +x.toFixed(4)); }));
+    }
+    commit({ text: `Claude drew on ${id}`, adapt: false });
     if (noteFor === id) openNote(id, false);
     return true;
   },
@@ -3885,7 +3942,7 @@ function renderSelected() {
         commit({ text: `${nameOf(p.id)}: ${d.chamfer ? `edge chamfered ${f2(sz)} mm × 45° on the ${face} face` : 'edge no longer chamfered'}`, adapt: false });
       });
       el.appendChild(ec);
-      if (d.chamfer && (d.chamfer.widths || d.chamfer.angle)) el.appendChild(para('pin', `Edge chamfer at ${d.chamfer.angle || 45}° from the face${d.chamfer.widths ? `, its width by side (facing → mm): ${d.chamfer.widths.map(q => `${q[0]}° → ${f2(q[1] * sc)}`).join(', ')}` : ''}.`));
+      if (d.chamfer && (d.chamfer.widths || d.chamfer.angle || d.chamfer.angles)) el.appendChild(para('pin', `Edge chamfer at ${d.chamfer.angles ? 'an angle by side' : `${d.chamfer.angle || 45}°`} from the face${d.chamfer.widths ? `, its width by side (facing → mm): ${d.chamfer.widths.map(q => `${q[0]}° → ${f2(q[1] * sc)}`).join(', ')}` : ''}${d.chamfer.angles ? `; its angle by side (facing → °): ${d.chamfer.angles.map(q => `${q[0]}° → ${+(+q[1]).toFixed(1)}`).join(', ')}` : ''}.`));
       for (const c of d.cuts || []) el.appendChild(cutCard(p.id, d, k, c));
       const add = document.createElement('div');
       add.className = 'row';
@@ -4064,7 +4121,7 @@ function cutSummary(c, k) {
   if (c.depth == null && c.from === 'back') bits.push('cut from the back');
   if (c.seat) bits.push(`seat Ø ${f2(c.seat.d * s)} × ${f2(c.seat.depth * s)}`);
   if (c.csk) bits.push(`countersunk Ø ${f2(c.csk.d * s)}`);
-  if (c.chamfer > 0) bits.push(`rim chamfered ${f2(c.chamfer * s)} × 45°`);
+  if (c.chamfer > 0) bits.push(c.chamferWidths ? `rim chamfered 45° by side (${c.chamferWidths.map(q => `${q[0]}° → ${f2(q[1] * s)}`).join(', ')})` : `rim chamfered ${f2(c.chamfer * s)} × 45°`);
   if (c.axis && ARBOR[c.axis]) bits.push(`on the ${ARBOR[c.axis].name} axis`);
   return bits.join(' · ');
 }
@@ -4508,7 +4565,8 @@ function normalizeState(st) {
           ...(typeof c.fit === 'string' && /^[\w-]+$/.test(c.fit) ? { fit: c.fit } : {}),
           from: c.from === 'back' ? 'back' : 'front', depth: num(c.depth) && c.depth > 0 ? c.depth : null,
           seat: c.seat && num(c.seat.d) && num(c.seat.depth) && c.seat.d > 0 && c.seat.depth > 0 ? { d: c.seat.d, depth: c.seat.depth } : null,
-          csk: c.csk && num(c.csk.d) && c.csk.d > 0 ? { d: c.csk.d } : null, ...(num(c.chamfer) && c.chamfer > 0 ? { chamfer: c.chamfer } : {}) }));
+          csk: c.csk && num(c.csk.d) && c.csk.d > 0 ? { d: c.csk.d } : null, ...(num(c.chamfer) && c.chamfer > 0 ? { chamfer: c.chamfer } : {}),
+          ...(num(c.chamfer) && c.chamfer > 0 && Array.isArray(c.chamferWidths) ? { chamferWidths: c.chamferWidths.filter(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1])).map(q => [q[0], q[1]]) } : {}) }));
       const okRing = p => Array.isArray(p) && p.length >= 3 && p.every(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1]));
       const rv = d.resolved, resolved = rv && okRing(rv.outline) && Array.isArray(rv.tiers)
         ? { outline: rv.outline, tiers: rv.tiers.filter(t => t && num(t.depth) && t.depth > 0 && Array.isArray(t.paths)).map(t => ({ depth: t.depth, paths: t.paths.filter(okRing) })),
@@ -4518,7 +4576,8 @@ function normalizeState(st) {
                ...(resolved ? { resolved } : {}), ...(num(d.minWall) && d.minWall >= 0 ? { minWall: d.minWall } : {}), ...(num(d.cutter) && d.cutter > 0 ? { cutter: d.cutter } : {}),
                ...(d.chamfer && ((num(d.chamfer.size) && d.chamfer.size > 0) || Array.isArray(d.chamfer.widths)) ? { chamfer: { face: d.chamfer.face === 'front' ? 'front' : 'back', size: num(d.chamfer.size) ? d.chamfer.size : 0,
                    ...(num(d.chamfer.angle) && d.chamfer.angle > 0 && d.chamfer.angle < 90 ? { angle: d.chamfer.angle } : {}),
-                   ...(Array.isArray(d.chamfer.widths) ? { widths: d.chamfer.widths.filter(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1])).map(q => [q[0], q[1]]) } : {}) } } : {}),
+                   ...(Array.isArray(d.chamfer.widths) ? { widths: d.chamfer.widths.filter(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1])).map(q => [q[0], q[1]]) } : {}),
+                   ...(Array.isArray(d.chamfer.angles) ? { angles: d.chamfer.angles.filter(q => Array.isArray(q) && q.length === 2 && num(q[0]) && num(q[1]) && q[1] > 0 && q[1] < 90).map(q => [q[0], q[1]]) } : {}) } } : {}),
                grow: ['plus', 'minus', 'both'].includes(d.grow) ? d.grow : 'plus', back, edges, ...(cuts.length ? { cuts } : {}), ...(d.mill === 'front' || d.mill === 'back' ? { mill: d.mill } : {}),
                ...(num(d.twist) && d.twist && Math.abs(d.twist) <= 36000 ? { twist: d.twist } : {}), ...(okXY(d.twistAt) ? { twistAt: d.twistAt.slice() } : {}),
                ...(d.place && Array.isArray(d.place.pivot) && d.place.pivot.length === 3 && d.place.pivot.every(num) && Array.isArray(d.place.axis) && d.place.axis.length === 3
@@ -4562,6 +4621,8 @@ function normalizeState(st) {
         if (ok3(p.tw) && p.tw.length === p.trace.length) q.tw = p.tw.map(v => v.slice());
       }
       if (typeof p.reply === 'string' && p.reply) q.reply = p.reply;
+      const okL = a => Array.isArray(a) && a.length && a.every(l => Array.isArray(l) && l.length >= 2 && l.every(v => Array.isArray(v) && v.length === 3 && v.every(num)));
+      if (okL(p.rl)) { q.rl = p.rl.map(l => l.map(v => v.slice())); if (okL(p.rlw) && p.rlw.length === p.rl.length) q.rlw = p.rlw.map(l => l.map(v => v.slice())); }
       if (typeof p.t === 'string') q.t = p.t;
       return q;
     });
@@ -4674,8 +4735,8 @@ function partRecord(id) {
     const mm = v => +(v * scale).toFixed(3);
     if (d.cuts && d.cuts.length) rec.cuts = d.cuts.map(c => ({ id: c.id, kind: c.kind, name: cutLabel(c), from: c.from, depth_mm: c.depth == null ? 'through' : mm(c.depth),
       ...(c.kind === 'pocket' ? { outline_sketch: c.sketch } : { d_mm: mm(c.d), at_mm: (cutCenter(c, k) || c.at).map(mm), ...(c.axis ? { on_axis: c.axis } : {}) }),
-      ...(c.seat ? { seat_mm: { d: mm(c.seat.d), depth: mm(c.seat.depth) } } : {}), ...(c.csk ? { countersink_d_mm: mm(c.csk.d) } : {}), ...(c.chamfer > 0 ? { rim_chamfer_45_mm: mm(c.chamfer) } : {}) }));
-    if (d.chamfer) rec.edge_chamfer = { face: d.chamfer.face, size_mm: mm(d.chamfer.size || 0), angle_deg: d.chamfer.angle || 45, ...(d.chamfer.widths ? { widths_by_side_mm: d.chamfer.widths.map(q => [q[0], mm(q[1])]) } : {}) };
+      ...(c.seat ? { seat_mm: { d: mm(c.seat.d), depth: mm(c.seat.depth) } } : {}), ...(c.csk ? { countersink_d_mm: mm(c.csk.d) } : {}), ...(c.chamfer > 0 ? { rim_chamfer_45_mm: mm(c.chamfer) } : {}), ...(c.chamferWidths ? { rim_chamfer_by_side_mm: c.chamferWidths.map(q => [q[0], mm(q[1])]) } : {}) }));
+    if (d.chamfer) rec.edge_chamfer = { face: d.chamfer.face, size_mm: mm(d.chamfer.size || 0), angle_deg: d.chamfer.angle || 45, ...(d.chamfer.widths ? { widths_by_side_mm: d.chamfer.widths.map(q => [q[0], mm(q[1])]) } : {}), ...(d.chamfer.angles ? { angles_by_side_deg: d.chamfer.angles } : {}) };
     Object.assign(rec, { thickness_mm: +(d.thickness * scale).toFixed(3), grows: growText(d, k), clashes_checked: false,
       outline: k ? { sketch: k.id, plane: { axis: k.plane.axis, offset_mm: +(k.plane.offset * scale).toFixed(3) }, closed: k.closed,
         faces_at_mm: faceOffsets(d, k).map(v => +(v * scale).toFixed(3)), points_mm: pts(k.points) } : null,
@@ -4686,7 +4747,8 @@ function partRecord(id) {
   }
   rec.pins = S.pins.filter(q => q.part === id).map(q => ({ id: q.id, note: q.note, state: stateOf(q), at_mm: q.at.map(v => +(v * scale).toFixed(3)),
     ...(q.r ? { area_d_mm: +(2 * q.r * scale).toFixed(3) } : {}), ...(q.reply ? { reply: q.reply } : {}),
-    ...(q.trace ? { trace_corners_mm: q.trace.map(v => v.map(x => +(x * scale).toFixed(3))), ...(q.tw ? { trace_corners_world_mm: q.tw } : {}), ...(q.tn ? { trace_normals: q.tn } : {}) } : {}) }));
+    ...(q.trace ? { trace_corners_mm: q.trace.map(v => v.map(x => +(x * scale).toFixed(3))), ...(q.tw ? { trace_corners_world_mm: q.tw } : {}), ...(q.tn ? { trace_normals: q.tn } : {}) } : {}),
+    ...(q.rlw ? { claude_lines_world_mm: q.rlw } : {}) }));
   return rec;
 }
 const sceneFile = () => ({ format: 'bspk-studio-scene', version: SCHEMA_VERSION, savedAt: new Date().toISOString(), print_scale: scale,
