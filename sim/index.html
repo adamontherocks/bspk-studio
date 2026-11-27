@@ -2590,9 +2590,11 @@ function discFace(h, hs) {
     g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
   }
   if (h.words) {
-    // Word discs (2026-11-26, the AXIS discs: "radial words, not stacked"): each word along its radius, set against the rim and
-    // reading left to right (outward on the right half, inward on the left: none upside down), so at an index on the disc's side
-    // it reads straight across, and two discs side by side read as one phrase ("TWELVE FORTY-FIVE"). h.words = { r0, r1, cap, font,
+    // Word discs (2026-11-26, the AXIS discs: "radial words, not stacked"): each word along its radius, set against the rim, and
+    // every word on a disc reading the same way, the way that reads left to right at the index (outward from the hub when the index is
+    // on the disc's right, inward from the rim when it's on the left): each word comes round to the index as the disc turns, so a word
+    // flipped to read upright at rest would arrive upside down (Adam: "they swap positions on both discs"). Two discs side by side,
+    // indexes facing, read as one phrase ("TWELVE FORTY-FIVE"). h.words = { r0, r1, cap, font,
     // weight, spacing }: the radial span (mm), the letters' cap height (measured off the face, so any font comes out that tall), the
     // face and weight, and the space between letters (em); a word longer than the span is narrowed to fit, never shrunk.
     const Wd = h.words, r0 = Wd.r0 > 0 ? Wd.r0 : R * 0.27, r1 = Wd.r1 > 0 ? Math.min(Wd.r1, R) : R - 0.6, cap = Wd.cap > 0 ? Wd.cap : 1.1;
@@ -2602,8 +2604,8 @@ function discFace(h, hs) {
     g.font = fam.replace('%s', fpx.toFixed(2)); g.letterSpacing = `${(Wd.spacing || 0) * fpx}px`;
     g.textBaseline = 'middle';
     labels.forEach((txt, k) => {
-      const a = ind - sgn * 2 * Math.PI * k / labels.length, ca = Math.cos(a), sa = Math.sin(a);
-      const out = ca > 1e-6 || (Math.abs(ca) <= 1e-6 && sa > 0), [x, y] = at(r1, a), span = (r1 - r0) * px, wt = g.measureText(String(txt)).width;
+      const a = ind - sgn * 2 * Math.PI * k / labels.length;
+      const out = Math.cos(ind) > -1e-6, [x, y] = at(r1, a), span = (r1 - r0) * px, wt = g.measureText(String(txt)).width;
       g.save(); g.translate(x, y); g.rotate(out ? -a : Math.PI - a); g.textAlign = out ? 'right' : 'left';
       if (wt > span) g.scale(span / wt, 1);
       g.fillText(String(txt), 0, 0); g.restore();

@@ -395,13 +395,14 @@ def build(layered_scene, info, helpers):
                   f'and the ring into the faceplate. Spring bars at the lower third of the height; {z_top - z_frame0:.2f} mm from the back to the deck.')
     # ---- engravings (Adam, 2026-11-26: "BSPK can be larger and the name can be smaller... fit them wherever fits well"; the literary
     # HEMISTICH, "the correct word"; his logo on the back "like 60% coverage"): V-carved and filled white. On the dial plate's face, where
-    # it shows between the discs, both in Orbitron like the discs: BSPK above, HEMISTICH '88 below, each narrowed where it must be to keep
-    # about 0.6 off the disc openings (maxw: the width there). On the back plate's wrist side: his shield logo, 60% of its height.
+    # it shows between the discs, both in Orbitron like the discs: BSPK above, HEMISTICH '88 below (Adam: "50% smaller... if not whatever
+    # the air can do"): BSPK 0.75 tall (half), the name 0.7 (the floor for a fine engraving V-bit; half would be 0.55), narrowed only if
+    # they'd come within about 0.6 of the disc openings (maxw: the width there). The discs stay 1.1. On the back plate's wrist side: his shield logo, 60% of its height.
     bk_h = back_outline.bounds[3] - back_outline.bounds[1]
     P['decor'] = {**(P.get('decor') or {}), 'engrave': {
         'D11': {'face': 'top', 'z': round(z_dial1, 4), 'items': [
-            {'kind': 'text', 'text': 'BSPK', 'at': [0.0, 8.2], 'cap': 1.5, 'font': '"Orbitron"', 'weight': 700, 'maxw': 6.9},
-            {'kind': 'text', 'text': "HEMISTICH '88", 'at': [0.0, -8.6], 'cap': 1.1, 'font': '"Orbitron"', 'weight': 500, 'maxw': 8.4}]},
+            {'kind': 'text', 'text': 'BSPK', 'at': [0.0, 8.4], 'cap': 0.75, 'font': '"Orbitron"', 'weight': 700, 'maxw': 6.9},
+            {'kind': 'text', 'text': "HEMISTICH '88", 'at': [0.0, -8.6], 'cap': 0.7, 'font': '"Orbitron"', 'weight': 500, 'maxw': 8.4}]},
         'D13': {'face': 'bottom', 'items': [
             {'kind': 'image', 'src': 'projects/assets/bspk-logo.png', 'at': [0.0, 0.0], 'w': round(0.6 * bk_h / 0.9773, 3), 'h': round(0.6 * bk_h, 3)}]}}}
     P['source'] = list(P.get('source') or []) + ['H-88 case: Claude, 2026-11-25, traced from Adam\'s Meshy model (1988 hemistitch) and render (H-88 "Spectrum"), his stack sketch '
