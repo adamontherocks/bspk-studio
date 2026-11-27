@@ -159,6 +159,8 @@ def build(layered_scene, info, helpers):
             continue
         new_pts.append({**q, 'u': round(u + dx_c, 4) if u >= crown_x0 - 1e-6 else u})
     kst['points'] = new_pts
+    if stem.get('flutes'):                                              # the crown's grip flutes go out with it
+        stem['flutes'] = {**stem['flutes'], 'from': round(stem['flutes']['from'] + dx_c, 4), 'to': round(stem['flutes']['to'] + dx_c, 4)}
     stem['name'] = ('Crown, stem and worm (one piece of 3/8" black delrin rod, cut on the 4th axis): in the H-88 the stem is %.1f longer, so the crown '
                     'stands %.1f proud of the 3 o\'clock wall, its neck Ø%.1f through the wall' % (dx_c, CROWN['gap'], 2 * neck_r))
     crown_x0 += dx_c

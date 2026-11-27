@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-26T19:26:14",
+ "savedAt": "2026-11-26T19:54:32",
  "state": {
   "pos": {
    "minute": [
@@ -306855,8 +306855,8 @@
      "backlash": 0.3
     },
     "flutes": {
-     "from": 24.75,
-     "to": 28.75,
+     "from": 27.65,
+     "to": 31.65,
      "count": 12,
      "width": 1.0,
      "depth": 0.45
