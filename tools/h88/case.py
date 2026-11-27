@@ -372,14 +372,17 @@ def build(layered_scene, info, helpers):
     # ---- the discs' faces: the AXIS word discs (Adam, 2026-11-26, from the AXIS renders: "radial words, not stacked... no frame or tick
     # marks... accept the v bits 1.1mm"): the hours written out on the left disc, the minutes in fives on the right, each word along its
     # radius against the rim; they're read where the discs face each other, across the middle, as one phrase ("TWELVE FORTY-FIVE").
-    # Letters 1.1 tall (V-carved and filled); no ticks, no index drawn.
+    # Letters 1.1 tall (V-carved and filled) in Avenir Next Condensed demi, spaced 0.06 em, from 2.0 off the centre to 0.4 off the rim (the
+    # long minute words narrowed to fit: Adam picked it over DIN Condensed for more room); :05 reads O'FIVE (Adam: "reads more logical",
+    # twelve oh-five, rhyming with O'CLOCK). No ticks, no index drawn.
     words_h = ['TWELVE', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN']
-    words_m = ["O'CLOCK", 'FIVE', 'TEN', 'FIFTEEN', 'TWENTY', 'TWENTY-FIVE', 'THIRTY', 'THIRTY-FIVE', 'FORTY', 'FORTY-FIVE', 'FIFTY', 'FIFTY-FIVE']
+    words_m = ["O'CLOCK", "O'FIVE", 'TEN', 'FIFTEEN', 'TWENTY', 'TWENTY-FIVE', 'THIRTY', 'THIRTY-FIVE', 'FORTY', 'FORTY-FIVE', 'FIFTY', 'FIFTY-FIVE']
     disc_x = dict(zip(('minute', 'hour'), (d_[0] for d_ in discs)))
     for hd in P.get('hands') or []:
         if hd.get('id') not in ('hour_disc', 'minute_disc'): continue
         mine = 'hour' if hd['id'] == 'hour_disc' else 'minute'
-        hd.update({'marks': 0, 'labels': words_h if mine == 'hour' else words_m, 'pointer': False, 'words': {'r0': 2.6, 'r1': DISC_R - 0.6, 'cap': 1.1},
+        hd.update({'marks': 0, 'labels': words_h if mine == 'hour' else words_m, 'pointer': False,
+                   'words': {'r0': 2.0, 'r1': DISC_R - 0.4, 'cap': 1.1, 'font': '"Avenir Next Condensed"', 'weight': 600, 'spacing': 0.06},
                    'indicator': 0.0 if disc_x[mine] < 0 else math.pi})    # (read on the side facing the other disc)
         hd['role'] = (hd.get('role') or '').split(' Its face:')[0] + (' Its face: the %s in words along the radii (the AXIS discs), letters 1.1 tall, V-carved and filled; '
                       'read where the discs face each other.' % ('hours' if mine == 'hour' else 'minutes in fives'))

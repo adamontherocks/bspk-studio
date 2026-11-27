@@ -2590,10 +2590,14 @@ function discFace(h, hs) {
   if (h.words) {
     // Word discs (2026-11-26, the AXIS discs: "radial words, not stacked"): each word along its radius, set against the rim and
     // reading left to right (outward on the right half, inward on the left: none upside down), so at an index on the disc's side
-    // it reads straight across, and two discs side by side read as one phrase ("TWELVE FORTY-FIVE"). h.words = { r0, r1, cap }: the
-    // radial span (mm) and the letters' cap height; a word longer than the span is narrowed to fit, never shrunk.
+    // it reads straight across, and two discs side by side read as one phrase ("TWELVE FORTY-FIVE"). h.words = { r0, r1, cap, font,
+    // weight, spacing }: the radial span (mm), the letters' cap height (measured off the face, so any font comes out that tall), the
+    // face and weight, and the space between letters (em); a word longer than the span is narrowed to fit, never shrunk.
     const Wd = h.words, r0 = Wd.r0 > 0 ? Wd.r0 : R * 0.27, r1 = Wd.r1 > 0 ? Math.min(Wd.r1, R) : R - 0.6, cap = Wd.cap > 0 ? Wd.cap : 1.1;
-    g.font = `700 ${(cap / 0.72) * px}px ${Wd.font || '"DIN Condensed", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", sans-serif'}`;
+    const fam = `${Wd.weight || 700} %spx ${Wd.font ? Wd.font + ', ' : ''}"DIN Condensed", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", sans-serif`;
+    g.textBaseline = 'alphabetic'; g.letterSpacing = '0px'; g.font = fam.replace('%s', '100');
+    const capPx = g.measureText('H').actualBoundingBoxAscent || 72, fpx = (100 * cap * px) / capPx;
+    g.font = fam.replace('%s', fpx.toFixed(2)); g.letterSpacing = `${(Wd.spacing || 0) * fpx}px`;
     g.textBaseline = 'middle';
     labels.forEach((txt, k) => {
       const a = ind - sgn * 2 * Math.PI * k / labels.length, ca = Math.cos(a), sa = Math.sin(a);
