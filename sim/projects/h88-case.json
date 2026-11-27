@@ -1,7 +1,7 @@
 {
  "format": "bspk-studio-scene",
  "version": 3,
- "savedAt": "2026-11-26T20:52:49",
+ "savedAt": "2026-11-26T20:58:14",
  "state": {
   "pos": {
    "minute": [
@@ -308464,6 +308464,18 @@
        "font": "\"Orbitron\"",
        "weight": 500,
        "maxw": 8.4
+      },
+      {
+       "kind": "text",
+       "text": "\u2013",
+       "at": [
+        0.0,
+        0.0
+       ],
+       "cap": 1.1,
+       "font": "\"Orbitron\"",
+       "weight": 500,
+       "maxw": 0.9
       }
      ]
     },

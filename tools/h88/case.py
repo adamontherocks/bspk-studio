@@ -402,7 +402,11 @@ def build(layered_scene, info, helpers):
     P['decor'] = {**(P.get('decor') or {}), 'engrave': {
         'D11': {'face': 'top', 'z': round(z_dial1, 4), 'items': [
             {'kind': 'text', 'text': 'BSPK', 'at': [0.0, 8.4], 'cap': 0.75, 'font': '"Orbitron"', 'weight': 700, 'maxw': 6.9},
-            {'kind': 'text', 'text': "HEMISTICH '88", 'at': [0.0, -8.6], 'cap': 0.7, 'font': '"Orbitron"', 'weight': 500, 'maxw': 8.4}]},
+            {'kind': 'text', 'text': "HEMISTICH '88", 'at': [0.0, -8.6], 'cap': 0.7, 'font': '"Orbitron"', 'weight': 500, 'maxw': 8.4},
+            # the caesura (Adam, P10: "a little hyphen or dash here... its where the point of 'hemistich' combines the time"): an en dash
+            # at the reading point, between the hour's half-line and the minute's ("TWELVE – O'FIVE"). The dial plate shows only 1.2 wide
+            # there (the disc openings come within 0.6 of the centre), so it's 0.9 long at most.
+            {'kind': 'text', 'text': '\u2013', 'at': [0.0, 0.0], 'cap': 1.1, 'font': '"Orbitron"', 'weight': 500, 'maxw': 0.9}]},
         'D13': {'face': 'bottom', 'items': [
             {'kind': 'image', 'src': 'projects/assets/bspk-logo.png', 'at': [0.0, 0.0], 'w': round(0.6 * bk_h / 0.9773, 3), 'h': round(0.6 * bk_h, 3)}]}}}
     P['source'] = list(P.get('source') or []) + ['H-88 case: Claude, 2026-11-25, traced from Adam\'s Meshy model (1988 hemistitch) and render (H-88 "Spectrum"), his stack sketch '
